@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Python
+.venv/
+venv/
+ENV/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Next.js build
+.next/
+out/
+build/
+dist/
+
+# SQLite databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads & temporary test outputs
+uploads/
+model/uploads/
+
+# Environment files
+.env
+.env*.local
+!.env.example
+
+# IDE & OS
+.DS_Store
+*.pem
+.vscode/
+.idea/

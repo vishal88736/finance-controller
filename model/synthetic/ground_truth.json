@@ -1,0 +1,1771 @@
+{
+  "dataset_name": "Multi-Source Financial Reconciliation Benchmark",
+  "generated_at": "2026-08-29T15:21:06.567503",
+  "total_cases": 200,
+  "cases": {
+    "TXN-LEDGER-1001": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5001",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9609.43,
+      "amount_b": 9609.43,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1002": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5002",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 423.91,
+      "amount_b": 423.91,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1003": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5003",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4161.69,
+      "amount_b": 4161.69,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1004": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5004",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3387.0,
+      "amount_b": 3387.0,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1005": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5005",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 11060.24,
+      "amount_b": 11060.24,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1006": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5006",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10166.66,
+      "amount_b": 10166.66,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1007": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5007",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13388.08,
+      "amount_b": 13388.08,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1008": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5008",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1349.74,
+      "amount_b": 1349.74,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1009": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5009",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 6357.73,
+      "amount_b": 6357.73,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1010": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5010",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 495.47,
+      "amount_b": 495.47,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1011": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5011",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3318.64,
+      "amount_b": 3318.64,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1012": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5012",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 7605.06,
+      "amount_b": 7605.06,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1013": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5013",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 446.71,
+      "amount_b": 446.71,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1014": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5014",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3022.62,
+      "amount_b": 3022.62,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1015": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5015",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9765.77,
+      "amount_b": 9765.77,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1016": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5016",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8196.88,
+      "amount_b": 8196.88,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1017": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5017",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3345.59,
+      "amount_b": 3345.59,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1018": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5018",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8859.52,
+      "amount_b": 8859.52,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1019": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5019",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12150.99,
+      "amount_b": 12150.99,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1020": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5020",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 147.16,
+      "amount_b": 147.16,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1021": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5021",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12097.0,
+      "amount_b": 12097.0,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1022": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5022",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10487.18,
+      "amount_b": 10487.18,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1023": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5023",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5136.75,
+      "amount_b": 5136.75,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1024": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5024",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 2374.42,
+      "amount_b": 2374.42,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1025": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5025",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14360.34,
+      "amount_b": 14360.34,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1026": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5026",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5082.09,
+      "amount_b": 5082.09,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1027": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5027",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1436.55,
+      "amount_b": 1436.55,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1028": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5028",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1495.91,
+      "amount_b": 1495.91,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1029": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5029",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12720.04,
+      "amount_b": 12720.04,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1030": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5030",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9075.7,
+      "amount_b": 9075.7,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1031": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5031",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12116.57,
+      "amount_b": 12116.57,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1032": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5032",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10959.49,
+      "amount_b": 10959.49,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1033": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5033",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8066.61,
+      "amount_b": 8066.61,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1034": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5034",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14598.08,
+      "amount_b": 14598.08,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1035": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5035",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5709.09,
+      "amount_b": 5709.09,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1036": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5036",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8303.01,
+      "amount_b": 8303.01,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1037": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5037",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12449.6,
+      "amount_b": 12449.6,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1038": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5038",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9296.87,
+      "amount_b": 9296.87,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1039": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5039",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12932.52,
+      "amount_b": 12932.52,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1040": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5040",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8681.41,
+      "amount_b": 8681.41,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1041": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5041",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10583.35,
+      "amount_b": 10583.35,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1042": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5042",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 735.07,
+      "amount_b": 735.07,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1043": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5043",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3457.08,
+      "amount_b": 3457.08,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1044": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5044",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4376.35,
+      "amount_b": 4376.35,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1045": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5045",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1242.89,
+      "amount_b": 1242.89,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1046": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5046",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3530.22,
+      "amount_b": 3530.22,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1047": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5047",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1559.97,
+      "amount_b": 1559.97,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1048": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5048",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4205.71,
+      "amount_b": 4205.71,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1049": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5049",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9553.48,
+      "amount_b": 9553.48,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1050": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5050",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5504.24,
+      "amount_b": 5504.24,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1051": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5051",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5584.21,
+      "amount_b": 5584.21,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1052": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5052",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3182.13,
+      "amount_b": 3182.13,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1053": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5053",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4041.32,
+      "amount_b": 4041.32,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1054": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5054",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14052.99,
+      "amount_b": 14052.99,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1055": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5055",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9738.13,
+      "amount_b": 9738.13,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1056": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5056",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9156.51,
+      "amount_b": 9156.51,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1057": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5057",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 2608.52,
+      "amount_b": 2608.52,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1058": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5058",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10950.45,
+      "amount_b": 10950.45,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1059": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5059",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 2492.87,
+      "amount_b": 2492.87,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1060": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5060",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5722.86,
+      "amount_b": 5722.86,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1061": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5061",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14843.37,
+      "amount_b": 14843.37,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1062": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5062",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9618.0,
+      "amount_b": 9618.0,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1063": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5063",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8376.4,
+      "amount_b": 8376.4,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1064": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5064",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10284.98,
+      "amount_b": 10284.98,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1065": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5065",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12650.64,
+      "amount_b": 12650.64,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1066": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5066",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 11651.2,
+      "amount_b": 11651.2,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1067": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5067",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3474.27,
+      "amount_b": 3474.27,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1068": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5068",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 529.9,
+      "amount_b": 529.9,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1069": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5069",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4766.02,
+      "amount_b": 4766.02,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1070": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5070",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4052.73,
+      "amount_b": 4052.73,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1071": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5071",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3204.19,
+      "amount_b": 3204.19,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1072": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5072",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14146.5,
+      "amount_b": 14146.5,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1073": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5073",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13151.7,
+      "amount_b": 13151.7,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1074": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5074",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4754.43,
+      "amount_b": 4754.43,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1075": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5075",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9848.81,
+      "amount_b": 9848.81,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1076": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5076",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5964.7,
+      "amount_b": 5964.7,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1077": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5077",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13722.49,
+      "amount_b": 13722.49,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1078": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5078",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 6909.84,
+      "amount_b": 6909.84,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1079": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5079",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4009.96,
+      "amount_b": 4009.96,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1080": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5080",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3737.08,
+      "amount_b": 3737.08,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1081": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5081",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8442.45,
+      "amount_b": 8442.45,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1082": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5082",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3977.99,
+      "amount_b": 3977.99,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1083": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5083",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8789.56,
+      "amount_b": 8789.56,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1084": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5084",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13472.45,
+      "amount_b": 13472.45,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1085": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5085",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 6021.04,
+      "amount_b": 6021.04,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1086": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5086",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3328.85,
+      "amount_b": 3328.85,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1087": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5087",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14963.19,
+      "amount_b": 14963.19,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1088": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5088",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 7667.42,
+      "amount_b": 7667.42,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1089": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5089",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1409.1,
+      "amount_b": 1409.1,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1090": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5090",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 754.39,
+      "amount_b": 754.39,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1091": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5091",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1689.25,
+      "amount_b": 1689.25,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1092": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5092",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9430.32,
+      "amount_b": 9430.32,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1093": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5093",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 11891.59,
+      "amount_b": 11891.59,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1094": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5094",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 6361.29,
+      "amount_b": 6361.29,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1095": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5095",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 999.74,
+      "amount_b": 999.74,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1096": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5096",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 5755.21,
+      "amount_b": 5755.21,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1097": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5097",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14942.01,
+      "amount_b": 14942.01,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1098": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5098",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 7960.26,
+      "amount_b": 7960.26,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1099": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5099",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14567.62,
+      "amount_b": 14567.62,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1100": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5100",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 12918.66,
+      "amount_b": 12918.66,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1101": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5101",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 221.64,
+      "amount_b": 221.64,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1102": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5102",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10824.79,
+      "amount_b": 10824.79,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1103": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5103",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 10241.57,
+      "amount_b": 10241.57,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1104": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5104",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 8077.71,
+      "amount_b": 8077.71,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1105": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5105",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4039.04,
+      "amount_b": 4039.04,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1106": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5106",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9632.38,
+      "amount_b": 9632.38,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1107": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5107",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 1717.7,
+      "amount_b": 1717.7,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1108": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5108",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 6549.74,
+      "amount_b": 6549.74,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1109": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5109",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 6833.17,
+      "amount_b": 6833.17,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1110": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5110",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 14309.55,
+      "amount_b": 14309.55,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1111": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5111",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13144.0,
+      "amount_b": 13144.0,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1112": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5112",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 3987.67,
+      "amount_b": 3987.67,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1113": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5113",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 7533.76,
+      "amount_b": 7533.76,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1114": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5114",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 2720.85,
+      "amount_b": 2720.85,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1115": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5115",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13693.79,
+      "amount_b": 13693.79,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1116": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5116",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 13064.25,
+      "amount_b": 13064.25,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1117": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5117",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 4511.75,
+      "amount_b": 4511.75,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1118": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5118",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9602.29,
+      "amount_b": 9602.29,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1119": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5119",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 9154.1,
+      "amount_b": 9154.1,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1120": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5120",
+      "category": "EXACT_MATCH",
+      "expected_confidence": 100.0,
+      "amount_a": 2334.95,
+      "amount_b": 2334.95,
+      "discrepancy_reason": null
+    },
+    "TXN-LEDGER-1121": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5121",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 6505.09,
+      "amount_b": 6505.09,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1122": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5122",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 4630.78,
+      "amount_b": 4630.78,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1123": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5123",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 6640.46,
+      "amount_b": 6640.46,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1124": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5124",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 4554.97,
+      "amount_b": 4554.97,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1125": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5125",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 104.8,
+      "amount_b": 104.8,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1126": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5126",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 2822.91,
+      "amount_b": 2822.91,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1127": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5127",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 263.6,
+      "amount_b": 263.6,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1128": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5128",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 7904.43,
+      "amount_b": 7904.43,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1129": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5129",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 7481.26,
+      "amount_b": 7481.26,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1130": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5130",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 7085.99,
+      "amount_b": 7085.99,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1131": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5131",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 2683.12,
+      "amount_b": 2683.12,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1132": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5132",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 586.57,
+      "amount_b": 586.57,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1133": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5133",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 7475.28,
+      "amount_b": 7475.28,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1134": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5134",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 8054.38,
+      "amount_b": 8054.38,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1135": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5135",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 819.49,
+      "amount_b": 819.49,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1136": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5136",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 4182.32,
+      "amount_b": 4182.32,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1137": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5137",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 681.39,
+      "amount_b": 681.39,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1138": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5138",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 6489.06,
+      "amount_b": 6489.06,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1139": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5139",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 6533.01,
+      "amount_b": 6533.01,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1140": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5140",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 1178.49,
+      "amount_b": 1178.49,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1141": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5141",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 4092.37,
+      "amount_b": 4092.37,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1142": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5142",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 4718.35,
+      "amount_b": 4718.35,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1143": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5143",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 2326.48,
+      "amount_b": 2326.48,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1144": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5144",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 7428.44,
+      "amount_b": 7428.44,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1145": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5145",
+      "category": "FUZZY_MATCH",
+      "expected_confidence": 88.0,
+      "amount_a": 3654.36,
+      "amount_b": 3654.36,
+      "discrepancy_reason": "Slight entity name and reference formatting variance"
+    },
+    "TXN-LEDGER-1146": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5146",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 2935.68,
+      "amount_b": 2920.68,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1147": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5147",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 6701.91,
+      "amount_b": 6534.36,
+      "discrepancy_reason": "Amount difference of $167.55 due to processing fees"
+    },
+    "TXN-LEDGER-1148": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5148",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 8894.21,
+      "amount_b": 8879.21,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1149": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5149",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 2813.24,
+      "amount_b": 2742.91,
+      "discrepancy_reason": "Amount difference of $70.33 due to processing fees"
+    },
+    "TXN-LEDGER-1150": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5150",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 4084.74,
+      "amount_b": 4069.74,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1151": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5151",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 11944.22,
+      "amount_b": 11645.61,
+      "discrepancy_reason": "Amount difference of $298.61 due to processing fees"
+    },
+    "TXN-LEDGER-1152": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5152",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 7973.6,
+      "amount_b": 7958.6,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1153": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5153",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 5538.15,
+      "amount_b": 5399.7,
+      "discrepancy_reason": "Amount difference of $138.45 due to processing fees"
+    },
+    "TXN-LEDGER-1154": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5154",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 6452.12,
+      "amount_b": 6437.12,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1155": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5155",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 1891.55,
+      "amount_b": 1844.26,
+      "discrepancy_reason": "Amount difference of $47.29 due to processing fees"
+    },
+    "TXN-LEDGER-1156": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5156",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 3084.02,
+      "amount_b": 3069.02,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1157": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5157",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 4387.98,
+      "amount_b": 4278.28,
+      "discrepancy_reason": "Amount difference of $109.7 due to processing fees"
+    },
+    "TXN-LEDGER-1158": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5158",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 7265.55,
+      "amount_b": 7250.55,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1159": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5159",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 3146.32,
+      "amount_b": 3067.66,
+      "discrepancy_reason": "Amount difference of $78.66 due to processing fees"
+    },
+    "TXN-LEDGER-1160": {
+      "ground_truth_status": "AMOUNT_MISMATCH",
+      "matched_record_id": "BNK-REF-5160",
+      "category": "AMOUNT_DISCREPANCY",
+      "expected_confidence": 75.0,
+      "amount_a": 3032.5,
+      "amount_b": 3017.5,
+      "discrepancy_reason": "Amount difference of $15.0 due to processing fees"
+    },
+    "TXN-LEDGER-1161": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5161",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 540.77,
+      "amount_b": 540.77,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1162": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5162",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 3229.29,
+      "amount_b": 3229.29,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1163": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5163",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 1298.92,
+      "amount_b": 1298.92,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1164": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5164",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 4546.02,
+      "amount_b": 4546.02,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1165": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5165",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 4326.25,
+      "amount_b": 4326.25,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1166": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5166",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 540.12,
+      "amount_b": 540.12,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1167": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5167",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 1342.42,
+      "amount_b": 1342.42,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1168": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5168",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 3411.09,
+      "amount_b": 3411.09,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1169": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5169",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 1228.34,
+      "amount_b": 1228.34,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1170": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5170",
+      "category": "DATE_LAG",
+      "expected_confidence": 85.0,
+      "amount_a": 835.1,
+      "amount_b": 835.1,
+      "discrepancy_reason": "Date lag of 7 days between ledger booking and bank credit"
+    },
+    "TXN-LEDGER-1171": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_MISSING_COUNTERPART",
+      "expected_confidence": 0.0,
+      "amount_a": 3761.4,
+      "amount_b": null,
+      "discrepancy_reason": "Record exists in Ledger but has no corresponding Bank debit/credit entry"
+    },
+    "TXN-LEDGER-1172": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_MISSING_COUNTERPART",
+      "expected_confidence": 0.0,
+      "amount_a": 2412.86,
+      "amount_b": null,
+      "discrepancy_reason": "Record exists in Ledger but has no corresponding Bank debit/credit entry"
+    },
+    "TXN-LEDGER-1173": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_MISSING_COUNTERPART",
+      "expected_confidence": 0.0,
+      "amount_a": 2048.88,
+      "amount_b": null,
+      "discrepancy_reason": "Record exists in Ledger but has no corresponding Bank debit/credit entry"
+    },
+    "TXN-LEDGER-1174": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_MISSING_COUNTERPART",
+      "expected_confidence": 0.0,
+      "amount_a": 3203.09,
+      "amount_b": null,
+      "discrepancy_reason": "Record exists in Ledger but has no corresponding Bank debit/credit entry"
+    },
+    "TXN-LEDGER-1175": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_MISSING_COUNTERPART",
+      "expected_confidence": 0.0,
+      "amount_a": 3287.74,
+      "amount_b": null,
+      "discrepancy_reason": "Record exists in Ledger but has no corresponding Bank debit/credit entry"
+    },
+    "BNK-REF-5176": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_UNRECORDED_BANK_FEE",
+      "expected_confidence": 0.0,
+      "amount_a": null,
+      "amount_b": 44.75,
+      "discrepancy_reason": "Bank charge not recorded in internal ledger"
+    },
+    "BNK-REF-5177": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_UNRECORDED_BANK_FEE",
+      "expected_confidence": 0.0,
+      "amount_a": null,
+      "amount_b": 32.6,
+      "discrepancy_reason": "Bank charge not recorded in internal ledger"
+    },
+    "BNK-REF-5178": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_UNRECORDED_BANK_FEE",
+      "expected_confidence": 0.0,
+      "amount_a": null,
+      "amount_b": 76.04,
+      "discrepancy_reason": "Bank charge not recorded in internal ledger"
+    },
+    "BNK-REF-5179": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_UNRECORDED_BANK_FEE",
+      "expected_confidence": 0.0,
+      "amount_a": null,
+      "amount_b": 75.07,
+      "discrepancy_reason": "Bank charge not recorded in internal ledger"
+    },
+    "BNK-REF-5180": {
+      "ground_truth_status": "MISSING_RECORD",
+      "matched_record_id": null,
+      "category": "UNMATCHED_UNRECORDED_BANK_FEE",
+      "expected_confidence": 0.0,
+      "amount_a": null,
+      "amount_b": 80.71,
+      "discrepancy_reason": "Bank charge not recorded in internal ledger"
+    },
+    "TXN-LEDGER-1181": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5181",
+      "category": "DUPLICATE_PRIMARY",
+      "expected_confidence": 95.0,
+      "amount_a": 1958.15,
+      "amount_b": 1958.15,
+      "discrepancy_reason": "Primary transaction matched to bank statement"
+    },
+    "TXN-LEDGER-1181-DUP": {
+      "ground_truth_status": "DUPLICATE",
+      "matched_record_id": null,
+      "category": "DUPLICATE_ENTRY",
+      "expected_confidence": 0.0,
+      "amount_a": 1958.15,
+      "amount_b": null,
+      "discrepancy_reason": "Duplicate booking of reference INV-2026-2181 in ledger"
+    },
+    "TXN-LEDGER-1182": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5182",
+      "category": "DUPLICATE_PRIMARY",
+      "expected_confidence": 95.0,
+      "amount_a": 1846.73,
+      "amount_b": 1846.73,
+      "discrepancy_reason": "Primary transaction matched to bank statement"
+    },
+    "TXN-LEDGER-1182-DUP": {
+      "ground_truth_status": "DUPLICATE",
+      "matched_record_id": null,
+      "category": "DUPLICATE_ENTRY",
+      "expected_confidence": 0.0,
+      "amount_a": 1846.73,
+      "amount_b": null,
+      "discrepancy_reason": "Duplicate booking of reference INV-2026-2182 in ledger"
+    },
+    "TXN-LEDGER-1183": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5183",
+      "category": "DUPLICATE_PRIMARY",
+      "expected_confidence": 95.0,
+      "amount_a": 2468.33,
+      "amount_b": 2468.33,
+      "discrepancy_reason": "Primary transaction matched to bank statement"
+    },
+    "TXN-LEDGER-1183-DUP": {
+      "ground_truth_status": "DUPLICATE",
+      "matched_record_id": null,
+      "category": "DUPLICATE_ENTRY",
+      "expected_confidence": 0.0,
+      "amount_a": 2468.33,
+      "amount_b": null,
+      "discrepancy_reason": "Duplicate booking of reference INV-2026-2183 in ledger"
+    },
+    "TXN-LEDGER-1184": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5184",
+      "category": "DUPLICATE_PRIMARY",
+      "expected_confidence": 95.0,
+      "amount_a": 696.84,
+      "amount_b": 696.84,
+      "discrepancy_reason": "Primary transaction matched to bank statement"
+    },
+    "TXN-LEDGER-1184-DUP": {
+      "ground_truth_status": "DUPLICATE",
+      "matched_record_id": null,
+      "category": "DUPLICATE_ENTRY",
+      "expected_confidence": 0.0,
+      "amount_a": 696.84,
+      "amount_b": null,
+      "discrepancy_reason": "Duplicate booking of reference INV-2026-2184 in ledger"
+    },
+    "TXN-LEDGER-1185": {
+      "ground_truth_status": "MATCHED",
+      "matched_record_id": "BNK-REF-5185",
+      "category": "DUPLICATE_PRIMARY",
+      "expected_confidence": 95.0,
+      "amount_a": 1305.24,
+      "amount_b": 1305.24,
+      "discrepancy_reason": "Primary transaction matched to bank statement"
+    },
+    "TXN-LEDGER-1185-DUP": {
+      "ground_truth_status": "DUPLICATE",
+      "matched_record_id": null,
+      "category": "DUPLICATE_ENTRY",
+      "expected_confidence": 0.0,
+      "amount_a": 1305.24,
+      "amount_b": null,
+      "discrepancy_reason": "Duplicate booking of reference INV-2026-2185 in ledger"
+    },
+    "TXN-LEDGER-1191": {
+      "ground_truth_status": "UNRESOLVED_AMBIGUOUS",
+      "matched_record_id": null,
+      "category": "AMBIGUOUS_MULTI_CANDIDATE",
+      "expected_confidence": 78.0,
+      "amount_a": 1250.0,
+      "amount_b": null,
+      "discrepancy_reason": "Two candidates (BNK-REF-5191-CAND1 and BNK-REF-5191-CAND2) found with identical amount ($1,250.00), entity, and date. Needs human investigation."
+    },
+    "TXN-LEDGER-1192": {
+      "ground_truth_status": "UNRESOLVED_AMBIGUOUS",
+      "matched_record_id": null,
+      "category": "AMBIGUOUS_MULTI_CANDIDATE",
+      "expected_confidence": 78.0,
+      "amount_a": 1250.0,
+      "amount_b": null,
+      "discrepancy_reason": "Two candidates (BNK-REF-5192-CAND1 and BNK-REF-5192-CAND2) found with identical amount ($1,250.00), entity, and date. Needs human investigation."
+    },
+    "TXN-LEDGER-1193": {
+      "ground_truth_status": "UNRESOLVED_AMBIGUOUS",
+      "matched_record_id": null,
+      "category": "AMBIGUOUS_MULTI_CANDIDATE",
+      "expected_confidence": 78.0,
+      "amount_a": 1250.0,
+      "amount_b": null,
+      "discrepancy_reason": "Two candidates (BNK-REF-5193-CAND1 and BNK-REF-5193-CAND2) found with identical amount ($1,250.00), entity, and date. Needs human investigation."
+    },
+    "TXN-LEDGER-1194": {
+      "ground_truth_status": "UNRESOLVED_AMBIGUOUS",
+      "matched_record_id": null,
+      "category": "AMBIGUOUS_MULTI_CANDIDATE",
+      "expected_confidence": 78.0,
+      "amount_a": 1250.0,
+      "amount_b": null,
+      "discrepancy_reason": "Two candidates (BNK-REF-5194-CAND1 and BNK-REF-5194-CAND2) found with identical amount ($1,250.00), entity, and date. Needs human investigation."
+    },
+    "TXN-LEDGER-1195": {
+      "ground_truth_status": "UNRESOLVED_AMBIGUOUS",
+      "matched_record_id": null,
+      "category": "AMBIGUOUS_MULTI_CANDIDATE",
+      "expected_confidence": 78.0,
+      "amount_a": 1250.0,
+      "amount_b": null,
+      "discrepancy_reason": "Two candidates (BNK-REF-5195-CAND1 and BNK-REF-5195-CAND2) found with identical amount ($1,250.00), entity, and date. Needs human investigation."
+    }
+  },
+  "summary": {
+    "exact_matches": 120,
+    "fuzzy_matches": 25,
+    "amount_discrepancies": 15,
+    "date_discrepancies": 10,
+    "missing_records": 10,
+    "duplicates": 10,
+    "ambiguous_candidates": 10
+  }
+}

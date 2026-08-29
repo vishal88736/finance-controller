@@ -1,0 +1,191 @@
+record_id,reference_id,date,entity,description,amount,currency,source
+TXN-LEDGER-1001,INV-2026-2001,2026-08-02,Stripe Payments,Payment for Stripe Payments - INV-2026-2001,9609.43,EUR,source_a_ledger
+TXN-LEDGER-1002,INV-2026-2002,2026-08-03,Razorpay Software,Payment for Razorpay Software - INV-2026-2002,423.91,GBP,source_a_ledger
+TXN-LEDGER-1003,INV-2026-2003,2026-08-04,AWS Infrastructure,Payment for AWS Infrastructure - INV-2026-2003,4161.69,INR,source_a_ledger
+TXN-LEDGER-1004,INV-2026-2004,2026-08-05,Google Cloud Platform,Payment for Google Cloud Platform - INV-2026-2004,3387.0,USD,source_a_ledger
+TXN-LEDGER-1005,INV-2026-2005,2026-08-06,Salesforce CRM,Payment for Salesforce CRM - INV-2026-2005,11060.24,EUR,source_a_ledger
+TXN-LEDGER-1006,INV-2026-2006,2026-08-07,Slack Technologies,Payment for Slack Technologies - INV-2026-2006,10166.66,GBP,source_a_ledger
+TXN-LEDGER-1007,INV-2026-2007,2026-08-08,Zoom Video Comm,Payment for Zoom Video Comm - INV-2026-2007,13388.08,INR,source_a_ledger
+TXN-LEDGER-1008,INV-2026-2008,2026-08-09,Twilio API Services,Payment for Twilio API Services - INV-2026-2008,1349.74,USD,source_a_ledger
+TXN-LEDGER-1009,INV-2026-2009,2026-08-10,Figma Design Systems,Payment for Figma Design Systems - INV-2026-2009,6357.73,EUR,source_a_ledger
+TXN-LEDGER-1010,INV-2026-2010,2026-08-11,Datadog Monitoring,Payment for Datadog Monitoring - INV-2026-2010,495.47,GBP,source_a_ledger
+TXN-LEDGER-1011,INV-2026-2011,2026-08-12,Atlassian Jira,Payment for Atlassian Jira - INV-2026-2011,3318.64,INR,source_a_ledger
+TXN-LEDGER-1012,INV-2026-2012,2026-08-13,HubSpot Marketing,Payment for HubSpot Marketing - INV-2026-2012,7605.06,USD,source_a_ledger
+TXN-LEDGER-1013,INV-2026-2013,2026-08-14,GitHub Enterprise,Payment for GitHub Enterprise - INV-2026-2013,446.71,EUR,source_a_ledger
+TXN-LEDGER-1014,INV-2026-2014,2026-08-15,Snowflake Data Cloud,Payment for Snowflake Data Cloud - INV-2026-2014,3022.62,GBP,source_a_ledger
+TXN-LEDGER-1015,INV-2026-2015,2026-08-16,Notion Labs,Payment for Notion Labs - INV-2026-2015,9765.77,INR,source_a_ledger
+TXN-LEDGER-1016,INV-2026-2016,2026-08-17,Intercom Support,Payment for Intercom Support - INV-2026-2016,8196.88,USD,source_a_ledger
+TXN-LEDGER-1017,INV-2026-2017,2026-08-18,Cloudflare Edge,Payment for Cloudflare Edge - INV-2026-2017,3345.59,EUR,source_a_ledger
+TXN-LEDGER-1018,INV-2026-2018,2026-08-19,Zendesk Support,Payment for Zendesk Support - INV-2026-2018,8859.52,GBP,source_a_ledger
+TXN-LEDGER-1019,INV-2026-2019,2026-08-20,Workday HRMS,Payment for Workday HRMS - INV-2026-2019,12150.99,INR,source_a_ledger
+TXN-LEDGER-1020,INV-2026-2020,2026-08-21,Acme Cloud Corp,Payment for Acme Cloud Corp - INV-2026-2020,147.16,USD,source_a_ledger
+TXN-LEDGER-1021,INV-2026-2021,2026-08-22,Stripe Payments,Payment for Stripe Payments - INV-2026-2021,12097.0,EUR,source_a_ledger
+TXN-LEDGER-1022,INV-2026-2022,2026-08-23,Razorpay Software,Payment for Razorpay Software - INV-2026-2022,10487.18,GBP,source_a_ledger
+TXN-LEDGER-1023,INV-2026-2023,2026-08-24,AWS Infrastructure,Payment for AWS Infrastructure - INV-2026-2023,5136.75,INR,source_a_ledger
+TXN-LEDGER-1024,INV-2026-2024,2026-08-25,Google Cloud Platform,Payment for Google Cloud Platform - INV-2026-2024,2374.42,USD,source_a_ledger
+TXN-LEDGER-1025,INV-2026-2025,2026-08-01,Salesforce CRM,Payment for Salesforce CRM - INV-2026-2025,14360.34,EUR,source_a_ledger
+TXN-LEDGER-1026,INV-2026-2026,2026-08-02,Slack Technologies,Payment for Slack Technologies - INV-2026-2026,5082.09,GBP,source_a_ledger
+TXN-LEDGER-1027,INV-2026-2027,2026-08-03,Zoom Video Comm,Payment for Zoom Video Comm - INV-2026-2027,1436.55,INR,source_a_ledger
+TXN-LEDGER-1028,INV-2026-2028,2026-08-04,Twilio API Services,Payment for Twilio API Services - INV-2026-2028,1495.91,USD,source_a_ledger
+TXN-LEDGER-1029,INV-2026-2029,2026-08-05,Figma Design Systems,Payment for Figma Design Systems - INV-2026-2029,12720.04,EUR,source_a_ledger
+TXN-LEDGER-1030,INV-2026-2030,2026-08-06,Datadog Monitoring,Payment for Datadog Monitoring - INV-2026-2030,9075.7,GBP,source_a_ledger
+TXN-LEDGER-1031,INV-2026-2031,2026-08-07,Atlassian Jira,Payment for Atlassian Jira - INV-2026-2031,12116.57,INR,source_a_ledger
+TXN-LEDGER-1032,INV-2026-2032,2026-08-08,HubSpot Marketing,Payment for HubSpot Marketing - INV-2026-2032,10959.49,USD,source_a_ledger
+TXN-LEDGER-1033,INV-2026-2033,2026-08-09,GitHub Enterprise,Payment for GitHub Enterprise - INV-2026-2033,8066.61,EUR,source_a_ledger
+TXN-LEDGER-1034,INV-2026-2034,2026-08-10,Snowflake Data Cloud,Payment for Snowflake Data Cloud - INV-2026-2034,14598.08,GBP,source_a_ledger
+TXN-LEDGER-1035,INV-2026-2035,2026-08-11,Notion Labs,Payment for Notion Labs - INV-2026-2035,5709.09,INR,source_a_ledger
+TXN-LEDGER-1036,INV-2026-2036,2026-08-12,Intercom Support,Payment for Intercom Support - INV-2026-2036,8303.01,USD,source_a_ledger
+TXN-LEDGER-1037,INV-2026-2037,2026-08-13,Cloudflare Edge,Payment for Cloudflare Edge - INV-2026-2037,12449.6,EUR,source_a_ledger
+TXN-LEDGER-1038,INV-2026-2038,2026-08-14,Zendesk Support,Payment for Zendesk Support - INV-2026-2038,9296.87,GBP,source_a_ledger
+TXN-LEDGER-1039,INV-2026-2039,2026-08-15,Workday HRMS,Payment for Workday HRMS - INV-2026-2039,12932.52,INR,source_a_ledger
+TXN-LEDGER-1040,INV-2026-2040,2026-08-16,Acme Cloud Corp,Payment for Acme Cloud Corp - INV-2026-2040,8681.41,USD,source_a_ledger
+TXN-LEDGER-1041,INV-2026-2041,2026-08-17,Stripe Payments,Payment for Stripe Payments - INV-2026-2041,10583.35,EUR,source_a_ledger
+TXN-LEDGER-1042,INV-2026-2042,2026-08-18,Razorpay Software,Payment for Razorpay Software - INV-2026-2042,735.07,GBP,source_a_ledger
+TXN-LEDGER-1043,INV-2026-2043,2026-08-19,AWS Infrastructure,Payment for AWS Infrastructure - INV-2026-2043,3457.08,INR,source_a_ledger
+TXN-LEDGER-1044,INV-2026-2044,2026-08-20,Google Cloud Platform,Payment for Google Cloud Platform - INV-2026-2044,4376.35,USD,source_a_ledger
+TXN-LEDGER-1045,INV-2026-2045,2026-08-21,Salesforce CRM,Payment for Salesforce CRM - INV-2026-2045,1242.89,EUR,source_a_ledger
+TXN-LEDGER-1046,INV-2026-2046,2026-08-22,Slack Technologies,Payment for Slack Technologies - INV-2026-2046,3530.22,GBP,source_a_ledger
+TXN-LEDGER-1047,INV-2026-2047,2026-08-23,Zoom Video Comm,Payment for Zoom Video Comm - INV-2026-2047,1559.97,INR,source_a_ledger
+TXN-LEDGER-1048,INV-2026-2048,2026-08-24,Twilio API Services,Payment for Twilio API Services - INV-2026-2048,4205.71,USD,source_a_ledger
+TXN-LEDGER-1049,INV-2026-2049,2026-08-25,Figma Design Systems,Payment for Figma Design Systems - INV-2026-2049,9553.48,EUR,source_a_ledger
+TXN-LEDGER-1050,INV-2026-2050,2026-08-01,Datadog Monitoring,Payment for Datadog Monitoring - INV-2026-2050,5504.24,GBP,source_a_ledger
+TXN-LEDGER-1051,INV-2026-2051,2026-08-02,Atlassian Jira,Payment for Atlassian Jira - INV-2026-2051,5584.21,INR,source_a_ledger
+TXN-LEDGER-1052,INV-2026-2052,2026-08-03,HubSpot Marketing,Payment for HubSpot Marketing - INV-2026-2052,3182.13,USD,source_a_ledger
+TXN-LEDGER-1053,INV-2026-2053,2026-08-04,GitHub Enterprise,Payment for GitHub Enterprise - INV-2026-2053,4041.32,EUR,source_a_ledger
+TXN-LEDGER-1054,INV-2026-2054,2026-08-05,Snowflake Data Cloud,Payment for Snowflake Data Cloud - INV-2026-2054,14052.99,GBP,source_a_ledger
+TXN-LEDGER-1055,INV-2026-2055,2026-08-06,Notion Labs,Payment for Notion Labs - INV-2026-2055,9738.13,INR,source_a_ledger
+TXN-LEDGER-1056,INV-2026-2056,2026-08-07,Intercom Support,Payment for Intercom Support - INV-2026-2056,9156.51,USD,source_a_ledger
+TXN-LEDGER-1057,INV-2026-2057,2026-08-08,Cloudflare Edge,Payment for Cloudflare Edge - INV-2026-2057,2608.52,EUR,source_a_ledger
+TXN-LEDGER-1058,INV-2026-2058,2026-08-09,Zendesk Support,Payment for Zendesk Support - INV-2026-2058,10950.45,GBP,source_a_ledger
+TXN-LEDGER-1059,INV-2026-2059,2026-08-10,Workday HRMS,Payment for Workday HRMS - INV-2026-2059,2492.87,INR,source_a_ledger
+TXN-LEDGER-1060,INV-2026-2060,2026-08-11,Acme Cloud Corp,Payment for Acme Cloud Corp - INV-2026-2060,5722.86,USD,source_a_ledger
+TXN-LEDGER-1061,INV-2026-2061,2026-08-12,Stripe Payments,Payment for Stripe Payments - INV-2026-2061,14843.37,EUR,source_a_ledger
+TXN-LEDGER-1062,INV-2026-2062,2026-08-13,Razorpay Software,Payment for Razorpay Software - INV-2026-2062,9618.0,GBP,source_a_ledger
+TXN-LEDGER-1063,INV-2026-2063,2026-08-14,AWS Infrastructure,Payment for AWS Infrastructure - INV-2026-2063,8376.4,INR,source_a_ledger
+TXN-LEDGER-1064,INV-2026-2064,2026-08-15,Google Cloud Platform,Payment for Google Cloud Platform - INV-2026-2064,10284.98,USD,source_a_ledger
+TXN-LEDGER-1065,INV-2026-2065,2026-08-16,Salesforce CRM,Payment for Salesforce CRM - INV-2026-2065,12650.64,EUR,source_a_ledger
+TXN-LEDGER-1066,INV-2026-2066,2026-08-17,Slack Technologies,Payment for Slack Technologies - INV-2026-2066,11651.2,GBP,source_a_ledger
+TXN-LEDGER-1067,INV-2026-2067,2026-08-18,Zoom Video Comm,Payment for Zoom Video Comm - INV-2026-2067,3474.27,INR,source_a_ledger
+TXN-LEDGER-1068,INV-2026-2068,2026-08-19,Twilio API Services,Payment for Twilio API Services - INV-2026-2068,529.9,USD,source_a_ledger
+TXN-LEDGER-1069,INV-2026-2069,2026-08-20,Figma Design Systems,Payment for Figma Design Systems - INV-2026-2069,4766.02,EUR,source_a_ledger
+TXN-LEDGER-1070,INV-2026-2070,2026-08-21,Datadog Monitoring,Payment for Datadog Monitoring - INV-2026-2070,4052.73,GBP,source_a_ledger
+TXN-LEDGER-1071,INV-2026-2071,2026-08-22,Atlassian Jira,Payment for Atlassian Jira - INV-2026-2071,3204.19,INR,source_a_ledger
+TXN-LEDGER-1072,INV-2026-2072,2026-08-23,HubSpot Marketing,Payment for HubSpot Marketing - INV-2026-2072,14146.5,USD,source_a_ledger
+TXN-LEDGER-1073,INV-2026-2073,2026-08-24,GitHub Enterprise,Payment for GitHub Enterprise - INV-2026-2073,13151.7,EUR,source_a_ledger
+TXN-LEDGER-1074,INV-2026-2074,2026-08-25,Snowflake Data Cloud,Payment for Snowflake Data Cloud - INV-2026-2074,4754.43,GBP,source_a_ledger
+TXN-LEDGER-1075,INV-2026-2075,2026-08-01,Notion Labs,Payment for Notion Labs - INV-2026-2075,9848.81,INR,source_a_ledger
+TXN-LEDGER-1076,INV-2026-2076,2026-08-02,Intercom Support,Payment for Intercom Support - INV-2026-2076,5964.7,USD,source_a_ledger
+TXN-LEDGER-1077,INV-2026-2077,2026-08-03,Cloudflare Edge,Payment for Cloudflare Edge - INV-2026-2077,13722.49,EUR,source_a_ledger
+TXN-LEDGER-1078,INV-2026-2078,2026-08-04,Zendesk Support,Payment for Zendesk Support - INV-2026-2078,6909.84,GBP,source_a_ledger
+TXN-LEDGER-1079,INV-2026-2079,2026-08-05,Workday HRMS,Payment for Workday HRMS - INV-2026-2079,4009.96,INR,source_a_ledger
+TXN-LEDGER-1080,INV-2026-2080,2026-08-06,Acme Cloud Corp,Payment for Acme Cloud Corp - INV-2026-2080,3737.08,USD,source_a_ledger
+TXN-LEDGER-1081,INV-2026-2081,2026-08-07,Stripe Payments,Payment for Stripe Payments - INV-2026-2081,8442.45,EUR,source_a_ledger
+TXN-LEDGER-1082,INV-2026-2082,2026-08-08,Razorpay Software,Payment for Razorpay Software - INV-2026-2082,3977.99,GBP,source_a_ledger
+TXN-LEDGER-1083,INV-2026-2083,2026-08-09,AWS Infrastructure,Payment for AWS Infrastructure - INV-2026-2083,8789.56,INR,source_a_ledger
+TXN-LEDGER-1084,INV-2026-2084,2026-08-10,Google Cloud Platform,Payment for Google Cloud Platform - INV-2026-2084,13472.45,USD,source_a_ledger
+TXN-LEDGER-1085,INV-2026-2085,2026-08-11,Salesforce CRM,Payment for Salesforce CRM - INV-2026-2085,6021.04,EUR,source_a_ledger
+TXN-LEDGER-1086,INV-2026-2086,2026-08-12,Slack Technologies,Payment for Slack Technologies - INV-2026-2086,3328.85,GBP,source_a_ledger
+TXN-LEDGER-1087,INV-2026-2087,2026-08-13,Zoom Video Comm,Payment for Zoom Video Comm - INV-2026-2087,14963.19,INR,source_a_ledger
+TXN-LEDGER-1088,INV-2026-2088,2026-08-14,Twilio API Services,Payment for Twilio API Services - INV-2026-2088,7667.42,USD,source_a_ledger
+TXN-LEDGER-1089,INV-2026-2089,2026-08-15,Figma Design Systems,Payment for Figma Design Systems - INV-2026-2089,1409.1,EUR,source_a_ledger
+TXN-LEDGER-1090,INV-2026-2090,2026-08-16,Datadog Monitoring,Payment for Datadog Monitoring - INV-2026-2090,754.39,GBP,source_a_ledger
+TXN-LEDGER-1091,INV-2026-2091,2026-08-17,Atlassian Jira,Payment for Atlassian Jira - INV-2026-2091,1689.25,INR,source_a_ledger
+TXN-LEDGER-1092,INV-2026-2092,2026-08-18,HubSpot Marketing,Payment for HubSpot Marketing - INV-2026-2092,9430.32,USD,source_a_ledger
+TXN-LEDGER-1093,INV-2026-2093,2026-08-19,GitHub Enterprise,Payment for GitHub Enterprise - INV-2026-2093,11891.59,EUR,source_a_ledger
+TXN-LEDGER-1094,INV-2026-2094,2026-08-20,Snowflake Data Cloud,Payment for Snowflake Data Cloud - INV-2026-2094,6361.29,GBP,source_a_ledger
+TXN-LEDGER-1095,INV-2026-2095,2026-08-21,Notion Labs,Payment for Notion Labs - INV-2026-2095,999.74,INR,source_a_ledger
+TXN-LEDGER-1096,INV-2026-2096,2026-08-22,Intercom Support,Payment for Intercom Support - INV-2026-2096,5755.21,USD,source_a_ledger
+TXN-LEDGER-1097,INV-2026-2097,2026-08-23,Cloudflare Edge,Payment for Cloudflare Edge - INV-2026-2097,14942.01,EUR,source_a_ledger
+TXN-LEDGER-1098,INV-2026-2098,2026-08-24,Zendesk Support,Payment for Zendesk Support - INV-2026-2098,7960.26,GBP,source_a_ledger
+TXN-LEDGER-1099,INV-2026-2099,2026-08-25,Workday HRMS,Payment for Workday HRMS - INV-2026-2099,14567.62,INR,source_a_ledger
+TXN-LEDGER-1100,INV-2026-2100,2026-08-01,Acme Cloud Corp,Payment for Acme Cloud Corp - INV-2026-2100,12918.66,USD,source_a_ledger
+TXN-LEDGER-1101,INV-2026-2101,2026-08-02,Stripe Payments,Payment for Stripe Payments - INV-2026-2101,221.64,EUR,source_a_ledger
+TXN-LEDGER-1102,INV-2026-2102,2026-08-03,Razorpay Software,Payment for Razorpay Software - INV-2026-2102,10824.79,GBP,source_a_ledger
+TXN-LEDGER-1103,INV-2026-2103,2026-08-04,AWS Infrastructure,Payment for AWS Infrastructure - INV-2026-2103,10241.57,INR,source_a_ledger
+TXN-LEDGER-1104,INV-2026-2104,2026-08-05,Google Cloud Platform,Payment for Google Cloud Platform - INV-2026-2104,8077.71,USD,source_a_ledger
+TXN-LEDGER-1105,INV-2026-2105,2026-08-06,Salesforce CRM,Payment for Salesforce CRM - INV-2026-2105,4039.04,EUR,source_a_ledger
+TXN-LEDGER-1106,INV-2026-2106,2026-08-07,Slack Technologies,Payment for Slack Technologies - INV-2026-2106,9632.38,GBP,source_a_ledger
+TXN-LEDGER-1107,INV-2026-2107,2026-08-08,Zoom Video Comm,Payment for Zoom Video Comm - INV-2026-2107,1717.7,INR,source_a_ledger
+TXN-LEDGER-1108,INV-2026-2108,2026-08-09,Twilio API Services,Payment for Twilio API Services - INV-2026-2108,6549.74,USD,source_a_ledger
+TXN-LEDGER-1109,INV-2026-2109,2026-08-10,Figma Design Systems,Payment for Figma Design Systems - INV-2026-2109,6833.17,EUR,source_a_ledger
+TXN-LEDGER-1110,INV-2026-2110,2026-08-11,Datadog Monitoring,Payment for Datadog Monitoring - INV-2026-2110,14309.55,GBP,source_a_ledger
+TXN-LEDGER-1111,INV-2026-2111,2026-08-12,Atlassian Jira,Payment for Atlassian Jira - INV-2026-2111,13144.0,INR,source_a_ledger
+TXN-LEDGER-1112,INV-2026-2112,2026-08-13,HubSpot Marketing,Payment for HubSpot Marketing - INV-2026-2112,3987.67,USD,source_a_ledger
+TXN-LEDGER-1113,INV-2026-2113,2026-08-14,GitHub Enterprise,Payment for GitHub Enterprise - INV-2026-2113,7533.76,EUR,source_a_ledger
+TXN-LEDGER-1114,INV-2026-2114,2026-08-15,Snowflake Data Cloud,Payment for Snowflake Data Cloud - INV-2026-2114,2720.85,GBP,source_a_ledger
+TXN-LEDGER-1115,INV-2026-2115,2026-08-16,Notion Labs,Payment for Notion Labs - INV-2026-2115,13693.79,INR,source_a_ledger
+TXN-LEDGER-1116,INV-2026-2116,2026-08-17,Intercom Support,Payment for Intercom Support - INV-2026-2116,13064.25,USD,source_a_ledger
+TXN-LEDGER-1117,INV-2026-2117,2026-08-18,Cloudflare Edge,Payment for Cloudflare Edge - INV-2026-2117,4511.75,EUR,source_a_ledger
+TXN-LEDGER-1118,INV-2026-2118,2026-08-19,Zendesk Support,Payment for Zendesk Support - INV-2026-2118,9602.29,GBP,source_a_ledger
+TXN-LEDGER-1119,INV-2026-2119,2026-08-20,Workday HRMS,Payment for Workday HRMS - INV-2026-2119,9154.1,INR,source_a_ledger
+TXN-LEDGER-1120,INV-2026-2120,2026-08-21,Acme Cloud Corp,Payment for Acme Cloud Corp - INV-2026-2120,2334.95,USD,source_a_ledger
+TXN-LEDGER-1121,INV-2026-2121,2026-08-22,Stripe Payments,Invoice settlement INV-2026-2121,6505.09,EUR,source_a_ledger
+TXN-LEDGER-1122,INV-2026-2122,2026-08-23,Razorpay Software,Invoice settlement INV-2026-2122,4630.78,GBP,source_a_ledger
+TXN-LEDGER-1123,INV-2026-2123,2026-08-24,AWS Infrastructure,Invoice settlement INV-2026-2123,6640.46,INR,source_a_ledger
+TXN-LEDGER-1124,INV-2026-2124,2026-08-25,Google Cloud Platform,Invoice settlement INV-2026-2124,4554.97,USD,source_a_ledger
+TXN-LEDGER-1125,INV-2026-2125,2026-08-01,Salesforce CRM,Invoice settlement INV-2026-2125,104.8,EUR,source_a_ledger
+TXN-LEDGER-1126,INV-2026-2126,2026-08-02,Slack Technologies,Invoice settlement INV-2026-2126,2822.91,GBP,source_a_ledger
+TXN-LEDGER-1127,INV-2026-2127,2026-08-03,Zoom Video Comm,Invoice settlement INV-2026-2127,263.6,INR,source_a_ledger
+TXN-LEDGER-1128,INV-2026-2128,2026-08-04,Twilio API Services,Invoice settlement INV-2026-2128,7904.43,USD,source_a_ledger
+TXN-LEDGER-1129,INV-2026-2129,2026-08-05,Figma Design Systems,Invoice settlement INV-2026-2129,7481.26,EUR,source_a_ledger
+TXN-LEDGER-1130,INV-2026-2130,2026-08-06,Datadog Monitoring,Invoice settlement INV-2026-2130,7085.99,GBP,source_a_ledger
+TXN-LEDGER-1131,INV-2026-2131,2026-08-07,Atlassian Jira,Invoice settlement INV-2026-2131,2683.12,INR,source_a_ledger
+TXN-LEDGER-1132,INV-2026-2132,2026-08-08,HubSpot Marketing,Invoice settlement INV-2026-2132,586.57,USD,source_a_ledger
+TXN-LEDGER-1133,INV-2026-2133,2026-08-09,GitHub Enterprise,Invoice settlement INV-2026-2133,7475.28,EUR,source_a_ledger
+TXN-LEDGER-1134,INV-2026-2134,2026-08-10,Snowflake Data Cloud,Invoice settlement INV-2026-2134,8054.38,GBP,source_a_ledger
+TXN-LEDGER-1135,INV-2026-2135,2026-08-11,Notion Labs,Invoice settlement INV-2026-2135,819.49,INR,source_a_ledger
+TXN-LEDGER-1136,INV-2026-2136,2026-08-12,Intercom Support,Invoice settlement INV-2026-2136,4182.32,USD,source_a_ledger
+TXN-LEDGER-1137,INV-2026-2137,2026-08-13,Cloudflare Edge,Invoice settlement INV-2026-2137,681.39,EUR,source_a_ledger
+TXN-LEDGER-1138,INV-2026-2138,2026-08-14,Zendesk Support,Invoice settlement INV-2026-2138,6489.06,GBP,source_a_ledger
+TXN-LEDGER-1139,INV-2026-2139,2026-08-15,Workday HRMS,Invoice settlement INV-2026-2139,6533.01,INR,source_a_ledger
+TXN-LEDGER-1140,INV-2026-2140,2026-08-16,Acme Cloud Corp,Invoice settlement INV-2026-2140,1178.49,USD,source_a_ledger
+TXN-LEDGER-1141,INV-2026-2141,2026-08-17,Stripe Payments,Invoice settlement INV-2026-2141,4092.37,EUR,source_a_ledger
+TXN-LEDGER-1142,INV-2026-2142,2026-08-18,Razorpay Software,Invoice settlement INV-2026-2142,4718.35,GBP,source_a_ledger
+TXN-LEDGER-1143,INV-2026-2143,2026-08-19,AWS Infrastructure,Invoice settlement INV-2026-2143,2326.48,INR,source_a_ledger
+TXN-LEDGER-1144,INV-2026-2144,2026-08-20,Google Cloud Platform,Invoice settlement INV-2026-2144,7428.44,USD,source_a_ledger
+TXN-LEDGER-1145,INV-2026-2145,2026-08-21,Salesforce CRM,Invoice settlement INV-2026-2145,3654.36,EUR,source_a_ledger
+TXN-LEDGER-1146,INV-2026-2146,2026-08-22,Slack Technologies,Gross amount billed INV-2026-2146,2935.68,USD,source_a_ledger
+TXN-LEDGER-1147,INV-2026-2147,2026-08-23,Zoom Video Comm,Gross amount billed INV-2026-2147,6701.91,USD,source_a_ledger
+TXN-LEDGER-1148,INV-2026-2148,2026-08-24,Twilio API Services,Gross amount billed INV-2026-2148,8894.21,USD,source_a_ledger
+TXN-LEDGER-1149,INV-2026-2149,2026-08-25,Figma Design Systems,Gross amount billed INV-2026-2149,2813.24,USD,source_a_ledger
+TXN-LEDGER-1150,INV-2026-2150,2026-08-01,Datadog Monitoring,Gross amount billed INV-2026-2150,4084.74,USD,source_a_ledger
+TXN-LEDGER-1151,INV-2026-2151,2026-08-02,Atlassian Jira,Gross amount billed INV-2026-2151,11944.22,USD,source_a_ledger
+TXN-LEDGER-1152,INV-2026-2152,2026-08-03,HubSpot Marketing,Gross amount billed INV-2026-2152,7973.6,USD,source_a_ledger
+TXN-LEDGER-1153,INV-2026-2153,2026-08-04,GitHub Enterprise,Gross amount billed INV-2026-2153,5538.15,USD,source_a_ledger
+TXN-LEDGER-1154,INV-2026-2154,2026-08-05,Snowflake Data Cloud,Gross amount billed INV-2026-2154,6452.12,USD,source_a_ledger
+TXN-LEDGER-1155,INV-2026-2155,2026-08-06,Notion Labs,Gross amount billed INV-2026-2155,1891.55,USD,source_a_ledger
+TXN-LEDGER-1156,INV-2026-2156,2026-08-07,Intercom Support,Gross amount billed INV-2026-2156,3084.02,USD,source_a_ledger
+TXN-LEDGER-1157,INV-2026-2157,2026-08-08,Cloudflare Edge,Gross amount billed INV-2026-2157,4387.98,USD,source_a_ledger
+TXN-LEDGER-1158,INV-2026-2158,2026-08-09,Zendesk Support,Gross amount billed INV-2026-2158,7265.55,USD,source_a_ledger
+TXN-LEDGER-1159,INV-2026-2159,2026-08-10,Workday HRMS,Gross amount billed INV-2026-2159,3146.32,USD,source_a_ledger
+TXN-LEDGER-1160,INV-2026-2160,2026-08-11,Acme Cloud Corp,Gross amount billed INV-2026-2160,3032.5,USD,source_a_ledger
+TXN-LEDGER-1161,INV-2026-2161,2026-08-03,Stripe Payments,Initiated wire INV-2026-2161,540.77,USD,source_a_ledger
+TXN-LEDGER-1162,INV-2026-2162,2026-08-03,Razorpay Software,Initiated wire INV-2026-2162,3229.29,USD,source_a_ledger
+TXN-LEDGER-1163,INV-2026-2163,2026-08-03,AWS Infrastructure,Initiated wire INV-2026-2163,1298.92,USD,source_a_ledger
+TXN-LEDGER-1164,INV-2026-2164,2026-08-03,Google Cloud Platform,Initiated wire INV-2026-2164,4546.02,USD,source_a_ledger
+TXN-LEDGER-1165,INV-2026-2165,2026-08-03,Salesforce CRM,Initiated wire INV-2026-2165,4326.25,USD,source_a_ledger
+TXN-LEDGER-1166,INV-2026-2166,2026-08-03,Slack Technologies,Initiated wire INV-2026-2166,540.12,USD,source_a_ledger
+TXN-LEDGER-1167,INV-2026-2167,2026-08-03,Zoom Video Comm,Initiated wire INV-2026-2167,1342.42,USD,source_a_ledger
+TXN-LEDGER-1168,INV-2026-2168,2026-08-03,Twilio API Services,Initiated wire INV-2026-2168,3411.09,USD,source_a_ledger
+TXN-LEDGER-1169,INV-2026-2169,2026-08-03,Figma Design Systems,Initiated wire INV-2026-2169,1228.34,USD,source_a_ledger
+TXN-LEDGER-1170,INV-2026-2170,2026-08-03,Datadog Monitoring,Initiated wire INV-2026-2170,835.1,USD,source_a_ledger
+TXN-LEDGER-1171,INV-2026-2171,2026-08-22,Atlassian Jira,Pending invoice unpaid in bank: INV-2026-2171,3761.4,USD,source_a_ledger
+TXN-LEDGER-1172,INV-2026-2172,2026-08-23,HubSpot Marketing,Pending invoice unpaid in bank: INV-2026-2172,2412.86,USD,source_a_ledger
+TXN-LEDGER-1173,INV-2026-2173,2026-08-24,GitHub Enterprise,Pending invoice unpaid in bank: INV-2026-2173,2048.88,USD,source_a_ledger
+TXN-LEDGER-1174,INV-2026-2174,2026-08-25,Snowflake Data Cloud,Pending invoice unpaid in bank: INV-2026-2174,3203.09,USD,source_a_ledger
+TXN-LEDGER-1175,INV-2026-2175,2026-08-01,Notion Labs,Pending invoice unpaid in bank: INV-2026-2175,3287.74,USD,source_a_ledger
+TXN-LEDGER-1181,INV-2026-2181,2026-08-07,Stripe Payments,Vendor payment INV-2026-2181,1958.15,USD,source_a_ledger
+TXN-LEDGER-1181-DUP,INV-2026-2181,2026-08-07,Stripe Payments,Duplicate accidental entry: INV-2026-2181,1958.15,USD,source_a_ledger
+TXN-LEDGER-1182,INV-2026-2182,2026-08-08,Razorpay Software,Vendor payment INV-2026-2182,1846.73,USD,source_a_ledger
+TXN-LEDGER-1182-DUP,INV-2026-2182,2026-08-08,Razorpay Software,Duplicate accidental entry: INV-2026-2182,1846.73,USD,source_a_ledger
+TXN-LEDGER-1183,INV-2026-2183,2026-08-09,AWS Infrastructure,Vendor payment INV-2026-2183,2468.33,USD,source_a_ledger
+TXN-LEDGER-1183-DUP,INV-2026-2183,2026-08-09,AWS Infrastructure,Duplicate accidental entry: INV-2026-2183,2468.33,USD,source_a_ledger
+TXN-LEDGER-1184,INV-2026-2184,2026-08-10,Google Cloud Platform,Vendor payment INV-2026-2184,696.84,USD,source_a_ledger
+TXN-LEDGER-1184-DUP,INV-2026-2184,2026-08-10,Google Cloud Platform,Duplicate accidental entry: INV-2026-2184,696.84,USD,source_a_ledger
+TXN-LEDGER-1185,INV-2026-2185,2026-08-11,Salesforce CRM,Vendor payment INV-2026-2185,1305.24,USD,source_a_ledger
+TXN-LEDGER-1185-DUP,INV-2026-2185,2026-08-11,Salesforce CRM,Duplicate accidental entry: INV-2026-2185,1305.24,USD,source_a_ledger
+TXN-LEDGER-1191,GENERIC-PAY-191,2026-08-16,Atlassian Jira,Subscription payment to Atlassian Jira,1250.0,USD,source_a_ledger
+TXN-LEDGER-1192,GENERIC-PAY-192,2026-08-16,HubSpot Marketing,Subscription payment to HubSpot Marketing,1250.0,USD,source_a_ledger
+TXN-LEDGER-1193,GENERIC-PAY-193,2026-08-16,GitHub Enterprise,Subscription payment to GitHub Enterprise,1250.0,USD,source_a_ledger
+TXN-LEDGER-1194,GENERIC-PAY-194,2026-08-16,Snowflake Data Cloud,Subscription payment to Snowflake Data Cloud,1250.0,USD,source_a_ledger
+TXN-LEDGER-1195,GENERIC-PAY-195,2026-08-16,Notion Labs,Subscription payment to Notion Labs,1250.0,USD,source_a_ledger

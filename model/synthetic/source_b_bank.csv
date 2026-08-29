@@ -1,0 +1,191 @@
+record_id,reference_id,date,entity,description,amount,currency,source
+BNK-REF-5001,INV-2026-2001,2026-08-02,Stripe Inc,Direct Debit / Transfer: INV-2026-2001,9609.43,EUR,source_b_bank
+BNK-REF-5002,INV-2026-2002,2026-08-03,Razorpay Pvt Ltd,Direct Debit / Transfer: INV-2026-2002,423.91,GBP,source_b_bank
+BNK-REF-5003,INV-2026-2003,2026-08-04,Amazon Web Services,Direct Debit / Transfer: INV-2026-2003,4161.69,INR,source_b_bank
+BNK-REF-5004,INV-2026-2004,2026-08-05,Google Ireland Ltd,Direct Debit / Transfer: INV-2026-2004,3387.0,USD,source_b_bank
+BNK-REF-5005,INV-2026-2005,2026-08-06,Salesforce Inc,Direct Debit / Transfer: INV-2026-2005,11060.24,EUR,source_b_bank
+BNK-REF-5006,INV-2026-2006,2026-08-07,Slack Inc,Direct Debit / Transfer: INV-2026-2006,10166.66,GBP,source_b_bank
+BNK-REF-5007,INV-2026-2007,2026-08-08,Zoom Communications,Direct Debit / Transfer: INV-2026-2007,13388.08,INR,source_b_bank
+BNK-REF-5008,INV-2026-2008,2026-08-09,Twilio Ireland,Direct Debit / Transfer: INV-2026-2008,1349.74,USD,source_b_bank
+BNK-REF-5009,INV-2026-2009,2026-08-10,Figma Inc,Direct Debit / Transfer: INV-2026-2009,6357.73,EUR,source_b_bank
+BNK-REF-5010,INV-2026-2010,2026-08-11,Datadog SaaS,Direct Debit / Transfer: INV-2026-2010,495.47,GBP,source_b_bank
+BNK-REF-5011,INV-2026-2011,2026-08-12,Atlassian Pty Ltd,Direct Debit / Transfer: INV-2026-2011,3318.64,INR,source_b_bank
+BNK-REF-5012,INV-2026-2012,2026-08-13,HubSpot Inc,Direct Debit / Transfer: INV-2026-2012,7605.06,USD,source_b_bank
+BNK-REF-5013,INV-2026-2013,2026-08-14,GitHub Inc,Direct Debit / Transfer: INV-2026-2013,446.71,EUR,source_b_bank
+BNK-REF-5014,INV-2026-2014,2026-08-15,Snowflake Inc,Direct Debit / Transfer: INV-2026-2014,3022.62,GBP,source_b_bank
+BNK-REF-5015,INV-2026-2015,2026-08-16,Notion Inc,Direct Debit / Transfer: INV-2026-2015,9765.77,INR,source_b_bank
+BNK-REF-5016,INV-2026-2016,2026-08-17,Intercom R&D,Direct Debit / Transfer: INV-2026-2016,8196.88,USD,source_b_bank
+BNK-REF-5017,INV-2026-2017,2026-08-18,Cloudflare Inc,Direct Debit / Transfer: INV-2026-2017,3345.59,EUR,source_b_bank
+BNK-REF-5018,INV-2026-2018,2026-08-19,Zendesk Inc,Direct Debit / Transfer: INV-2026-2018,8859.52,GBP,source_b_bank
+BNK-REF-5019,INV-2026-2019,2026-08-20,Workday Inc,Direct Debit / Transfer: INV-2026-2019,12150.99,INR,source_b_bank
+BNK-REF-5020,INV-2026-2020,2026-08-21,Acme Cloud Services,Direct Debit / Transfer: INV-2026-2020,147.16,USD,source_b_bank
+BNK-REF-5021,INV-2026-2021,2026-08-22,Stripe Inc,Direct Debit / Transfer: INV-2026-2021,12097.0,EUR,source_b_bank
+BNK-REF-5022,INV-2026-2022,2026-08-23,Razorpay Pvt Ltd,Direct Debit / Transfer: INV-2026-2022,10487.18,GBP,source_b_bank
+BNK-REF-5023,INV-2026-2023,2026-08-24,Amazon Web Services,Direct Debit / Transfer: INV-2026-2023,5136.75,INR,source_b_bank
+BNK-REF-5024,INV-2026-2024,2026-08-25,Google Ireland Ltd,Direct Debit / Transfer: INV-2026-2024,2374.42,USD,source_b_bank
+BNK-REF-5025,INV-2026-2025,2026-08-01,Salesforce Inc,Direct Debit / Transfer: INV-2026-2025,14360.34,EUR,source_b_bank
+BNK-REF-5026,INV-2026-2026,2026-08-02,Slack Inc,Direct Debit / Transfer: INV-2026-2026,5082.09,GBP,source_b_bank
+BNK-REF-5027,INV-2026-2027,2026-08-03,Zoom Communications,Direct Debit / Transfer: INV-2026-2027,1436.55,INR,source_b_bank
+BNK-REF-5028,INV-2026-2028,2026-08-04,Twilio Ireland,Direct Debit / Transfer: INV-2026-2028,1495.91,USD,source_b_bank
+BNK-REF-5029,INV-2026-2029,2026-08-05,Figma Inc,Direct Debit / Transfer: INV-2026-2029,12720.04,EUR,source_b_bank
+BNK-REF-5030,INV-2026-2030,2026-08-06,Datadog SaaS,Direct Debit / Transfer: INV-2026-2030,9075.7,GBP,source_b_bank
+BNK-REF-5031,INV-2026-2031,2026-08-07,Atlassian Pty Ltd,Direct Debit / Transfer: INV-2026-2031,12116.57,INR,source_b_bank
+BNK-REF-5032,INV-2026-2032,2026-08-08,HubSpot Inc,Direct Debit / Transfer: INV-2026-2032,10959.49,USD,source_b_bank
+BNK-REF-5033,INV-2026-2033,2026-08-09,GitHub Inc,Direct Debit / Transfer: INV-2026-2033,8066.61,EUR,source_b_bank
+BNK-REF-5034,INV-2026-2034,2026-08-10,Snowflake Inc,Direct Debit / Transfer: INV-2026-2034,14598.08,GBP,source_b_bank
+BNK-REF-5035,INV-2026-2035,2026-08-11,Notion Inc,Direct Debit / Transfer: INV-2026-2035,5709.09,INR,source_b_bank
+BNK-REF-5036,INV-2026-2036,2026-08-12,Intercom R&D,Direct Debit / Transfer: INV-2026-2036,8303.01,USD,source_b_bank
+BNK-REF-5037,INV-2026-2037,2026-08-13,Cloudflare Inc,Direct Debit / Transfer: INV-2026-2037,12449.6,EUR,source_b_bank
+BNK-REF-5038,INV-2026-2038,2026-08-14,Zendesk Inc,Direct Debit / Transfer: INV-2026-2038,9296.87,GBP,source_b_bank
+BNK-REF-5039,INV-2026-2039,2026-08-15,Workday Inc,Direct Debit / Transfer: INV-2026-2039,12932.52,INR,source_b_bank
+BNK-REF-5040,INV-2026-2040,2026-08-16,Acme Cloud Services,Direct Debit / Transfer: INV-2026-2040,8681.41,USD,source_b_bank
+BNK-REF-5041,INV-2026-2041,2026-08-17,Stripe Inc,Direct Debit / Transfer: INV-2026-2041,10583.35,EUR,source_b_bank
+BNK-REF-5042,INV-2026-2042,2026-08-18,Razorpay Pvt Ltd,Direct Debit / Transfer: INV-2026-2042,735.07,GBP,source_b_bank
+BNK-REF-5043,INV-2026-2043,2026-08-19,Amazon Web Services,Direct Debit / Transfer: INV-2026-2043,3457.08,INR,source_b_bank
+BNK-REF-5044,INV-2026-2044,2026-08-20,Google Ireland Ltd,Direct Debit / Transfer: INV-2026-2044,4376.35,USD,source_b_bank
+BNK-REF-5045,INV-2026-2045,2026-08-21,Salesforce Inc,Direct Debit / Transfer: INV-2026-2045,1242.89,EUR,source_b_bank
+BNK-REF-5046,INV-2026-2046,2026-08-22,Slack Inc,Direct Debit / Transfer: INV-2026-2046,3530.22,GBP,source_b_bank
+BNK-REF-5047,INV-2026-2047,2026-08-23,Zoom Communications,Direct Debit / Transfer: INV-2026-2047,1559.97,INR,source_b_bank
+BNK-REF-5048,INV-2026-2048,2026-08-24,Twilio Ireland,Direct Debit / Transfer: INV-2026-2048,4205.71,USD,source_b_bank
+BNK-REF-5049,INV-2026-2049,2026-08-25,Figma Inc,Direct Debit / Transfer: INV-2026-2049,9553.48,EUR,source_b_bank
+BNK-REF-5050,INV-2026-2050,2026-08-01,Datadog SaaS,Direct Debit / Transfer: INV-2026-2050,5504.24,GBP,source_b_bank
+BNK-REF-5051,INV-2026-2051,2026-08-02,Atlassian Pty Ltd,Direct Debit / Transfer: INV-2026-2051,5584.21,INR,source_b_bank
+BNK-REF-5052,INV-2026-2052,2026-08-03,HubSpot Inc,Direct Debit / Transfer: INV-2026-2052,3182.13,USD,source_b_bank
+BNK-REF-5053,INV-2026-2053,2026-08-04,GitHub Inc,Direct Debit / Transfer: INV-2026-2053,4041.32,EUR,source_b_bank
+BNK-REF-5054,INV-2026-2054,2026-08-05,Snowflake Inc,Direct Debit / Transfer: INV-2026-2054,14052.99,GBP,source_b_bank
+BNK-REF-5055,INV-2026-2055,2026-08-06,Notion Inc,Direct Debit / Transfer: INV-2026-2055,9738.13,INR,source_b_bank
+BNK-REF-5056,INV-2026-2056,2026-08-07,Intercom R&D,Direct Debit / Transfer: INV-2026-2056,9156.51,USD,source_b_bank
+BNK-REF-5057,INV-2026-2057,2026-08-08,Cloudflare Inc,Direct Debit / Transfer: INV-2026-2057,2608.52,EUR,source_b_bank
+BNK-REF-5058,INV-2026-2058,2026-08-09,Zendesk Inc,Direct Debit / Transfer: INV-2026-2058,10950.45,GBP,source_b_bank
+BNK-REF-5059,INV-2026-2059,2026-08-10,Workday Inc,Direct Debit / Transfer: INV-2026-2059,2492.87,INR,source_b_bank
+BNK-REF-5060,INV-2026-2060,2026-08-11,Acme Cloud Services,Direct Debit / Transfer: INV-2026-2060,5722.86,USD,source_b_bank
+BNK-REF-5061,INV-2026-2061,2026-08-12,Stripe Inc,Direct Debit / Transfer: INV-2026-2061,14843.37,EUR,source_b_bank
+BNK-REF-5062,INV-2026-2062,2026-08-13,Razorpay Pvt Ltd,Direct Debit / Transfer: INV-2026-2062,9618.0,GBP,source_b_bank
+BNK-REF-5063,INV-2026-2063,2026-08-14,Amazon Web Services,Direct Debit / Transfer: INV-2026-2063,8376.4,INR,source_b_bank
+BNK-REF-5064,INV-2026-2064,2026-08-15,Google Ireland Ltd,Direct Debit / Transfer: INV-2026-2064,10284.98,USD,source_b_bank
+BNK-REF-5065,INV-2026-2065,2026-08-16,Salesforce Inc,Direct Debit / Transfer: INV-2026-2065,12650.64,EUR,source_b_bank
+BNK-REF-5066,INV-2026-2066,2026-08-17,Slack Inc,Direct Debit / Transfer: INV-2026-2066,11651.2,GBP,source_b_bank
+BNK-REF-5067,INV-2026-2067,2026-08-18,Zoom Communications,Direct Debit / Transfer: INV-2026-2067,3474.27,INR,source_b_bank
+BNK-REF-5068,INV-2026-2068,2026-08-19,Twilio Ireland,Direct Debit / Transfer: INV-2026-2068,529.9,USD,source_b_bank
+BNK-REF-5069,INV-2026-2069,2026-08-20,Figma Inc,Direct Debit / Transfer: INV-2026-2069,4766.02,EUR,source_b_bank
+BNK-REF-5070,INV-2026-2070,2026-08-21,Datadog SaaS,Direct Debit / Transfer: INV-2026-2070,4052.73,GBP,source_b_bank
+BNK-REF-5071,INV-2026-2071,2026-08-22,Atlassian Pty Ltd,Direct Debit / Transfer: INV-2026-2071,3204.19,INR,source_b_bank
+BNK-REF-5072,INV-2026-2072,2026-08-23,HubSpot Inc,Direct Debit / Transfer: INV-2026-2072,14146.5,USD,source_b_bank
+BNK-REF-5073,INV-2026-2073,2026-08-24,GitHub Inc,Direct Debit / Transfer: INV-2026-2073,13151.7,EUR,source_b_bank
+BNK-REF-5074,INV-2026-2074,2026-08-25,Snowflake Inc,Direct Debit / Transfer: INV-2026-2074,4754.43,GBP,source_b_bank
+BNK-REF-5075,INV-2026-2075,2026-08-01,Notion Inc,Direct Debit / Transfer: INV-2026-2075,9848.81,INR,source_b_bank
+BNK-REF-5076,INV-2026-2076,2026-08-02,Intercom R&D,Direct Debit / Transfer: INV-2026-2076,5964.7,USD,source_b_bank
+BNK-REF-5077,INV-2026-2077,2026-08-03,Cloudflare Inc,Direct Debit / Transfer: INV-2026-2077,13722.49,EUR,source_b_bank
+BNK-REF-5078,INV-2026-2078,2026-08-04,Zendesk Inc,Direct Debit / Transfer: INV-2026-2078,6909.84,GBP,source_b_bank
+BNK-REF-5079,INV-2026-2079,2026-08-05,Workday Inc,Direct Debit / Transfer: INV-2026-2079,4009.96,INR,source_b_bank
+BNK-REF-5080,INV-2026-2080,2026-08-06,Acme Cloud Services,Direct Debit / Transfer: INV-2026-2080,3737.08,USD,source_b_bank
+BNK-REF-5081,INV-2026-2081,2026-08-07,Stripe Inc,Direct Debit / Transfer: INV-2026-2081,8442.45,EUR,source_b_bank
+BNK-REF-5082,INV-2026-2082,2026-08-08,Razorpay Pvt Ltd,Direct Debit / Transfer: INV-2026-2082,3977.99,GBP,source_b_bank
+BNK-REF-5083,INV-2026-2083,2026-08-09,Amazon Web Services,Direct Debit / Transfer: INV-2026-2083,8789.56,INR,source_b_bank
+BNK-REF-5084,INV-2026-2084,2026-08-10,Google Ireland Ltd,Direct Debit / Transfer: INV-2026-2084,13472.45,USD,source_b_bank
+BNK-REF-5085,INV-2026-2085,2026-08-11,Salesforce Inc,Direct Debit / Transfer: INV-2026-2085,6021.04,EUR,source_b_bank
+BNK-REF-5086,INV-2026-2086,2026-08-12,Slack Inc,Direct Debit / Transfer: INV-2026-2086,3328.85,GBP,source_b_bank
+BNK-REF-5087,INV-2026-2087,2026-08-13,Zoom Communications,Direct Debit / Transfer: INV-2026-2087,14963.19,INR,source_b_bank
+BNK-REF-5088,INV-2026-2088,2026-08-14,Twilio Ireland,Direct Debit / Transfer: INV-2026-2088,7667.42,USD,source_b_bank
+BNK-REF-5089,INV-2026-2089,2026-08-15,Figma Inc,Direct Debit / Transfer: INV-2026-2089,1409.1,EUR,source_b_bank
+BNK-REF-5090,INV-2026-2090,2026-08-16,Datadog SaaS,Direct Debit / Transfer: INV-2026-2090,754.39,GBP,source_b_bank
+BNK-REF-5091,INV-2026-2091,2026-08-17,Atlassian Pty Ltd,Direct Debit / Transfer: INV-2026-2091,1689.25,INR,source_b_bank
+BNK-REF-5092,INV-2026-2092,2026-08-18,HubSpot Inc,Direct Debit / Transfer: INV-2026-2092,9430.32,USD,source_b_bank
+BNK-REF-5093,INV-2026-2093,2026-08-19,GitHub Inc,Direct Debit / Transfer: INV-2026-2093,11891.59,EUR,source_b_bank
+BNK-REF-5094,INV-2026-2094,2026-08-20,Snowflake Inc,Direct Debit / Transfer: INV-2026-2094,6361.29,GBP,source_b_bank
+BNK-REF-5095,INV-2026-2095,2026-08-21,Notion Inc,Direct Debit / Transfer: INV-2026-2095,999.74,INR,source_b_bank
+BNK-REF-5096,INV-2026-2096,2026-08-22,Intercom R&D,Direct Debit / Transfer: INV-2026-2096,5755.21,USD,source_b_bank
+BNK-REF-5097,INV-2026-2097,2026-08-23,Cloudflare Inc,Direct Debit / Transfer: INV-2026-2097,14942.01,EUR,source_b_bank
+BNK-REF-5098,INV-2026-2098,2026-08-24,Zendesk Inc,Direct Debit / Transfer: INV-2026-2098,7960.26,GBP,source_b_bank
+BNK-REF-5099,INV-2026-2099,2026-08-25,Workday Inc,Direct Debit / Transfer: INV-2026-2099,14567.62,INR,source_b_bank
+BNK-REF-5100,INV-2026-2100,2026-08-01,Acme Cloud Services,Direct Debit / Transfer: INV-2026-2100,12918.66,USD,source_b_bank
+BNK-REF-5101,INV-2026-2101,2026-08-02,Stripe Inc,Direct Debit / Transfer: INV-2026-2101,221.64,EUR,source_b_bank
+BNK-REF-5102,INV-2026-2102,2026-08-03,Razorpay Pvt Ltd,Direct Debit / Transfer: INV-2026-2102,10824.79,GBP,source_b_bank
+BNK-REF-5103,INV-2026-2103,2026-08-04,Amazon Web Services,Direct Debit / Transfer: INV-2026-2103,10241.57,INR,source_b_bank
+BNK-REF-5104,INV-2026-2104,2026-08-05,Google Ireland Ltd,Direct Debit / Transfer: INV-2026-2104,8077.71,USD,source_b_bank
+BNK-REF-5105,INV-2026-2105,2026-08-06,Salesforce Inc,Direct Debit / Transfer: INV-2026-2105,4039.04,EUR,source_b_bank
+BNK-REF-5106,INV-2026-2106,2026-08-07,Slack Inc,Direct Debit / Transfer: INV-2026-2106,9632.38,GBP,source_b_bank
+BNK-REF-5107,INV-2026-2107,2026-08-08,Zoom Communications,Direct Debit / Transfer: INV-2026-2107,1717.7,INR,source_b_bank
+BNK-REF-5108,INV-2026-2108,2026-08-09,Twilio Ireland,Direct Debit / Transfer: INV-2026-2108,6549.74,USD,source_b_bank
+BNK-REF-5109,INV-2026-2109,2026-08-10,Figma Inc,Direct Debit / Transfer: INV-2026-2109,6833.17,EUR,source_b_bank
+BNK-REF-5110,INV-2026-2110,2026-08-11,Datadog SaaS,Direct Debit / Transfer: INV-2026-2110,14309.55,GBP,source_b_bank
+BNK-REF-5111,INV-2026-2111,2026-08-12,Atlassian Pty Ltd,Direct Debit / Transfer: INV-2026-2111,13144.0,INR,source_b_bank
+BNK-REF-5112,INV-2026-2112,2026-08-13,HubSpot Inc,Direct Debit / Transfer: INV-2026-2112,3987.67,USD,source_b_bank
+BNK-REF-5113,INV-2026-2113,2026-08-14,GitHub Inc,Direct Debit / Transfer: INV-2026-2113,7533.76,EUR,source_b_bank
+BNK-REF-5114,INV-2026-2114,2026-08-15,Snowflake Inc,Direct Debit / Transfer: INV-2026-2114,2720.85,GBP,source_b_bank
+BNK-REF-5115,INV-2026-2115,2026-08-16,Notion Inc,Direct Debit / Transfer: INV-2026-2115,13693.79,INR,source_b_bank
+BNK-REF-5116,INV-2026-2116,2026-08-17,Intercom R&D,Direct Debit / Transfer: INV-2026-2116,13064.25,USD,source_b_bank
+BNK-REF-5117,INV-2026-2117,2026-08-18,Cloudflare Inc,Direct Debit / Transfer: INV-2026-2117,4511.75,EUR,source_b_bank
+BNK-REF-5118,INV-2026-2118,2026-08-19,Zendesk Inc,Direct Debit / Transfer: INV-2026-2118,9602.29,GBP,source_b_bank
+BNK-REF-5119,INV-2026-2119,2026-08-20,Workday Inc,Direct Debit / Transfer: INV-2026-2119,9154.1,INR,source_b_bank
+BNK-REF-5120,INV-2026-2120,2026-08-21,Acme Cloud Services,Direct Debit / Transfer: INV-2026-2120,2334.95,USD,source_b_bank
+BNK-REF-5121,REF#2121/AUTO,2026-08-23,STRIPE-PAY,POS Cleared: Stripe Inc REF#2121/AUTO,6505.09,EUR,source_b_bank
+BNK-REF-5122,REF#2122/AUTO,2026-08-24,RAZORPAY-SETTLE,POS Cleared: Razorpay Pvt Ltd REF#2122/AUTO,4630.78,GBP,source_b_bank
+BNK-REF-5123,REF#2123/AUTO,2026-08-25,AWS-INFRA-EAST,POS Cleared: Amazon Web Services REF#2123/AUTO,6640.46,INR,source_b_bank
+BNK-REF-5124,REF#2124/AUTO,2026-08-26,GCP-WORKSPACE,POS Cleared: Google Ireland Ltd REF#2124/AUTO,4554.97,USD,source_b_bank
+BNK-REF-5125,REF#2125/AUTO,2026-08-02,SFDC-SUB,POS Cleared: Salesforce Inc REF#2125/AUTO,104.8,EUR,source_b_bank
+BNK-REF-5126,REF#2126/AUTO,2026-08-03,SLACK-COMM,POS Cleared: Slack Inc REF#2126/AUTO,2822.91,GBP,source_b_bank
+BNK-REF-5127,REF#2127/AUTO,2026-08-04,ZOOM-PRO-MTG,POS Cleared: Zoom Communications REF#2127/AUTO,263.6,INR,source_b_bank
+BNK-REF-5128,REF#2128/AUTO,2026-08-05,TWILIO-SMS,POS Cleared: Twilio Ireland REF#2128/AUTO,7904.43,USD,source_b_bank
+BNK-REF-5129,REF#2129/AUTO,2026-08-06,FIGMA-SEATS,POS Cleared: Figma Inc REF#2129/AUTO,7481.26,EUR,source_b_bank
+BNK-REF-5130,REF#2130/AUTO,2026-08-07,DATADOG-APM,POS Cleared: Datadog SaaS REF#2130/AUTO,7085.99,GBP,source_b_bank
+BNK-REF-5131,REF#2131/AUTO,2026-08-08,JIRA-CLOUD,POS Cleared: Atlassian Pty Ltd REF#2131/AUTO,2683.12,INR,source_b_bank
+BNK-REF-5132,REF#2132/AUTO,2026-08-09,HUBSPOT-ENT,POS Cleared: HubSpot Inc REF#2132/AUTO,586.57,USD,source_b_bank
+BNK-REF-5133,REF#2133/AUTO,2026-08-10,GH-COPILOT-SEATS,POS Cleared: GitHub Inc REF#2133/AUTO,7475.28,EUR,source_b_bank
+BNK-REF-5134,REF#2134/AUTO,2026-08-11,SNOWFLAKE-WH,POS Cleared: Snowflake Inc REF#2134/AUTO,8054.38,GBP,source_b_bank
+BNK-REF-5135,REF#2135/AUTO,2026-08-12,NOTION-WORKSPACE,POS Cleared: Notion Inc REF#2135/AUTO,819.49,INR,source_b_bank
+BNK-REF-5136,REF#2136/AUTO,2026-08-13,INTERCOM-MESSAGING,POS Cleared: Intercom R&D REF#2136/AUTO,4182.32,USD,source_b_bank
+BNK-REF-5137,REF#2137/AUTO,2026-08-14,CLOUDFLARE-CDN,POS Cleared: Cloudflare Inc REF#2137/AUTO,681.39,EUR,source_b_bank
+BNK-REF-5138,REF#2138/AUTO,2026-08-15,ZENDESK-SEATS,POS Cleared: Zendesk Inc REF#2138/AUTO,6489.06,GBP,source_b_bank
+BNK-REF-5139,REF#2139/AUTO,2026-08-16,WORKDAY-PAYROLL,POS Cleared: Workday Inc REF#2139/AUTO,6533.01,INR,source_b_bank
+BNK-REF-5140,REF#2140/AUTO,2026-08-17,ACME-CLOUD-US,POS Cleared: Acme Cloud Services REF#2140/AUTO,1178.49,USD,source_b_bank
+BNK-REF-5141,REF#2141/AUTO,2026-08-18,STRIPE-PAY,POS Cleared: Stripe Inc REF#2141/AUTO,4092.37,EUR,source_b_bank
+BNK-REF-5142,REF#2142/AUTO,2026-08-19,RAZORPAY-SETTLE,POS Cleared: Razorpay Pvt Ltd REF#2142/AUTO,4718.35,GBP,source_b_bank
+BNK-REF-5143,REF#2143/AUTO,2026-08-20,AWS-INFRA-EAST,POS Cleared: Amazon Web Services REF#2143/AUTO,2326.48,INR,source_b_bank
+BNK-REF-5144,REF#2144/AUTO,2026-08-21,GCP-WORKSPACE,POS Cleared: Google Ireland Ltd REF#2144/AUTO,7428.44,USD,source_b_bank
+BNK-REF-5145,REF#2145/AUTO,2026-08-22,SFDC-SUB,POS Cleared: Salesforce Inc REF#2145/AUTO,3654.36,EUR,source_b_bank
+BNK-REF-5146,INV-2026-2146,2026-08-22,Slack Inc,Net settlement received INV-2026-2146 (fee deducted),2920.68,USD,source_b_bank
+BNK-REF-5147,INV-2026-2147,2026-08-23,Zoom Communications,Net settlement received INV-2026-2147 (fee deducted),6534.36,USD,source_b_bank
+BNK-REF-5148,INV-2026-2148,2026-08-24,Twilio Ireland,Net settlement received INV-2026-2148 (fee deducted),8879.21,USD,source_b_bank
+BNK-REF-5149,INV-2026-2149,2026-08-25,Figma Inc,Net settlement received INV-2026-2149 (fee deducted),2742.91,USD,source_b_bank
+BNK-REF-5150,INV-2026-2150,2026-08-01,Datadog SaaS,Net settlement received INV-2026-2150 (fee deducted),4069.74,USD,source_b_bank
+BNK-REF-5151,INV-2026-2151,2026-08-02,Atlassian Pty Ltd,Net settlement received INV-2026-2151 (fee deducted),11645.61,USD,source_b_bank
+BNK-REF-5152,INV-2026-2152,2026-08-03,HubSpot Inc,Net settlement received INV-2026-2152 (fee deducted),7958.6,USD,source_b_bank
+BNK-REF-5153,INV-2026-2153,2026-08-04,GitHub Inc,Net settlement received INV-2026-2153 (fee deducted),5399.7,USD,source_b_bank
+BNK-REF-5154,INV-2026-2154,2026-08-05,Snowflake Inc,Net settlement received INV-2026-2154 (fee deducted),6437.12,USD,source_b_bank
+BNK-REF-5155,INV-2026-2155,2026-08-06,Notion Inc,Net settlement received INV-2026-2155 (fee deducted),1844.26,USD,source_b_bank
+BNK-REF-5156,INV-2026-2156,2026-08-07,Intercom R&D,Net settlement received INV-2026-2156 (fee deducted),3069.02,USD,source_b_bank
+BNK-REF-5157,INV-2026-2157,2026-08-08,Cloudflare Inc,Net settlement received INV-2026-2157 (fee deducted),4278.28,USD,source_b_bank
+BNK-REF-5158,INV-2026-2158,2026-08-09,Zendesk Inc,Net settlement received INV-2026-2158 (fee deducted),7250.55,USD,source_b_bank
+BNK-REF-5159,INV-2026-2159,2026-08-10,Workday Inc,Net settlement received INV-2026-2159 (fee deducted),3067.66,USD,source_b_bank
+BNK-REF-5160,INV-2026-2160,2026-08-11,Acme Cloud Services,Net settlement received INV-2026-2160 (fee deducted),3017.5,USD,source_b_bank
+BNK-REF-5161,INV-2026-2161,2026-08-10,Stripe Inc,International Wire Credited INV-2026-2161,540.77,USD,source_b_bank
+BNK-REF-5162,INV-2026-2162,2026-08-10,Razorpay Pvt Ltd,International Wire Credited INV-2026-2162,3229.29,USD,source_b_bank
+BNK-REF-5163,INV-2026-2163,2026-08-10,Amazon Web Services,International Wire Credited INV-2026-2163,1298.92,USD,source_b_bank
+BNK-REF-5164,INV-2026-2164,2026-08-10,Google Ireland Ltd,International Wire Credited INV-2026-2164,4546.02,USD,source_b_bank
+BNK-REF-5165,INV-2026-2165,2026-08-10,Salesforce Inc,International Wire Credited INV-2026-2165,4326.25,USD,source_b_bank
+BNK-REF-5166,INV-2026-2166,2026-08-10,Slack Inc,International Wire Credited INV-2026-2166,540.12,USD,source_b_bank
+BNK-REF-5167,INV-2026-2167,2026-08-10,Zoom Communications,International Wire Credited INV-2026-2167,1342.42,USD,source_b_bank
+BNK-REF-5168,INV-2026-2168,2026-08-10,Twilio Ireland,International Wire Credited INV-2026-2168,3411.09,USD,source_b_bank
+BNK-REF-5169,INV-2026-2169,2026-08-10,Figma Inc,International Wire Credited INV-2026-2169,1228.34,USD,source_b_bank
+BNK-REF-5170,INV-2026-2170,2026-08-10,Datadog SaaS,International Wire Credited INV-2026-2170,835.1,USD,source_b_bank
+BNK-REF-5176,UNKNOWN-FEE-2176,2026-08-02,Bank Service Charge,Monthly Account Maintenance Fee UNKNOWN-FEE-2176,44.75,USD,source_b_bank
+BNK-REF-5177,UNKNOWN-FEE-2177,2026-08-03,Bank Service Charge,Monthly Account Maintenance Fee UNKNOWN-FEE-2177,32.6,USD,source_b_bank
+BNK-REF-5178,UNKNOWN-FEE-2178,2026-08-04,Bank Service Charge,Monthly Account Maintenance Fee UNKNOWN-FEE-2178,76.04,USD,source_b_bank
+BNK-REF-5179,UNKNOWN-FEE-2179,2026-08-05,Bank Service Charge,Monthly Account Maintenance Fee UNKNOWN-FEE-2179,75.07,USD,source_b_bank
+BNK-REF-5180,UNKNOWN-FEE-2180,2026-08-06,Bank Service Charge,Monthly Account Maintenance Fee UNKNOWN-FEE-2180,80.71,USD,source_b_bank
+BNK-REF-5181,INV-2026-2181,2026-08-07,Stripe Inc,Cleared payment INV-2026-2181,1958.15,USD,source_b_bank
+BNK-REF-5182,INV-2026-2182,2026-08-08,Razorpay Pvt Ltd,Cleared payment INV-2026-2182,1846.73,USD,source_b_bank
+BNK-REF-5183,INV-2026-2183,2026-08-09,Amazon Web Services,Cleared payment INV-2026-2183,2468.33,USD,source_b_bank
+BNK-REF-5184,INV-2026-2184,2026-08-10,Google Ireland Ltd,Cleared payment INV-2026-2184,696.84,USD,source_b_bank
+BNK-REF-5185,INV-2026-2185,2026-08-11,Salesforce Inc,Cleared payment INV-2026-2185,1305.24,USD,source_b_bank
+BNK-REF-5191-CAND1,UNLABELED-TRF-191-1,2026-08-16,Atlassian Pty Ltd,Debit transfer Atlassian Pty Ltd,1250.0,USD,source_b_bank
+BNK-REF-5191-CAND2,UNLABELED-TRF-191-2,2026-08-16,Atlassian Pty Ltd,Debit transfer Atlassian Pty Ltd,1250.0,USD,source_b_bank
+BNK-REF-5192-CAND1,UNLABELED-TRF-192-1,2026-08-16,HubSpot Inc,Debit transfer HubSpot Inc,1250.0,USD,source_b_bank
+BNK-REF-5192-CAND2,UNLABELED-TRF-192-2,2026-08-16,HubSpot Inc,Debit transfer HubSpot Inc,1250.0,USD,source_b_bank
+BNK-REF-5193-CAND1,UNLABELED-TRF-193-1,2026-08-16,GitHub Inc,Debit transfer GitHub Inc,1250.0,USD,source_b_bank
+BNK-REF-5193-CAND2,UNLABELED-TRF-193-2,2026-08-16,GitHub Inc,Debit transfer GitHub Inc,1250.0,USD,source_b_bank
+BNK-REF-5194-CAND1,UNLABELED-TRF-194-1,2026-08-16,Snowflake Inc,Debit transfer Snowflake Inc,1250.0,USD,source_b_bank
+BNK-REF-5194-CAND2,UNLABELED-TRF-194-2,2026-08-16,Snowflake Inc,Debit transfer Snowflake Inc,1250.0,USD,source_b_bank
+BNK-REF-5195-CAND1,UNLABELED-TRF-195-1,2026-08-16,Notion Inc,Debit transfer Notion Inc,1250.0,USD,source_b_bank
+BNK-REF-5195-CAND2,UNLABELED-TRF-195-2,2026-08-16,Notion Inc,Debit transfer Notion Inc,1250.0,USD,source_b_bank
