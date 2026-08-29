@@ -3,8 +3,11 @@
 @layer base {
   :root {
     --primary-navy: #0c2340;
+    --navy-dark: #08182b;
+    --navy-light: #163a66;
     --primary-blue: #0066ff;
     --primary-blue-hover: #0052cc;
+    --accent-cyan: #00c49f;
     --surface-bg: #f8fafc;
     --surface-card: #ffffff;
     --border-subtle: #e2e8f0;
@@ -20,10 +23,41 @@
   }
 }
 
-/* Custom scrollbar for data tables */
+/* Custom animations & polish */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.02); }
+}
+
+.animate-pulse-subtle {
+  animation: pulse-subtle 3s infinite ease-in-out;
+}
+
+/* Razorpay-style glass & border treatments */
+.razorpay-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.04), 0 1px 2px -1px rgba(0, 0, 0, 0.02);
+  transition: all 0.2s ease-in-out;
+}
+
+.razorpay-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.03);
+}
+
+.razorpay-gradient-banner {
+  background: linear-gradient(135deg, #0c2340 0%, #163a66 60%, #0066ff 100%);
+}
+
+.fintech-badge {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+/* Custom slim scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {
@@ -32,19 +66,9 @@
 
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 3px;
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
-}
-
-.razorpay-gradient-subtle {
-  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
-}
-
-.glass-card {
-  background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(8px);
-  border: 1px solid #e2e8f0;
 }
