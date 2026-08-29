@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { X, AlertTriangle, ShieldAlert, Brain, CheckCircle2, DollarSign, Calendar, Tag, ArrowRight, FileCheck, Layers } from "lucide-react";
+import { X, CheckCircle2, DollarSign } from "lucide-react";
 import { ExceptionItem } from "@/lib/api";
 
 interface ExceptionDetailModalProps {
@@ -18,181 +18,147 @@ export const ExceptionDetailModal: React.FC<ExceptionDetailModalProps> = ({
   if (!exception) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-2xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-150">
+      <div className="bg-white rounded-lg border border-gray-200 shadow-xl max-w-xl w-full overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50/80">
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-amber-100 border border-amber-200 flex items-center justify-center text-amber-700 shadow-2xs">
-              <AlertTriangle className="w-5 h-5" />
+        <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50">
+          <div>
+            <div className="flex items-center space-x-2">
+              <h3 className="text-sm font-bold text-gray-900 font-mono">
+                {exception.record_id}
+              </h3>
+              <span className="text-[10px] font-semibold text-amber-800 bg-amber-100 px-2 py-0.2 rounded">
+                {exception.decision}
+              </span>
             </div>
-            <div>
-              <div className="flex items-center space-x-2.5">
-                <h3 className="text-base font-extrabold text-slate-900">
-                  Exception Diagnosis: <span className="font-mono text-blue-700">{exception.record_id}</span>
-                </h3>
-                <span className="text-[10px] font-extrabold tracking-wider uppercase bg-amber-100 text-amber-900 border border-amber-300 px-2 py-0.5 rounded-full">
-                  {exception.decision}
-                </span>
-              </div>
-              <p className="text-xs text-slate-500 font-mono">
-                ID: {exception.exception_id} • Ingestion Source: {exception.source}
-              </p>
-            </div>
+            <p className="text-xs text-gray-500 font-mono mt-0.5">
+              Source: {exception.source} • Reason: {exception.reason_code}
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-200/60 transition-colors"
+            className="text-gray-400 hover:text-gray-600 p-1 rounded"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Content Body */}
-        <div className="p-6 space-y-5 overflow-y-auto">
+        <div className="p-4 space-y-4 overflow-y-auto text-xs">
           {/* Action Success Alert if user interacted */}
           {resolvedAction && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-300 rounded-xl text-xs text-emerald-900 font-medium flex items-center space-x-2">
+            <div className="p-3 bg-emerald-50 border border-emerald-200 rounded text-emerald-800 font-medium flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
               <span>{resolvedAction}</span>
             </div>
           )}
 
           {/* KPI Summary Grid */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 text-xs">
+          <div className="grid grid-cols-3 gap-2 bg-gray-50 p-3 rounded border border-gray-200 font-mono">
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Booked Amount</span>
-              <span className="text-slate-900 font-black text-sm font-mono">
+              <span className="text-gray-400 block text-[10px] uppercase font-medium">Recorded Amount</span>
+              <span className="text-gray-900 font-bold text-xs">
                 ${exception.amount !== undefined ? exception.amount.toFixed(2) : "0.00"}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Amount Delta</span>
-              <span className={`font-black text-sm font-mono ${exception.amount_discrepancy > 0 ? "text-rose-600" : "text-slate-700"}`}>
+              <span className="text-gray-400 block text-[10px] uppercase font-medium">Fee Delta</span>
+              <span className={`font-bold text-xs ${exception.amount_discrepancy > 0 ? "text-rose-600" : "text-gray-700"}`}>
                 {exception.amount_discrepancy > 0 ? `Δ $${exception.amount_discrepancy.toFixed(2)}` : "$0.00"}
               </span>
             </div>
             <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Reason Code</span>
-              <span className="text-blue-700 font-bold text-xs">
-                {exception.reason_code}
-              </span>
-            </div>
-            <div>
-              <span className="text-slate-400 block text-[10px] uppercase font-bold tracking-wider">Top Match Score</span>
-              <span className="text-slate-800 font-bold text-xs font-mono">
+              <span className="text-gray-400 block text-[10px] uppercase font-medium">Top Match Score</span>
+              <span className="text-gray-800 font-bold text-xs">
                 {exception.confidence.toFixed(1)}%
               </span>
             </div>
           </div>
 
-          {/* Deterministic Explanation & Diagnosis */}
-          <div className="space-y-2">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
-              <Brain className="w-3.5 h-3.5 text-blue-600" />
-              <span>Deterministic Explanation & Audit Note</span>
-            </h4>
-            <div className="bg-blue-50/70 border border-blue-200/90 p-4 rounded-xl text-xs text-slate-800 leading-relaxed shadow-2xs">
+          {/* Explanation */}
+          <div className="space-y-1">
+            <div className="font-semibold text-gray-700 text-xs">Deterministic Audit Explanation</div>
+            <div className="bg-gray-50 border border-gray-200 p-3 rounded text-gray-800 leading-relaxed">
               {exception.explanation}
             </div>
           </div>
 
           {/* Candidates Comparison Breakdown */}
           {exception.candidates && exception.candidates.length > 0 && (
-            <div className="space-y-2.5">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center space-x-1.5">
-                <Layers className="w-3.5 h-3.5 text-purple-600" />
-                <span>Candidate Counterparts Analyzed ({exception.candidates.length})</span>
-              </h4>
-              <div className="space-y-2">
+            <div className="space-y-1.5">
+              <div className="font-semibold text-gray-700 text-xs">
+                Candidate Matches ({exception.candidates.length})
+              </div>
+              <div className="space-y-1.5">
                 {exception.candidates.map((cand, idx) => (
                   <div
                     key={idx}
-                    className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5 text-xs razorpay-card"
+                    className="p-2.5 bg-gray-50 border border-gray-200 rounded space-y-1 font-mono text-[11px]"
                   >
                     <div className="flex items-center justify-between">
-                      <div className="font-bold text-slate-900 flex items-center space-x-2">
-                        <span className="w-5 h-5 rounded-full bg-slate-200 text-slate-700 flex items-center justify-center font-bold text-[10px]">
-                          {String.fromCharCode(65 + idx)}
-                        </span>
-                        <span className="font-mono">{cand.target_record_id}</span>
-                        <span className="text-[10px] text-slate-400 font-normal">({cand.target_source})</span>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <span className="text-blue-800 font-extrabold bg-blue-100 px-2.5 py-0.5 rounded-full text-[11px] font-mono">
-                          {cand.confidence_score.toFixed(1)}% Score
-                        </span>
-                      </div>
+                      <span className="font-bold text-gray-900">
+                        Candidate {String.fromCharCode(65 + idx)}: {cand.target_record_id}
+                      </span>
+                      <span className="text-blue-700 font-bold">
+                        {cand.confidence_score.toFixed(1)}% Score
+                      </span>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 text-[11px] text-slate-600 pt-1.5 border-t border-slate-200 font-mono">
-                      <div>Bank Amount: <span className="font-bold text-slate-900">${cand.target_amount.toFixed(2)}</span></div>
-                      <div>Bank Date: <span className="font-bold text-slate-900">{cand.target_date || "N/A"}</span></div>
-                      <div>Delta: <span className={`font-bold ${cand.amount_diff > 0 ? "text-rose-600" : "text-emerald-600"}`}>${cand.amount_diff.toFixed(2)}</span></div>
+                    <div className="grid grid-cols-3 gap-2 text-gray-600 pt-1 border-t border-gray-200">
+                      <div>Bank Amt: <span className="font-bold text-gray-900">${cand.target_amount.toFixed(2)}</span></div>
+                      <div>Date: <span className="font-bold text-gray-900">{cand.target_date || "N/A"}</span></div>
+                      <div>Delta: <span className={`font-bold ${cand.amount_diff > 0 ? "text-rose-600" : "text-gray-900"}`}>${cand.amount_diff.toFixed(2)}</span></div>
                     </div>
-
-                    {cand.notes && (
-                      <div className="text-[10px] text-slate-500 bg-white p-2 rounded-lg border border-slate-200 font-mono">
-                        Scoring Vectors: {cand.notes}
-                      </div>
-                    )}
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* Recommended Financial Ops Resolution */}
-          <div className="p-4 bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-xl text-xs space-y-2.5">
-            <div className="flex items-center justify-between">
-              <span className="font-bold text-amber-950 flex items-center space-x-1.5 text-xs">
-                <ShieldAlert className="w-4 h-4 text-amber-700" />
-                <span>Recommended Financial Action</span>
-              </span>
-              <span className="text-[10px] font-mono font-bold text-amber-800 bg-amber-200/60 px-2 py-0.5 rounded">
-                Human-in-the-Loop Safe
-              </span>
+          {/* Accounting Action Box */}
+          <div className="p-3 bg-blue-50/70 border border-blue-200 rounded space-y-2">
+            <div className="font-semibold text-blue-950 text-xs">
+              Recommended Financial Action
             </div>
-            <p className="text-amber-900 leading-relaxed text-[11px]">
+            <p className="text-blue-900 text-[11px] leading-relaxed">
               {exception.reason_code === "AMOUNT_MISMATCH"
-                ? `Post an automatic payment gateway fee adjustment of $${exception.amount_discrepancy.toFixed(2)} to balance ledger account vs net bank credit.`
+                ? `Journalize payment processing fee adjustment of $${exception.amount_discrepancy.toFixed(2)} to reconcile gross ledger against net bank settlement.`
                 : exception.reason_code === "AMBIGUOUS_CANDIDATES"
-                ? "Multiple counterpart entries share identical amount and date. Request remittance slip before posting to prevent incorrect invoice clearing."
+                ? "Multiple counterpart entries match amount and date. Manual cross-referencing required."
                 : exception.reason_code === "DUPLICATE"
-                ? "Void the duplicate ledger entry to ensure accurate cash book balances."
-                : "Record missing transaction into internal ledger or investigate pending bank clearance."}
+                ? "Void duplicate ledger transaction entry to correct cash balances."
+                : "Post missing transaction to ledger."}
             </p>
 
-            {/* Simulated Action Buttons */}
-            <div className="flex flex-wrap gap-2 pt-1">
+            <div className="flex items-center space-x-2 pt-1">
               {exception.reason_code === "AMOUNT_MISMATCH" && (
                 <button
                   type="button"
-                  onClick={() => setResolvedAction(`Fee adjustment entry of $${exception.amount_discrepancy.toFixed(2)} posted to Expense:Bank Fees.`)}
-                  className="bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs px-3 py-1.5 rounded-lg shadow-2xs transition-colors flex items-center space-x-1"
+                  onClick={() => setResolvedAction(`Fee adjustment entry of $${exception.amount_discrepancy.toFixed(2)} journalized to Expense:Bank Fees.`)}
+                  className="bg-[#0C6CF2] hover:bg-blue-600 text-white font-medium text-xs px-3 py-1.5 rounded transition-colors flex items-center space-x-1"
                 >
-                  <DollarSign className="w-3.5 h-3.5" />
+                  <DollarSign className="w-3 h-3" />
                   <span>Journalize Fee (${exception.amount_discrepancy.toFixed(2)})</span>
                 </button>
               )}
               <button
                 type="button"
-                onClick={() => setResolvedAction(`Record ${exception.record_id} marked as reviewed and queued for controller approval.`)}
-                className="bg-white hover:bg-amber-100/60 text-amber-900 border border-amber-300 font-bold text-xs px-3 py-1.5 rounded-lg transition-colors"
+                onClick={() => setResolvedAction(`Record ${exception.record_id} marked as audited.`)}
+                className="bg-white hover:bg-gray-100 text-gray-700 border border-gray-300 font-medium text-xs px-3 py-1.5 rounded transition-colors"
               >
-                Approve for Audit
+                Mark Audited
               </button>
             </div>
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-slate-50 border-t border-slate-200 flex justify-end space-x-2">
+        <div className="p-3 bg-gray-50 border-t border-gray-200 flex justify-end">
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold shadow-xs transition-colors"
+            className="px-3.5 py-1.5 bg-gray-900 hover:bg-gray-800 text-white rounded text-xs font-semibold"
           >
-            Close Inspector
+            Close
           </button>
         </div>
       </div>
