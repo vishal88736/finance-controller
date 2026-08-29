@@ -8,14 +8,10 @@ from sqlalchemy.orm import sessionmaker, scoped_session
 from .models import Base
 
 DB_PATH = os.environ.get("DATABASE_URL", "sqlite:///./finance_controller.db")
-# Fix sqlite URL format if relative path is given
-if DB_PATH.startswith("sqlite:///") and not DB_PATH.startswith("sqlite:////"):
-    # Ensure current working directory has DB
-    pass
 
 engine = create_engine(
     DB_PATH,
-    connect_args={"check_same_thread": False} if "sqlite" in DB_PATH else {},
+    connect_args={"check_same_thread": False, "timeout": 30.0} if "sqlite" in DB_PATH else {},
     echo=False
 )
 

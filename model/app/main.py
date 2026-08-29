@@ -166,100 +166,104 @@ def run_reconciliation_endpoint(
     matches_list = output_state.get("matches", [])
     exceptions_list = output_state.get("exceptions", [])
 
-    # Persist in SQLite
-    run_record = ReconciliationRun(
-        id=run_id,
-        user_prompt=req.user_prompt,
-        status="COMPLETED",
-        file_count=len(uploaded_files_data),
-        total_records=final_report.get("total_records", 0),
-        matched_records=final_report.get("matched_count", 0),
-        unmatched_records=final_report.get("exceptions_count", 0),
-        exception_records=final_report.get("exceptions_count", 0),
-        match_rate=final_report.get("match_rate", 0.0),
-        accuracy=final_report.get("accuracy", 0.0),
-        precision_rate=final_report.get("precision", 0.0),
-        recall_rate=final_report.get("recall", 0.0),
-        processing_time_sec=final_report.get("processing_time_sec", 0.0),
-        throughput_rec_sec=final_report.get("throughput_records_sec", 0.0),
-        summary_text=json.dumps(final_report)
-    )
-    db.add(run_record)
-
-    # Persist File Metadata
-    for f in uploaded_files_data:
-        fm = FileMetadata(
-            id=f"FILE-{uuid.uuid4().hex[:8].upper()}",
-            run_id=run_id,
-            filename=f["filename"],
-            file_type=os.path.splitext(f["filename"])[1].replace(".", ""),
-            file_size_bytes=os.path.getsize(f["path"]) if os.path.exists(f["path"]) else 0,
-            record_count=final_report.get("total_records", 0) // len(uploaded_files_data),
-            source_label=f["source_label"]
+    try:
+        # Persist in SQLite
+        run_record = ReconciliationRun(
+            id=run_id,
+            user_prompt=req.user_prompt,
+            status="COMPLETED",
+            file_count=len(uploaded_files_data),
+            total_records=final_report.get("total_records", 0),
+            matched_records=final_report.get("matched_count", 0),
+            unmatched_records=final_report.get("exceptions_count", 0),
+            exception_records=final_report.get("exceptions_count", 0),
+            match_rate=final_report.get("match_rate", 0.0),
+            accuracy=final_report.get("accuracy", 0.0),
+            precision_rate=final_report.get("precision", 0.0),
+            recall_rate=final_report.get("recall", 0.0),
+            processing_time_sec=final_report.get("processing_time_sec", 0.0),
+            throughput_rec_sec=final_report.get("throughput_records_sec", 0.0),
+            summary_text=json.dumps(final_report)
         )
-        db.add(fm)
+        db.add(run_record)
 
-    # Persist Matches
-    for m in matches_list:
-        mr = MatchResult(
-            id=m.get("match_id", f"MATCH-{uuid.uuid4().hex[:8].upper()}"),
+        # Persist File Metadata
+        for f in uploaded_files_data:
+            fm = FileMetadata(
+                id=f"FILE-{uuid.uuid4().hex[:8].upper()}",
+                run_id=run_id,
+                filename=f["filename"],
+                file_type=os.path.splitext(f["filename"])[1].replace(".", ""),
+                file_size_bytes=os.path.getsize(f["path"]) if os.path.exists(f["path"]) else 0,
+                record_count=final_report.get("total_records", 0) // len(uploaded_files_data),
+                source_label=f["source_label"]
+            )
+            db.add(fm)
+
+        # Persist Matches
+        for m in matches_list:
+            mr = MatchResult(
+                id=m.get("match_id", f"MATCH-{uuid.uuid4().hex[:8].upper()}"),
+                run_id=run_id,
+                record_id_a=m["record_id_a"],
+                record_id_b=m["record_id_b"],
+                source_a=m["source_a"],
+                source_b=m["source_b"],
+                amount_a=m["amount_a"],
+                amount_b=m["amount_b"],
+                date_a=m.get("date_a"),
+                date_b=m.get("date_b"),
+                entity_a=m.get("entity_a"),
+                entity_b=m.get("entity_b"),
+                confidence_score=m["confidence_score"],
+                match_category=m.get("match_category", "EXACT_MATCH"),
+                status=m.get("status", "MATCHED"),
+                score_breakdown_json=json.dumps(m.get("score_breakdown", {}))
+            )
+            db.add(mr)
+
+        # Persist Exceptions
+        for e in exceptions_list:
+            er = ExceptionResult(
+                id=e.get("exception_id", f"EXC-{uuid.uuid4().hex[:8].upper()}"),
+                run_id=run_id,
+                record_id=e["record_id"],
+                source=e["source"],
+                amount=e.get("amount"),
+                entity=e.get("entity"),
+                date=e.get("date"),
+                reason_code=e["reason_code"],
+                confidence=e.get("confidence", 0.0),
+                decision=e.get("decision", "UNRESOLVED"),
+                explanation=e["explanation"],
+                candidates_json=json.dumps(e.get("candidates", [])),
+                amount_discrepancy=e.get("amount_discrepancy", 0.0)
+            )
+            db.add(er)
+
+        # Persist Metrics
+        em = EvaluationMetric(
+            id=f"METRIC-{uuid.uuid4().hex[:8].upper()}",
             run_id=run_id,
-            record_id_a=m["record_id_a"],
-            record_id_b=m["record_id_b"],
-            source_a=m["source_a"],
-            source_b=m["source_b"],
-            amount_a=m["amount_a"],
-            amount_b=m["amount_b"],
-            date_a=m.get("date_a"),
-            date_b=m.get("date_b"),
-            entity_a=m.get("entity_a"),
-            entity_b=m.get("entity_b"),
-            confidence_score=m["confidence_score"],
-            match_category=m.get("match_category", "EXACT_MATCH"),
-            status=m.get("status", "MATCHED"),
-            score_breakdown_json=json.dumps(m.get("score_breakdown", {}))
+            total_ground_truth_cases=metrics.get("total_ground_truth_cases", 0),
+            true_positives=metrics.get("true_positives", 0),
+            false_positives=metrics.get("false_positives", 0),
+            false_negatives=metrics.get("false_negatives", 0),
+            true_negatives=metrics.get("true_negatives", 0),
+            precision=metrics.get("precision", 0.0),
+            recall=metrics.get("recall", 0.0),
+            f1_score=metrics.get("f1_score", 0.0),
+            accuracy=metrics.get("accuracy", 0.0),
+            match_rate=metrics.get("match_rate", 0.0),
+            processing_time_sec=metrics.get("processing_time_sec", 0.0),
+            throughput_records_per_sec=metrics.get("throughput_records_sec", 0.0),
+            confusion_matrix_json=json.dumps(metrics.get("detailed_metrics_json", {}))
         )
-        db.add(mr)
-
-    # Persist Exceptions
-    for e in exceptions_list:
-        er = ExceptionResult(
-            id=e.get("exception_id", f"EXC-{uuid.uuid4().hex[:8].upper()}"),
-            run_id=run_id,
-            record_id=e["record_id"],
-            source=e["source"],
-            amount=e.get("amount"),
-            entity=e.get("entity"),
-            date=e.get("date"),
-            reason_code=e["reason_code"],
-            confidence=e.get("confidence", 0.0),
-            decision=e.get("decision", "UNRESOLVED"),
-            explanation=e["explanation"],
-            candidates_json=json.dumps(e.get("candidates", [])),
-            amount_discrepancy=e.get("amount_discrepancy", 0.0)
-        )
-        db.add(er)
-
-    # Persist Metrics
-    em = EvaluationMetric(
-        id=f"METRIC-{uuid.uuid4().hex[:8].upper()}",
-        run_id=run_id,
-        total_ground_truth_cases=metrics.get("total_ground_truth_cases", 0),
-        true_positives=metrics.get("true_positives", 0),
-        false_positives=metrics.get("false_positives", 0),
-        false_negatives=metrics.get("false_negatives", 0),
-        true_negatives=metrics.get("true_negatives", 0),
-        precision=metrics.get("precision", 0.0),
-        recall=metrics.get("recall", 0.0),
-        f1_score=metrics.get("f1_score", 0.0),
-        accuracy=metrics.get("accuracy", 0.0),
-        match_rate=metrics.get("match_rate", 0.0),
-        processing_time_sec=metrics.get("processing_time_sec", 0.0),
-        throughput_records_per_sec=metrics.get("throughput_records_sec", 0.0),
-        confusion_matrix_json=json.dumps(metrics.get("detailed_metrics_json", {}))
-    )
-    db.add(em)
-    db.commit()
+        db.add(em)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        print(f"Warning: Database persist error: {e}")
 
     return {
         "status": "success",
@@ -270,20 +274,23 @@ def run_reconciliation_endpoint(
 
 @app.get("/api/runs")
 def get_all_runs(db: Session = Depends(get_db)):
-    runs = db.query(ReconciliationRun).order_by(ReconciliationRun.created_at.desc()).all()
-    return [{
-        "id": r.id,
-        "created_at": r.created_at.isoformat() if r.created_at else None,
-        "status": r.status,
-        "user_prompt": r.user_prompt,
-        "total_records": r.total_records,
-        "matched_records": r.matched_records,
-        "exception_records": r.exception_records,
-        "match_rate": r.match_rate,
-        "accuracy": r.accuracy,
-        "throughput_rec_sec": r.throughput_rec_sec,
-        "processing_time_sec": r.processing_time_sec
-    } for r in runs]
+    try:
+        runs = db.query(ReconciliationRun).order_by(ReconciliationRun.created_at.desc()).all()
+        return [{
+            "id": r.id,
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "status": r.status,
+            "user_prompt": r.user_prompt,
+            "total_records": r.total_records,
+            "matched_records": r.matched_records,
+            "exception_records": r.exception_records,
+            "match_rate": r.match_rate,
+            "accuracy": r.accuracy,
+            "throughput_rec_sec": r.throughput_rec_sec,
+            "processing_time_sec": r.processing_time_sec
+        } for r in runs]
+    except Exception as e:
+        return []
 
 @app.get("/api/reconciliation/{run_id}")
 def get_run_details(run_id: str, db: Session = Depends(get_db)):
@@ -323,12 +330,12 @@ def get_run_matches(
     run_id: str,
     category: Optional[str] = None,
     search: Optional[str] = None,
-    limit: int = 200,
+    limit: int = 250,
     offset: int = 0,
     db: Session = Depends(get_db)
 ):
     query = db.query(MatchResult).filter(MatchResult.run_id == run_id)
-    if category:
+    if category and category != "ALL":
         query = query.filter(MatchResult.match_category == category)
     if search:
         s = f"%{search}%"
@@ -370,12 +377,12 @@ def get_run_exceptions(
     run_id: str,
     reason: Optional[str] = None,
     search: Optional[str] = None,
-    limit: int = 100,
+    limit: int = 200,
     offset: int = 0,
     db: Session = Depends(get_db)
 ):
     query = db.query(ExceptionResult).filter(ExceptionResult.run_id == run_id)
-    if reason:
+    if reason and reason != "ALL":
         query = query.filter(ExceptionResult.reason_code == reason)
     if search:
         s = f"%{search}%"
@@ -433,18 +440,19 @@ def get_run_metrics(run_id: str, db: Session = Depends(get_db)):
 
 @app.post("/api/chat")
 def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
-    # Record user message
-    user_msg_id = f"MSG-{uuid.uuid4().hex[:8].upper()}"
-    user_msg = ChatHistory(
-        id=user_msg_id,
-        run_id=req.run_id,
-        role="user",
-        content=req.question
-    )
-    db.add(user_msg)
-    db.commit()
+    try:
+        user_msg_id = f"MSG-{uuid.uuid4().hex[:8].upper()}"
+        user_msg = ChatHistory(
+            id=user_msg_id,
+            run_id=req.run_id,
+            role="user",
+            content=req.question
+        )
+        db.add(user_msg)
+        db.commit()
+    except Exception:
+        db.rollback()
 
-    # Call QA LangGraph agent
     qa_input = {
         "run_id": req.run_id,
         "question": req.question,
@@ -459,21 +467,23 @@ def chat_endpoint(req: ChatRequest, db: Session = Depends(get_db)):
     qa_output = qa_graph.invoke(qa_input)
     answer = qa_output.get("answer", "No relevant data retrieved.")
 
-    # Record assistant message
-    asst_msg_id = f"MSG-{uuid.uuid4().hex[:8].upper()}"
-    asst_msg = ChatHistory(
-        id=asst_msg_id,
-        run_id=req.run_id,
-        role="assistant",
-        content=answer,
-        retrieved_data_json=json.dumps({
-            "records": qa_output.get("retrieved_records", []),
-            "exceptions": qa_output.get("retrieved_exceptions", []),
-            "metrics": qa_output.get("retrieved_metrics", {})
-        })
-    )
-    db.add(asst_msg)
-    db.commit()
+    try:
+        asst_msg_id = f"MSG-{uuid.uuid4().hex[:8].upper()}"
+        asst_msg = ChatHistory(
+            id=asst_msg_id,
+            run_id=req.run_id,
+            role="assistant",
+            content=answer,
+            retrieved_data_json=json.dumps({
+                "records": qa_output.get("retrieved_records", []),
+                "exceptions": qa_output.get("retrieved_exceptions", []),
+                "metrics": qa_output.get("retrieved_metrics", {})
+            })
+        )
+        db.add(asst_msg)
+        db.commit()
+    except Exception:
+        db.rollback()
 
     return {
         "answer": answer,
