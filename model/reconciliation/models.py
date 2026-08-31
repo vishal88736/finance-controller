@@ -1,10 +1,11 @@
 """
-Data models for Reconciliation Engine.
+Data models for Reconciliation Engine with evidence-first design.
 """
 
 from typing import Optional, List, Dict, Any
 from pydantic import BaseModel, Field
 from ..ingestion.normalizer import NormalizedRecord
+
 
 class CandidateMatch(BaseModel):
     target_record_id: str
@@ -19,6 +20,7 @@ class CandidateMatch(BaseModel):
     date_diff_days: int = 0
     checks: Dict[str, bool] = Field(default_factory=dict)
     notes: Optional[str] = None
+
 
 class ReconciliationMatch(BaseModel):
     match_id: str
@@ -37,7 +39,9 @@ class ReconciliationMatch(BaseModel):
     status: str = "MATCHED"
     score_breakdown: Dict[str, float] = Field(default_factory=dict)
     checks: Dict[str, bool] = Field(default_factory=dict)
+    evidence: Dict[str, Any] = Field(default_factory=dict)
     explanation: Optional[str] = None
+
 
 class ReconciliationException(BaseModel):
     exception_id: str
@@ -47,12 +51,15 @@ class ReconciliationException(BaseModel):
     entity: Optional[str] = None
     date: Optional[str] = None
     reason_code: str  # AMOUNT_MISMATCH, AMBIGUOUS_CANDIDATES, MISSING_COUNTERPART, DUPLICATE, etc.
+    discrepancy_category: str = "MATERIAL"  # NORMAL vs MATERIAL
     confidence: float = 0.0
     decision: str = "UNRESOLVED"
     explanation: str
     amount_discrepancy: float = 0.0
     candidates: List[CandidateMatch] = Field(default_factory=list)
+    evidence: Dict[str, Any] = Field(default_factory=dict)
     raw_data: Dict[str, Any] = Field(default_factory=dict)
+
 
 class ReconciliationSummary(BaseModel):
     total_records_processed: int

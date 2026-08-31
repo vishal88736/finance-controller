@@ -146,7 +146,7 @@ export const ExceptionTable: React.FC<ExceptionTableProps> = ({
                       <span className="text-red-600 font-semibold">
                         Δ ${exc.amount_discrepancy.toFixed(2)} fee delta
                       </span>
-                    ) : exc.candidates.length > 0 ? (
+                    ) : (exc.candidates && exc.candidates.length > 0) ? (
                       <span className="text-purple-700 font-medium">
                         {exc.candidates.length} candidate pairs
                       </span>

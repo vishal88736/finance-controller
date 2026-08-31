@@ -18,7 +18,7 @@ Outputs:
 import json
 import random
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import pandas as pd
 
 # Vendors and Entities
@@ -59,7 +59,7 @@ def generate_synthetic_dataset(output_dir: str = None, total_records: int = 200)
     records_c = []
     ground_truth = {
         "dataset_name": "Multi-Source Financial Reconciliation Benchmark",
-        "generated_at": datetime.utcnow().isoformat(),
+        "generated_at": datetime.now(timezone.utc).isoformat(),
         "total_cases": total_records,
         "cases": {},
         "summary": {

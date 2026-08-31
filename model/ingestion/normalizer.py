@@ -2,12 +2,15 @@
 Record normalization module.
 Standardizes dates, amounts, currencies, identifiers, and entity names.
 Uses Decimal for all monetary values.
+Deterministic record ID generation without memory-pointer dependencies.
 """
 
 import re
 import math
+import json
+import hashlib
 from decimal import Decimal, ROUND_HALF_UP
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional, Dict, Any
 from pydantic import BaseModel, Field
 
@@ -48,7 +51,6 @@ class NormalizedRecord(BaseModel):
 def clean_text(text: Optional[str]) -> str:
     if not text:
         return ""
-    # Strip whitespace, lower case, replace multiple spaces/punctuations
     cleaned = re.sub(r'[\s\-_/\\#]+', ' ', str(text)).strip().lower()
     return cleaned
 
@@ -79,26 +81,77 @@ def pd_is_nan(val: Any) -> bool:
 
 
 def normalize_single_record(raw: Dict[str, Any], source_label: str) -> NormalizedRecord:
-    # Identify record_id
-    rec_id = str(raw.get("record_id") or raw.get("id") or raw.get("txn_id") or raw.get("payout_id") or raw.get("transaction_id") or f"REC-{id(raw)}")
+    # Deterministic record_id identification
+    raw_id = (
+        raw.get("record_id")
+        or raw.get("id")
+        or raw.get("txn_id")
+        or raw.get("payout_id")
+        or raw.get("transaction_id")
+        or raw.get("invoice_id")
+        or raw.get("settlement_id")
+    )
+    if raw_id:
+        rec_id = str(raw_id)
+    else:
+        # Deterministic hash of row contents (no memory pointer dependencies)
+        row_sig = hashlib.sha256(json.dumps(raw, sort_keys=True, default=str).encode("utf-8")).hexdigest()[:10]
+        rec_id = f"REC-{row_sig}"
 
-    raw_ref = raw.get("reference_id") or raw.get("reference") or raw.get("order_ref") or raw.get("ref_no") or raw.get("invoice")
+    raw_ref = (
+        raw.get("reference_id")
+        or raw.get("reference")
+        or raw.get("order_ref")
+        or raw.get("ref_no")
+        or raw.get("invoice")
+        or raw.get("utr")
+    )
     clean_ref = extract_reference_token(str(raw_ref)) if raw_ref else None
 
-    raw_date = raw.get("date") or raw.get("txn_date") or raw.get("payout_date") or raw.get("created_at") or raw.get("posting_date")
+    raw_date = (
+        raw.get("date")
+        or raw.get("txn_date")
+        or raw.get("payout_date")
+        or raw.get("created_at")
+        or raw.get("posting_date")
+        or raw.get("settlement_date")
+        or raw.get("invoice_date")
+    )
     iso_date = parse_iso_date(raw_date)
 
-    raw_amt = raw.get("amount") or raw.get("net_amount") or raw.get("gross_amount") or raw.get("value") or raw.get("total")
+    raw_amt = (
+        raw.get("amount")
+        or raw.get("net_amount")
+        or raw.get("gross_amount")
+        or raw.get("value")
+        or raw.get("total")
+        or raw.get("paid_amount")
+    )
     amount = parse_amount(raw_amt)
     amount_decimal = parse_amount_decimal(raw_amt)
 
     currency_raw = raw.get("currency") or raw.get("curr") or "USD"
     currency = normalize_currency(currency_raw)
 
-    raw_ent = raw.get("entity") or raw.get("vendor") or raw.get("merchant") or raw.get("merchant_entity") or raw.get("counterparty") or raw.get("customer")
+    raw_ent = (
+        raw.get("entity")
+        or raw.get("vendor")
+        or raw.get("merchant")
+        or raw.get("merchant_entity")
+        or raw.get("counterparty")
+        or raw.get("customer")
+        or raw.get("client")
+    )
     clean_ent = normalize_entity_name(raw_ent) if raw_ent else ""
 
-    raw_desc = raw.get("description") or raw.get("details") or raw.get("narration") or raw.get("notes") or raw.get("memo")
+    raw_desc = (
+        raw.get("description")
+        or raw.get("details")
+        or raw.get("narration")
+        or raw.get("notes")
+        or raw.get("memo")
+        or raw.get("remarks")
+    )
     clean_desc = clean_text(str(raw_desc)) if raw_desc else ""
 
     return NormalizedRecord(

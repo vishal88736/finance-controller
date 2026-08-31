@@ -1,10 +1,13 @@
 """
 LangGraph state definitions for Reconciliation and QA agents.
+Scoped with thread_id and evidence structures.
 """
 
 from typing import List, Dict, Any, Optional, TypedDict
 
+
 class ReconciliationState(TypedDict):
+    thread_id: str
     run_id: str
     user_request: str
     uploaded_files: List[Dict[str, Any]]
@@ -18,14 +21,23 @@ class ReconciliationState(TypedDict):
     current_step: str
     step_progress: List[str]
     error: Optional[str]
+    db_session: Optional[Any]
+
 
 class QAState(TypedDict):
+    thread_id: str
     run_id: Optional[str]
     question: str
-    query_type: str  # SPECIFIC_RECORD, METRIC_QUERY, DISCREPANCY_QUERY, SUMMARY_QUERY, GENERAL
+    guardrail_passed: bool
+    guardrail_refusal: Optional[str]
+    query_type: str  # SPECIFIC_RECORD, METRIC_QUERY, DISCREPANCY_QUERY, EXCEPTION_QUERY, MATERIAL_EXCEPTIONS, SUMMARY_QUERY, GENERAL
     extracted_entities: List[str]
     extracted_record_ids: List[str]
     retrieved_records: List[Dict[str, Any]]
     retrieved_exceptions: List[Dict[str, Any]]
     retrieved_metrics: Dict[str, Any]
+    retrieved_documents: List[Dict[str, Any]]
+    evidence: Dict[str, Any]
+    tools_called: List[str]
     answer: str
+    db_session: Optional[Any]
