@@ -1,53 +1,250 @@
 @import "tailwindcss";
 
+/* ═══════════════════════════════════════════════════════════════
+   DESIGN TOKENS — Finance Controller Professional Theme
+   Based on UI UX Pro Max: Fintech SaaS Dashboard style
+   ═══════════════════════════════════════════════════════════════ */
+
 @layer base {
   :root {
-    --bg-page: #f8f9fa;
+    /* ── Surface & Background ── */
+    --bg-page: #f1f5f9;
     --bg-surface: #ffffff;
-    --border-color: #e5e7eb;
-    --border-light: #f3f4f6;
-    --text-primary: #111827;
-    --text-secondary: #4b5563;
-    --text-muted: #9ca3af;
-    --brand-blue: #0c6cf2;
+    --bg-surface-raised: #ffffff;
+    --bg-surface-sunken: #f8fafc;
+    --bg-surface-hover: #f8fafc;
+
+    /* ── Brand Palette ── */
+    --brand-primary: #0066ff;
+    --brand-primary-hover: #0052cc;
+    --brand-primary-light: #eff6ff;
+    --brand-primary-muted: #dbeafe;
     --brand-navy: #0f172a;
-    --success-green: #059669;
-    --warning-amber: #d97706;
-    --danger-red: #dc2626;
+
+    /* ── Semantic Colors ── */
+    --success: #10b981;
+    --success-light: #ecfdf5;
+    --success-text: #065f46;
+    --warning: #f59e0b;
+    --warning-light: #fffbeb;
+    --warning-text: #92400e;
+    --danger: #ef4444;
+    --danger-light: #fef2f2;
+    --danger-text: #991b1b;
+    --info: #6366f1;
+    --info-light: #eef2ff;
+    --info-text: #3730a3;
+
+    /* ── Text Hierarchy ── */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --text-faint: #cbd5e1;
+
+    /* ── Borders ── */
+    --border-default: #e2e8f0;
+    --border-light: #f1f5f9;
+    --border-focus: #0066ff;
+    --border-hover: #cbd5e1;
+
+    /* ── Shadows (Layered Soft) ── */
+    --shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.04);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.06), 0 1px 2px -1px rgb(0 0 0 / 0.06);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.08), 0 8px 10px -6px rgb(0 0 0 / 0.04);
+
+    /* ── Radius (Consistent) ── */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+
+    /* ── Transitions ── */
+    --transition-fast: 120ms ease;
+    --transition-base: 180ms ease;
+    --transition-slow: 280ms ease;
+    --transition-spring: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
   body {
     background-color: var(--bg-page);
     color: var(--text-primary);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    letter-spacing: -0.01em;
+    font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    letter-spacing: -0.011em;
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    line-height: 1.5;
+  }
+
+  /* ── Selection ── */
+  ::selection {
+    background-color: var(--brand-primary);
+    color: white;
+  }
+
+  /* ── Focus Visible (Accessibility) ── */
+  *:focus-visible {
+    outline: 2px solid var(--brand-primary);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
   }
 }
 
-/* Crisp table styling */
+/* ═══════════════════════════════════════════════════════════════
+   COMPONENT UTILITIES
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── Card Elevation System ── */
+.card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base), transform var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.card-interactive:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-1px);
+}
+
+/* ── Fintech Table ── */
 .fintech-table th {
   font-weight: 600;
-  color: #6b7280;
-  font-size: 0.75rem;
-  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
+  padding: 0.75rem 1rem;
+  white-space: nowrap;
 }
 
 .fintech-table td {
   font-size: 0.8125rem;
-  color: #1f2937;
+  color: var(--text-primary);
+  padding: 0.75rem 1rem;
 }
 
-/* Clean border line */
-.border-grid {
-  border: 1px solid #e5e7eb;
+.fintech-table tbody tr {
+  transition: background-color var(--transition-fast);
 }
 
-/* Subtle scrollbar */
+.fintech-table tbody tr:hover {
+  background-color: var(--bg-surface-hover);
+}
+
+/* ── Pill / Chip ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  transition: all var(--transition-fast);
+}
+
+/* ── Segmented Control ── */
+.segment-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: #e2e8f0;
+  padding: 3px;
+  border-radius: var(--radius-md);
+}
+
+.segment-item {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 6px 14px;
+  border-radius: calc(var(--radius-md) - 2px);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+  user-select: none;
+}
+
+.segment-item:hover {
+  color: var(--text-primary);
+}
+
+.segment-item-active {
+  background: white;
+  color: var(--text-primary);
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   ANIMATIONS
+   ═══════════════════════════════════════════════════════════════ */
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.animate-fade-in {
+  animation: fadeIn 300ms ease forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 400ms ease forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 300ms ease forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 250ms ease forwards;
+}
+
+/* Stagger children animations */
+.stagger-children > *:nth-child(1) { animation-delay: 0ms; }
+.stagger-children > *:nth-child(2) { animation-delay: 50ms; }
+.stagger-children > *:nth-child(3) { animation-delay: 100ms; }
+.stagger-children > *:nth-child(4) { animation-delay: 150ms; }
+.stagger-children > *:nth-child(5) { animation-delay: 200ms; }
+.stagger-children > *:nth-child(6) { animation-delay: 250ms; }
+
+/* ═══════════════════════════════════════════════════════════════
+   SCROLLBAR (Refined)
+   ═══════════════════════════════════════════════════════════════ */
+
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -55,10 +252,22 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 2px;
+  background: #cbd5e1;
+  border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: #94a3b8;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   REDUCED MOTION (Accessibility)
+   ═══════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

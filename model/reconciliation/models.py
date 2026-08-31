@@ -14,9 +14,10 @@ class CandidateMatch(BaseModel):
     target_entity: Optional[str] = None
     confidence_score: float
     score_breakdown: Dict[str, float] = Field(default_factory=dict)
-    match_category: str  # EXACT, FUZZY, DATE_LAG, AMOUNT_MISMATCH
+    match_category: str  # EXACT_MATCH, FUZZY_MATCH, DATE_LAG, AMOUNT_MISMATCH, PARTIAL_MATCH
     amount_diff: float = 0.0
     date_diff_days: int = 0
+    checks: Dict[str, bool] = Field(default_factory=dict)
     notes: Optional[str] = None
 
 class ReconciliationMatch(BaseModel):
@@ -35,6 +36,7 @@ class ReconciliationMatch(BaseModel):
     match_category: str
     status: str = "MATCHED"
     score_breakdown: Dict[str, float] = Field(default_factory=dict)
+    checks: Dict[str, bool] = Field(default_factory=dict)
     explanation: Optional[str] = None
 
 class ReconciliationException(BaseModel):
@@ -44,7 +46,7 @@ class ReconciliationException(BaseModel):
     amount: Optional[float] = None
     entity: Optional[str] = None
     date: Optional[str] = None
-    reason_code: str  # AMOUNT_MISMATCH, AMBIGUOUS_CANDIDATES, MISSING_COUNTERPART, DUPLICATE
+    reason_code: str  # AMOUNT_MISMATCH, AMBIGUOUS_CANDIDATES, MISSING_COUNTERPART, DUPLICATE, etc.
     confidence: float = 0.0
     decision: str = "UNRESOLVED"
     explanation: str

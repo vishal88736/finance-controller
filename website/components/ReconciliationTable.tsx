@@ -48,26 +48,23 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-lg shadow-xs overflow-hidden">
+    <div className="card overflow-hidden">
       {/* Table Header Controls */}
-      <div className="p-3.5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gray-50/50">
-        <div className="flex items-center space-x-2">
-          <span className="text-xs font-semibold text-gray-900">
-            Reconciled Transactions ({totalMatches})
-          </span>
-        </div>
+      <div className="px-5 py-4 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-slate-900">
+          Reconciled Transactions
+          <span className="text-slate-400 font-normal ml-1.5">({totalMatches})</span>
+        </h3>
 
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Segment Pills */}
-          <div className="flex items-center space-x-1 bg-gray-200/70 p-0.5 rounded-md">
+          <div className="segment-group">
             {categories.map((c) => (
               <button
                 key={c.id}
                 onClick={() => onCategoryChange(c.id)}
-                className={`text-[11px] font-medium px-2.5 py-1 rounded transition-all ${
-                  selectedCategory === c.id
-                    ? "bg-white text-gray-900 font-semibold shadow-2xs"
-                    : "text-gray-600 hover:text-gray-900"
+                className={`segment-item cursor-pointer ${
+                  selectedCategory === c.id ? "segment-item-active" : ""
                 }`}
               >
                 {c.label}
@@ -77,7 +74,7 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
 
           {/* Search Box */}
           <div className="relative">
-            <Search className="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-2" />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
             <input
               type="text"
               value={searchInput}
@@ -86,78 +83,89 @@ export const ReconciliationTable: React.FC<ReconciliationTableProps> = ({
                 onSearchChange(e.target.value);
               }}
               placeholder="Search reference, vendor..."
-              className="bg-white border border-gray-300 focus:border-blue-500 rounded-md pl-8 pr-2.5 py-1 text-xs text-gray-900 placeholder-gray-400 focus:outline-none w-48"
+              className="bg-white border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/10 rounded-lg pl-9 pr-3 py-2 text-sm text-slate-900 placeholder-slate-400 focus:outline-none w-52 transition-all"
             />
           </div>
 
           {/* Export CSV */}
           <button
             onClick={handleExportCSV}
-            className="flex items-center space-x-1 bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 text-xs font-medium px-2.5 py-1 rounded-md transition-colors"
+            className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 hover:border-slate-300 text-sm font-medium px-3 py-2 rounded-lg transition-all cursor-pointer"
           >
-            <Download className="w-3 h-3 text-gray-500" />
+            <Download className="w-3.5 h-3.5 text-slate-400" />
             <span>CSV</span>
           </button>
         </div>
       </div>
 
-      {/* Clean Fintech Table */}
+      {/* Table */}
       <div className="overflow-x-auto">
         <table className="w-full text-left fintech-table">
-          <thead className="bg-gray-50 text-gray-500 uppercase tracking-wider text-[10px] border-b border-gray-200">
+          <thead className="bg-slate-50/80 border-b border-slate-100">
             <tr>
-              <th className="py-2.5 px-3.5 font-semibold">Ledger Entry</th>
-              <th className="py-2.5 px-3.5 font-semibold">Bank Statement</th>
-              <th className="py-2.5 px-3.5 font-semibold">Counterparty</th>
-              <th className="py-2.5 px-3.5 font-semibold">Amount</th>
-              <th className="py-2.5 px-3.5 font-semibold">Posting Date</th>
-              <th className="py-2.5 px-3.5 font-semibold">Score</th>
-              <th className="py-2.5 px-3.5 font-semibold">Status</th>
+              <th>Ledger Entry</th>
+              <th>Bank Statement</th>
+              <th>Counterparty</th>
+              <th>Amount</th>
+              <th>Posting Date</th>
+              <th>Score</th>
+              <th>Status</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100 font-normal">
+          <tbody className="divide-y divide-slate-50">
             {matches.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-8 text-center text-gray-400 text-xs">
-                  No matched transactions matching your filters.
+                <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
+                  <div className="flex flex-col items-center gap-2">
+                    <CheckCircle2 className="w-8 h-8 text-slate-200" />
+                    <span>No matched transactions matching your filters.</span>
+                  </div>
                 </td>
               </tr>
             ) : (
               matches.map((m) => (
-                <tr key={m.match_id} className="hover:bg-gray-50/80 transition-colors">
+                <tr key={m.match_id}>
                   {/* Ledger Record */}
-                  <td className="py-2.5 px-3.5 font-mono text-[11px] text-gray-900 font-medium">
+                  <td className="font-[family-name:var(--font-geist-mono)] text-xs font-medium text-slate-900">
                     {m.record_id_a}
                   </td>
 
                   {/* Bank Record */}
-                  <td className="py-2.5 px-3.5 font-mono text-[11px] text-gray-600">
+                  <td className="font-[family-name:var(--font-geist-mono)] text-xs text-slate-500">
                     {m.record_id_b}
                   </td>
 
                   {/* Entity */}
-                  <td className="py-2.5 px-3.5 text-gray-800 text-xs font-medium truncate max-w-[180px]">
+                  <td className="text-slate-800 text-sm font-medium truncate max-w-[200px]">
                     {m.entity_a || m.entity_b || "Settlement Transfer"}
                   </td>
 
                   {/* Amount */}
-                  <td className="py-2.5 px-3.5 font-mono text-xs font-bold text-gray-900">
+                  <td className="font-[family-name:var(--font-geist-mono)] text-sm font-bold text-slate-900">
                     ${m.amount_a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
 
                   {/* Date */}
-                  <td className="py-2.5 px-3.5 text-gray-500 font-mono text-[11px]">
+                  <td className="text-slate-500 font-[family-name:var(--font-geist-mono)] text-xs">
                     {m.date_a || "N/A"}
                   </td>
 
                   {/* Score */}
-                  <td className="py-2.5 px-3.5 font-mono text-[11px]">
-                    <span className="font-semibold text-gray-800">{m.confidence_score.toFixed(0)}%</span>
+                  <td className="font-[family-name:var(--font-geist-mono)] text-xs">
+                    <div className="flex items-center gap-1.5">
+                      <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-emerald-500 rounded-full"
+                          style={{ width: `${m.confidence_score}%` }}
+                        />
+                      </div>
+                      <span className="font-semibold text-slate-700">{m.confidence_score.toFixed(0)}%</span>
+                    </div>
                   </td>
 
                   {/* Status */}
-                  <td className="py-2.5 px-3.5">
-                    <span className="inline-flex items-center text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded text-[10px] font-semibold">
+                  <td>
+                    <span className="pill bg-emerald-50 text-emerald-700 border border-emerald-200">
                       Matched
                     </span>
                   </td>

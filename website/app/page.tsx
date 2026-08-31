@@ -11,12 +11,25 @@ import { ExceptionDetailModal } from "@/components/ExceptionDetailModal";
 import { EvaluationView } from "@/components/EvaluationView";
 import { ChatPanel } from "@/components/ChatPanel";
 import {
+  CheckCircle2,
+  AlertTriangle,
+  BarChart3,
+  MessageSquare
+} from "lucide-react";
+import {
   api,
   ReconciliationRunSummary,
   MatchItem,
   ExceptionItem,
   EvaluationMetricData
 } from "@/lib/api";
+
+const TABS = [
+  { id: "matches" as const, label: "Reconciled Pairs", icon: CheckCircle2 },
+  { id: "exceptions" as const, label: "Exceptions & Fees", icon: AlertTriangle },
+  { id: "evaluation" as const, label: "Benchmark", icon: BarChart3 },
+  { id: "qa" as const, label: "Financial Copilot", icon: MessageSquare }
+];
 
 export default function Home() {
   // Navigation State
@@ -183,9 +196,18 @@ Status: COMPLETED
     document.body.removeChild(link);
   };
 
+  const getTabBadge = (id: string) => {
+    switch (id) {
+      case "matches": return totalMatches;
+      case "exceptions": return totalExceptions;
+      case "evaluation": return `${summary.accuracy.toFixed(1)}%`;
+      default: return null;
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-[#F8F9FA] flex flex-col selection:bg-blue-600 selection:text-white">
-      {/* Clean Navbar */}
+    <div className="min-h-screen bg-[var(--bg-page)] flex flex-col">
+      {/* Navbar */}
       <Navbar
         onTriggerDemo={handleRunReconciliation}
         isRunning={isRunning}
@@ -193,9 +215,9 @@ Status: COMPLETED
         onExportReport={handleExportAuditSummary}
       />
 
-      {/* Main Container */}
-      <main className="max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-5">
-        {/* Workspace Command Header */}
+      {/* Main Content */}
+      <main className="max-w-[1400px] w-full mx-auto px-5 sm:px-8 py-8 space-y-6">
+        {/* Workspace Header */}
         <WorkspaceHeader
           prompt={prompt}
           setPrompt={setPrompt}
@@ -203,7 +225,7 @@ Status: COMPLETED
           isRunning={isRunning}
         />
 
-        {/* Ingestion Dropzone */}
+        {/* File Uploader */}
         <FileUploader
           files={uploadedFiles}
           onAddFiles={(newFiles) => setUploadedFiles((prev) => [...prev, ...newFiles])}
@@ -211,87 +233,75 @@ Status: COMPLETED
           onLoadSyntheticBatch={handleLoadSyntheticBatch}
         />
 
-        {/* 4 Clean Metric Cards */}
+        {/* Metric Cards */}
         <MetricCards summary={summary} />
 
-        {/* Segment Tabs */}
-        <div className="space-y-3">
-          <div className="flex items-center space-x-1 border-b border-gray-200">
-            <button
-              onClick={() => setActiveTab("matches")}
-              className={`py-2.5 px-3.5 text-xs font-semibold border-b-2 transition-colors ${
-                activeTab === "matches"
-                  ? "border-[#0C6CF2] text-[#0C6CF2]"
-                  : "border-transparent text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Reconciled Pairs ({totalMatches})
-            </button>
-
-            <button
-              onClick={() => setActiveTab("exceptions")}
-              className={`py-2.5 px-3.5 text-xs font-semibold border-b-2 transition-colors ${
-                activeTab === "exceptions"
-                  ? "border-[#0C6CF2] text-[#0C6CF2]"
-                  : "border-transparent text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Exceptions & Fees ({totalExceptions})
-            </button>
-
-            <button
-              onClick={() => setActiveTab("evaluation")}
-              className={`py-2.5 px-3.5 text-xs font-semibold border-b-2 transition-colors ${
-                activeTab === "evaluation"
-                  ? "border-[#0C6CF2] text-[#0C6CF2]"
-                  : "border-transparent text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Benchmark Evaluation ({summary.accuracy.toFixed(1)}%)
-            </button>
-
-            <button
-              onClick={() => setActiveTab("qa")}
-              className={`py-2.5 px-3.5 text-xs font-semibold border-b-2 transition-colors ${
-                activeTab === "qa"
-                  ? "border-[#0C6CF2] text-[#0C6CF2]"
-                  : "border-transparent text-gray-500 hover:text-gray-900"
-              }`}
-            >
-              Financial Copilot
-            </button>
+        {/* ── Tab Navigation ── */}
+        <div className="space-y-5">
+          {/* Segmented Tab Bar */}
+          <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 w-fit">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              const badge = getTabBadge(tab.id);
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-white text-slate-900 shadow-sm font-semibold"
+                      : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon className={`w-4 h-4 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                  <span>{tab.label}</span>
+                  {badge !== null && (
+                    <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${
+                      isActive
+                        ? "bg-blue-50 text-blue-700"
+                        : "bg-slate-200 text-slate-500"
+                    }`}>
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
           </div>
 
-          {/* Tab Views */}
-          {activeTab === "matches" && (
-            <ReconciliationTable
-              matches={matches}
-              totalMatches={totalMatches}
-              onSearchChange={handleMatchSearch}
-              onCategoryChange={handleMatchCategory}
-              selectedCategory={matchCategory}
-            />
-          )}
+          {/* Tab Content */}
+          <div className="animate-fade-in">
+            {activeTab === "matches" && (
+              <ReconciliationTable
+                matches={matches}
+                totalMatches={totalMatches}
+                onSearchChange={handleMatchSearch}
+                onCategoryChange={handleMatchCategory}
+                selectedCategory={matchCategory}
+              />
+            )}
 
-          {activeTab === "exceptions" && (
-            <ExceptionTable
-              exceptions={exceptions}
-              totalExceptions={totalExceptions}
-              onSelectException={(exc) => setSelectedException(exc)}
-              onReasonChange={handleExceptionReason}
-              selectedReason={exceptionReason}
-            />
-          )}
+            {activeTab === "exceptions" && (
+              <ExceptionTable
+                exceptions={exceptions}
+                totalExceptions={totalExceptions}
+                onSelectException={(exc) => setSelectedException(exc)}
+                onReasonChange={handleExceptionReason}
+                selectedReason={exceptionReason}
+              />
+            )}
 
-          {activeTab === "evaluation" && (
-            <EvaluationView metrics={metrics} summary={summary} />
-          )}
+            {activeTab === "evaluation" && (
+              <EvaluationView metrics={metrics} summary={summary} />
+            )}
 
-          {activeTab === "qa" && (
-            <div className="max-w-3xl mx-auto">
-              <ChatPanel runId={runId || undefined} />
-            </div>
-          )}
+            {activeTab === "qa" && (
+              <div className="max-w-3xl mx-auto">
+                <ChatPanel runId={runId || undefined} />
+              </div>
+            )}
+          </div>
         </div>
       </main>
 

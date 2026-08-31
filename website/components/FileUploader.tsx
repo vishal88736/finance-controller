@@ -49,29 +49,46 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const isExcel = (name: string) => name.endsWith(".xlsx") || name.endsWith(".xls");
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-xs space-y-3">
+    <div
+      className={`card p-5 space-y-4 transition-all ${
+        isDragging ? "!border-blue-400 !bg-blue-50/50 ring-2 ring-blue-500/10" : ""
+      }`}
+      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+      onDragLeave={() => setIsDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setIsDragging(false);
+        handleFiles(e.dataTransfer.files);
+      }}
+    >
+      {/* Header */}
       <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-xs font-semibold text-gray-900 uppercase tracking-wider">
-            Uploaded Ingestion Sources ({files.length})
+        <div className="flex items-center gap-2.5">
+          <h3 className="text-sm font-semibold text-slate-900">
+            Ingestion Sources
           </h3>
+          <span className="pill bg-slate-100 text-slate-600 border border-slate-200 !text-[10px]">
+            {files.length} files
+          </span>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center gap-2">
           <button
             type="button"
             onClick={onLoadSyntheticBatch}
-            className="text-xs font-medium text-gray-700 hover:text-gray-900 bg-gray-100 hover:bg-gray-200/80 px-2.5 py-1 rounded transition-colors"
+            className="text-xs font-medium text-slate-600 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
           >
-            Reset 200+ Demo Batch
+            Reset Demo Batch
           </button>
           <button
             type="button"
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center space-x-1 text-xs font-medium text-[#0C6CF2] hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded transition-colors"
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Upload File</span>
+            <span>Upload</span>
           </button>
         </div>
       </div>
@@ -85,28 +102,36 @@ export const FileUploader: React.FC<FileUploaderProps> = ({
         onChange={(e) => handleFiles(e.target.files)}
       />
 
-      {/* Clean File Chips Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+      {/* File Chips Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         {files.map((file) => (
           <div
             key={file.id}
-            className="flex items-center justify-between bg-gray-50/80 border border-gray-200 px-3 py-2 rounded-md text-xs"
+            className="group flex items-center justify-between bg-slate-50 hover:bg-slate-100/80 border border-slate-200 hover:border-slate-300 px-3.5 py-2.5 rounded-xl text-sm transition-all"
           >
-            <div className="flex items-center space-x-2 truncate">
-              {file.name.endsWith(".xlsx") || file.name.endsWith(".xls") ? (
-                <FileSpreadsheet className="w-4 h-4 text-emerald-600 shrink-0" />
-              ) : (
-                <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-              )}
+            <div className="flex items-center gap-2.5 truncate">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
+                isExcel(file.name) ? "bg-emerald-50" : "bg-blue-50"
+              }`}>
+                {isExcel(file.name) ? (
+                  <FileSpreadsheet className="w-4 h-4 text-emerald-600" />
+                ) : (
+                  <FileText className="w-4 h-4 text-blue-600" />
+                )}
+              </div>
               <div className="truncate">
-                <div className="font-medium text-gray-800 truncate font-mono text-[11px]">{file.name}</div>
-                <div className="text-[10px] text-gray-400 font-mono">{formatSize(file.size)}</div>
+                <div className="font-medium text-slate-800 truncate text-xs font-[family-name:var(--font-geist-mono)]">
+                  {file.name}
+                </div>
+                <div className="text-[11px] text-slate-400 font-[family-name:var(--font-geist-mono)]">
+                  {formatSize(file.size)}
+                </div>
               </div>
             </div>
             <button
               type="button"
               onClick={() => onRemoveFile(file.id)}
-              className="text-gray-400 hover:text-gray-600 p-1 ml-1"
+              className="text-slate-300 hover:text-red-500 p-1 ml-2 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
             >
               <X className="w-3.5 h-3.5" />
             </button>
