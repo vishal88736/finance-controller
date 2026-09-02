@@ -1,316 +1,292 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Navbar } from "@/components/Navbar";
+import React, { useState, useEffect, useCallback } from "react";
 import { ThreadSidebar } from "@/components/ThreadSidebar";
-import { DocumentDrawer } from "@/components/DocumentDrawer";
-import { WorkspaceHeader } from "@/components/WorkspaceHeader";
-import { MetricCards } from "@/components/MetricCards";
-import { ReconciliationTable } from "@/components/ReconciliationTable";
-import { ExceptionTable } from "@/components/ExceptionTable";
-import { ExceptionDetailModal } from "@/components/ExceptionDetailModal";
+import { DocumentWorkspace } from "@/components/DocumentWorkspace";
+import { ReconciliationControl } from "@/components/ReconciliationControl";
+import { OverviewCards } from "@/components/OverviewCards";
+import { ResultsView } from "@/components/ResultsView";
+import { ExceptionInvestigator } from "@/components/ExceptionInvestigator";
 import { EvaluationView } from "@/components/EvaluationView";
 import { ChatPanel } from "@/components/ChatPanel";
 import { AuditTrailView } from "@/components/AuditTrailView";
 import {
-  CheckCircle2,
-  AlertTriangle,
-  BarChart3,
-  MessageSquare,
-  ShieldCheck,
-  Menu,
-  FileText
+  CheckCircle2, AlertTriangle, BarChart3, MessageSquare, ShieldCheck,
+  Menu, FileText, WifiOff,
 } from "lucide-react";
 import {
-  api,
-  ThreadItem,
-  ThreadDocumentItem,
-  ReconciliationRunSummary,
-  MatchItem,
-  ExceptionItem,
-  EvaluationMetricData,
-  UploadOutcome
+  api, ThreadItem, ThreadDocumentItem, LatestRun, MatchItem, ExceptionItem,
 } from "@/lib/api";
 
+type Tab = "overview" | "matches" | "exceptions" | "evaluation" | "qa" | "audit";
+
 const TABS = [
-  { id: "matches" as const, label: "Reconciled Pairs", icon: CheckCircle2 },
-  { id: "exceptions" as const, label: "Exceptions & Fees", icon: AlertTriangle },
-  { id: "evaluation" as const, label: "Benchmark", icon: BarChart3 },
-  { id: "qa" as const, label: "Financial Copilot", icon: MessageSquare },
-  { id: "audit" as const, label: "Audit Trail", icon: ShieldCheck }
+  { id: "overview" as const, label: "Overview", icon: FileText },
+  { id: "matches" as const, label: "Matched", icon: CheckCircle2 },
+  { id: "exceptions" as const, label: "Exceptions", icon: AlertTriangle },
+  { id: "evaluation" as const, label: "Evaluation", icon: BarChart3 },
+  { id: "qa" as const, label: "Copilot", icon: MessageSquare },
+  { id: "audit" as const, label: "Audit", icon: ShieldCheck },
 ];
 
 export default function Home() {
-  // ── Thread State ──
+  // ── App state ──
   const [threads, setThreads] = useState<ThreadItem[]>([]);
-  const [activeThreadId, setActiveThreadId] = useState<string>("thr_default");
+  const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [docDrawerOpen, setDocDrawerOpen] = useState(false);
+  const [docsOpen, setDocsOpen] = useState(false);
+  const [backendDown, setBackendDown] = useState(false);
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
 
-  // ── Tab State ──
-  const [activeTab, setActiveTab] = useState<"matches" | "exceptions" | "evaluation" | "qa" | "audit">("matches");
-
-  // ── Workspace Prompt & Ingestion ──
-  const [prompt, setPrompt] = useState(
-    "Reconcile these financial records and identify anything that doesn't match."
-  );
+  // ── Thread data ──
   const [documents, setDocuments] = useState<ThreadDocumentItem[]>([]);
-  const [isRunning, setIsRunning] = useState(false);
-
-  // ── Reconciliation Results ──
-  const [runId, setRunId] = useState<string | null>(null);
-  const [summary, setSummary] = useState<ReconciliationRunSummary>({
-    total_records: 380,
-    matched_records: 154,
-    unmatched_records: 35,
-    exception_records: 35,
-    match_rate: 81.1,
-    accuracy: 96.9,
-    precision: 100.0,
-    recall: 96.2,
-    f1_score: 98.1,
-    processing_time_sec: 0.61,
-    throughput_records_sec: 622.5,
-    status: "COMPLETED"
-  });
-
-  const [matches, setMatches] = useState<MatchItem[]>([]);
-  const [totalMatches, setTotalMatches] = useState(154);
+  const [latestRun, setLatestRun] = useState<LatestRun | null>(null);
   const [matchCategory, setMatchCategory] = useState("ALL");
   const [matchSearch, setMatchSearch] = useState("");
-
-  const [exceptions, setExceptions] = useState<ExceptionItem[]>([]);
-  const [totalExceptions, setTotalExceptions] = useState(35);
+  const [matches, setMatches] = useState<MatchItem[]>([]);
+  const [totalMatches, setTotalMatches] = useState(0);
+  const [matchesLoading, setMatchesLoading] = useState(false);
   const [exceptionReason, setExceptionReason] = useState("ALL");
-  const [selectedException, setSelectedException] = useState<ExceptionItem | null>(null);
+  const [exceptionCategory, setExceptionCategory] = useState("ALL");
+  const [exceptions, setExceptions] = useState<ExceptionItem[]>([]);
+  const [totalExceptions, setTotalExceptions] = useState(0);
+  const [exceptionsLoading, setExceptionsLoading] = useState(false);
+  const [presetFilter, setPresetFilter] = useState<{ reason?: string; category?: string } | null>(null);
 
-  const [metrics, setMetrics] = useState<EvaluationMetricData | null>(null);
+  // ── Run state ──
+  const [isRunning, setIsRunning] = useState(false);
+  const [runError, setRunError] = useState<string | null>(null);
+  const [stepProgress, setStepProgress] = useState<string[]>([]);
+  const [runId, setRunId] = useState<string | null>(null);
 
-  // ── Initial Load: Fetch Threads ──
-  useEffect(() => {
-    async function initThreads() {
-      const list = await api.listThreads();
-      if (list.length > 0) {
-        setThreads(list);
-        setActiveThreadId(list[0].id);
-      } else {
-        const created = await api.createThread("Initial Reconciliation Thread");
-        setThreads([created]);
-        setActiveThreadId(created.id);
-      }
-    }
-    initThreads();
+  // ── Initial load ──
+  const refreshThreads = useCallback(async (): Promise<ThreadItem[]> => {
+    const list = await api.listThreads();
+    setThreads(list);
+    return list;
   }, []);
 
-  // ── Load Thread Context on Active Thread Change ──
   useEffect(() => {
-    if (!activeThreadId) return;
-    loadThreadData(activeThreadId);
-  }, [activeThreadId]);
+    (async () => {
+      try {
+        await api.health();
+        setBackendDown(false);
+        const list = await refreshThreads();
+        if (list.length > 0) {
+          setActiveThreadId(list[0].id);
+        } else {
+          const created = await api.createThread("My First Reconciliation");
+          setThreads([created]);
+          setActiveThreadId(created.id);
+        }
+      } catch {
+        setBackendDown(true);
+      }
+    })();
+  }, [refreshThreads]);
 
-  const loadThreadData = async (threadId: string) => {
-    // 1. Documents
-    const docs = await api.getDocuments(threadId);
-    setDocuments(docs);
+  const loadResults = useCallback(async (threadId: string, category: string, search: string) => {
+    setMatchesLoading(true);
+    try {
+      const res = await api.getResults(threadId, category, search);
+      setMatches(res.matches);
+      setTotalMatches(res.total);
+    } catch {
+      setMatches([]);
+      setTotalMatches(0);
+    } finally {
+      setMatchesLoading(false);
+    }
+  }, []);
 
-    // 2. Thread Overview & latest run
-    const th = await api.getThread(threadId);
-    if (th && th.latest_run) {
-      setRunId(th.latest_run.id);
-      setSummary({
-        total_records: th.latest_run.total_records || 380,
-        matched_records: th.latest_run.matched_count || 154,
-        unmatched_records: th.latest_run.exceptions_count || 35,
-        exception_records: th.latest_run.exceptions_count || 35,
-        match_rate: th.latest_run.match_rate || 81.1,
-        accuracy: th.latest_run.accuracy || 96.9,
-        precision: th.latest_run.precision || 100.0,
-        recall: th.latest_run.recall || 96.2,
-        f1_score: th.latest_run.f1_score || 98.1,
-        processing_time_sec: th.latest_run.processing_time_sec || 0.61,
-        throughput_records_sec: th.latest_run.throughput_records_sec || 622.5,
-        status: "COMPLETED"
-      });
+  const loadExceptions = useCallback(async (threadId: string, reason: string, category: string) => {
+    setExceptionsLoading(true);
+    try {
+      const res = await api.getExceptions(threadId, reason, category);
+      setExceptions(res.exceptions);
+      setTotalExceptions(res.total);
+    } catch {
+      setExceptions([]);
+      setTotalExceptions(0);
+    } finally {
+      setExceptionsLoading(false);
+    }
+  }, []);
+
+  // ── Load thread context ──
+  const loadThreadData = useCallback(async (threadId: string) => {
+    const th = await api.getThread(threadId).catch(() => null);
+
+    // Reset view state (after the await boundary) so stale data never leaks across threads
+    setMatchCategory("ALL");
+    setMatchSearch("");
+    setExceptionReason("ALL");
+    setExceptionCategory("ALL");
+    setPresetFilter(null);
+    setRunError(null);
+    setStepProgress([]);
+    setMatches([]);
+    setTotalMatches(0);
+    setExceptions([]);
+    setTotalExceptions(0);
+
+    if (!th) {
+      setDocuments([]);
+      setLatestRun(null);
+      return;
     }
 
-    // 3. Matches
-    try {
-      const mRes = await api.getResults(threadId, matchCategory, matchSearch);
-      if (mRes?.matches) {
-        setMatches(mRes.matches);
-        setTotalMatches(mRes.total || mRes.matches.length);
-      }
-    } catch (e) {}
+    setDocuments(th.documents || []);
+    setLatestRun(th.latest_run);
+    setRunId(th.latest_run?.id ?? null);
+    if (th.latest_run) void loadResults(threadId, "ALL", "");
+    void loadExceptions(threadId, "ALL", "ALL");
+  }, [loadResults, loadExceptions]);
 
-    // 4. Exceptions
-    try {
-      const eRes = await api.getExceptions(threadId, exceptionReason);
-      if (eRes?.exceptions) {
-        setExceptions(eRes.exceptions);
-        setTotalExceptions(eRes.total || eRes.exceptions.length);
-      }
-    } catch (e) {}
+  useEffect(() => {
+    if (activeThreadId) void loadThreadData(activeThreadId);
+  }, [activeThreadId, loadThreadData]);
 
-    // 5. Metrics
+  // ── Handlers ──
+  const handleCreateThread = async () => {
     try {
-      const m = await api.getMetrics(threadId);
-      if (m) setMetrics(m);
-    } catch (e) {}
-  };
-
-  const handleCreateNewThread = async () => {
-    const title = `Investigation #${threads.length + 1}`;
-    const newThread = await api.createThread(title);
-    setThreads((prev) => [newThread, ...prev]);
-    setActiveThreadId(newThread.id);
+      const t = await api.createThread(`Analysis ${new Date().toLocaleDateString()}`);
+      const list = await refreshThreads();
+      void list;
+      setActiveThreadId(t.id);
+      setActiveTab("overview");
+    } catch (e: any) {
+      setBackendDown(true);
+    }
   };
 
   const handleDeleteThread = async (id: string) => {
-    await api.deleteThread(id);
-    const remaining = threads.filter((t) => t.id !== id);
-    setThreads(remaining);
-    if (remaining.length > 0) {
-      setActiveThreadId(remaining[0].id);
-    } else {
-      handleCreateNewThread();
+    try {
+      await api.deleteThread(id);
+      const list = await refreshThreads();
+      if (activeThreadId === id) {
+        setActiveThreadId(list.length > 0 ? list[0].id : null);
+      }
+    } catch {
+      /* keep state; surface via backendDown only for hard failures */
     }
   };
 
-  const handleRunReconciliation = async (forceSynthetic = false) => {
-    setIsRunning(true);
+  const handleRenameThread = async (id: string, title: string) => {
     try {
-      const useSynthetic = forceSynthetic || documents.length === 0;
-      const res = await api.reconcileThread(activeThreadId, prompt, useSynthetic);
-      if (res.run_id) {
-        setRunId(res.run_id);
-      }
-      if (res.summary) {
-        setSummary({
-          total_records: res.summary.total_records || 380,
-          matched_records: res.summary.matched_count || 154,
-          unmatched_records: res.summary.exceptions_count || 35,
-          exception_records: res.summary.exceptions_count || 35,
-          match_rate: res.summary.match_rate || 81.1,
-          accuracy: res.summary.accuracy || 96.9,
-          precision: res.summary.precision || 100.0,
-          recall: res.summary.recall || 96.2,
-          f1_score: res.summary.f1_score || 98.1,
-          processing_time_sec: res.summary.processing_time_sec || 0.61,
-          throughput_records_sec: res.summary.throughput_records_sec || 622.5,
-          status: "COMPLETED"
-        });
-      }
+      await api.renameThread(id, title);
+      await refreshThreads();
+    } catch {
+      /* ignore */
+    }
+  };
 
-      await loadThreadData(activeThreadId);
-    } catch (err: any) {
-      console.error("Reconciliation execution error:", err);
+  const handleRunReconciliation = async () => {
+    if (!activeThreadId || isRunning) return;
+    setIsRunning(true);
+    setRunError(null);
+    setStepProgress([]);
+    try {
+      const res = await api.reconcileThread(activeThreadId);
+      if (res.run_id) setRunId(res.run_id);
+      if (res.step_progress) setStepProgress(res.step_progress);
+      const th = await api.getThread(activeThreadId);
+      setDocuments(th.documents || []);
+      setLatestRun(th.latest_run);
+      setRunId(th.latest_run?.id ?? res.run_id);
+      await Promise.all([
+        loadResults(activeThreadId, "ALL", ""),
+        loadExceptions(activeThreadId, "ALL", "ALL"),
+      ]);
+      await refreshThreads();
+    } catch (e: any) {
+      setRunError(e?.message || "Reconciliation failed.");
     } finally {
       setIsRunning(false);
     }
   };
 
-  const handleUploadFiles = async (files: File[]): Promise<{ uploaded_count: number; results: UploadOutcome[] }> => {
-    const res = await api.uploadDocuments(activeThreadId, files);
-    const updatedDocs = await api.getDocuments(activeThreadId);
-    setDocuments(updatedDocs);
-    return res;
+  const handleOpenRecord = (recordId: string) => {
+    setActiveTab("qa");
+    setDocsOpen(false);
+    // The chat input is pre-filled by a custom event the ChatPanel listens for
+    window.dispatchEvent(
+      new CustomEvent("copilot:ask", { detail: { question: `What is the status of ${recordId}?` } })
+    );
   };
 
-  const handleMatchSearch = async (query: string) => {
-    setMatchSearch(query);
-    const res = await api.getResults(activeThreadId, matchCategory, query);
-    setMatches(res.matches || []);
-    setTotalMatches(res.total || 0);
+  const jumpToExceptions = (filter?: { category?: string }) => {
+    setPresetFilter(filter?.category ? { category: filter.category } : null);
+    setExceptionCategory(filter?.category || "ALL");
+    setExceptionReason("ALL");
+    if (activeThreadId) void loadExceptions(activeThreadId, "ALL", filter?.category || "ALL");
+    setActiveTab("exceptions");
   };
 
-  const handleMatchCategory = async (cat: string) => {
-    setMatchCategory(cat);
-    const res = await api.getResults(activeThreadId, cat, matchSearch);
-    setMatches(res.matches || []);
-    setTotalMatches(res.total || 0);
-  };
+  const threadTitle = threads.find((t) => t.id === activeThreadId)?.title || "…";
 
-  const handleExceptionReason = async (reason: string) => {
-    setExceptionReason(reason);
-    const res = await api.getExceptions(activeThreadId, reason);
-    setExceptions(res.exceptions || []);
-    setTotalExceptions(res.total || 0);
-  };
-
-  const handleExportAuditSummary = () => {
-    const report = `AI Finance Controller - Reconciliation Audit Report
-Thread ID: ${activeThreadId}
-Run ID: ${runId || "run_latest"}
-Timestamp: ${new Date().toISOString()}
-Total Records Processed: ${summary.total_records}
-Reconciled Pairs: ${summary.matched_records}
-Honest Exceptions: ${summary.exception_records}
-Match Rate: ${summary.match_rate.toFixed(1)}%
-Ground Truth Accuracy: ${summary.accuracy.toFixed(1)}%
-Precision: ${summary.precision || 100.0}%
-Recall: ${summary.recall || 96.2}%
-Throughput: ${summary.throughput_records_sec.toFixed(0)} rec/sec in ${summary.processing_time_sec.toFixed(2)}s
-Status: COMPLETED
-`;
-    const blob = new Blob([report], { type: "text/plain;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `reconciliation_audit_${activeThreadId}.txt`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  const getTabBadge = (id: string) => {
-    switch (id) {
-      case "matches": return totalMatches;
-      case "exceptions": return totalExceptions;
-      case "evaluation": return `${summary.accuracy.toFixed(1)}%`;
-      default: return null;
-    }
-  };
+  // ── Backend-down screen ──
+  if (backendDown) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-page)] flex items-center justify-center p-6">
+        <div className="card max-w-md w-full p-10 text-center space-y-4">
+          <WifiOff className="w-12 h-12 mx-auto text-slate-300" />
+          <h1 className="text-lg font-bold text-slate-900">Backend unavailable</h1>
+          <p className="text-sm text-slate-500">
+            The Finance Controller API is not reachable. No cached or sample data is shown —
+            start the backend and retry.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all cursor-pointer"
+          >
+            Retry
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[var(--bg-page)] flex">
-      {/* ── Left Sidebar (ChatGPT-Style Threads) ── */}
       <ThreadSidebar
         threads={threads}
         activeThreadId={activeThreadId}
-        onSelectThread={(id) => setActiveThreadId(id)}
-        onCreateThread={handleCreateNewThread}
+        onSelectThread={(id) => {
+          setActiveThreadId(id);
+          setActiveTab("overview");
+        }}
+        onCreateThread={handleCreateThread}
         onDeleteThread={handleDeleteThread}
+        onRenameThread={handleRenameThread}
         isOpen={sidebarOpen}
-        onToggleOpen={() => setSidebarOpen((prev) => !prev)}
-        documentCount={documents.length}
-        onOpenDocumentPanel={() => setDocDrawerOpen(true)}
+        onToggleOpen={() => setSidebarOpen((p) => !p)}
       />
 
-      {/* ── Main Workspace Area ── */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top Navbar */}
+        {/* Top bar */}
         <header className="bg-white/80 backdrop-blur-xl border-b border-slate-200/80 sticky top-0 z-30">
-          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="max-w-[1400px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
               <button
                 onClick={() => setSidebarOpen((prev) => !prev)}
-                className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100"
+                className="lg:hidden p-2 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 cursor-pointer"
+                aria-label="Toggle sidebar"
               >
                 <Menu className="w-5 h-5" />
               </button>
-              <div className="flex items-center gap-2 text-sm">
-                <span className="font-bold text-slate-900">Finance Controller</span>
-                <span className="text-slate-300 font-light">/</span>
-                <span className="text-slate-600 font-medium font-mono truncate max-w-[180px] sm:max-w-none">
-                  {threads.find((t) => t.id === activeThreadId)?.title || activeThreadId}
+              <div className="flex items-center gap-2 text-sm min-w-0">
+                <span className="font-bold text-slate-900 shrink-0">Finance Controller</span>
+                <span className="text-slate-300 font-light shrink-0">/</span>
+                <span className="text-slate-600 font-medium font-mono truncate" title={threadTitle}>
+                  {threadTitle}
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              {/* Document Registry Button */}
+            <div className="flex items-center gap-2.5 shrink-0">
               <button
-                onClick={() => setDocDrawerOpen(true)}
+                onClick={() => setDocsOpen(true)}
                 className="flex items-center gap-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold px-3 py-2 rounded-lg transition-all shadow-xs cursor-pointer"
               >
                 <FileText className="w-3.5 h-3.5 text-blue-500" />
@@ -319,121 +295,248 @@ Status: COMPLETED
                   {documents.length}
                 </span>
               </button>
-
-              {/* Run Reconciliation Button */}
               <button
-                onClick={() => handleRunReconciliation(false)}
-                disabled={isRunning}
-                className="flex items-center gap-2 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all shadow-sm cursor-pointer active:scale-[0.98]"
+                onClick={handleRunReconciliation}
+                disabled={isRunning || documents.filter((d) => d.processing_status === "PROCESSED").length === 0}
+                className="flex items-center gap-2 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-semibold px-4 py-2 rounded-lg transition-all shadow-sm cursor-pointer active:scale-[0.98]"
               >
                 <CheckCircle2 className={`w-3.5 h-3.5 ${isRunning ? "animate-spin" : ""}`} />
-                <span>{isRunning ? "Reconciling..." : "Run Reconcile"}</span>
+                <span>{isRunning ? "Reconciling…" : "Run Reconciliation"}</span>
               </button>
             </div>
           </div>
         </header>
 
-        {/* Main Content Area */}
         <main className="max-w-[1400px] w-full mx-auto px-4 sm:px-8 py-6 space-y-6">
-          {/* Workspace Command Header */}
-          <WorkspaceHeader
-            prompt={prompt}
-            setPrompt={setPrompt}
-            onExecute={handleRunReconciliation}
-            isRunning={isRunning}
-          />
-
-          {/* Metric Cards */}
-          <MetricCards summary={summary} />
-
-          {/* ── Tabbed Workspace ── */}
-          <div className="space-y-4">
-            {/* Segmented Tab Controls */}
-            <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 w-fit overflow-x-auto">
-              {TABS.map((tab) => {
-                const Icon = tab.icon;
-                const isActive = activeTab === tab.id;
-                const badge = getTabBadge(tab.id);
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
-                      isActive
-                        ? "bg-white text-slate-900 shadow-sm font-semibold"
-                        : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-                    }`}
-                  >
-                    <Icon className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
-                    <span>{tab.label}</span>
-                    {badge !== null && (
-                      <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
-                        isActive ? "bg-blue-50 text-blue-700" : "bg-slate-200 text-slate-600"
-                      }`}>
-                        {badge}
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
+          {!activeThreadId ? (
+            <div className="card p-12 text-center text-sm text-slate-400">
+              Create or select an analysis thread to begin.
             </div>
+          ) : (
+            <>
+              <ReconciliationControl
+                documents={documents}
+                latestRun={latestRun}
+                isRunning={isRunning}
+                onRun={handleRunReconciliation}
+                runError={runError}
+                activeSteps={stepProgress}
+              />
 
-            {/* Tab Views */}
-            <div className="animate-fade-in">
-              {activeTab === "matches" && (
-                <ReconciliationTable
-                  matches={matches}
-                  totalMatches={totalMatches}
-                  onSearchChange={handleMatchSearch}
-                  onCategoryChange={handleMatchCategory}
-                  selectedCategory={matchCategory}
+              {activeTab === "overview" && (
+                <OverviewCards
+                  latestRun={latestRun}
+                  hasDocuments={documents.length > 0}
+                  documentCount={documents.length}
+                  onSelect={(tab, filter) => {
+                    if (tab === "documents") setDocsOpen(true);
+                    else if (tab === "matches") {
+                      loadResults(activeThreadId, matchCategory, matchSearch);
+                      setActiveTab("matches");
+                    } else if (tab === "exceptions") {
+                      jumpToExceptions(filter?.category ? { category: filter.category } : undefined);
+                    }
+                  }}
                 />
               )}
 
-              {activeTab === "exceptions" && (
-                <ExceptionTable
-                  exceptions={exceptions}
-                  totalExceptions={totalExceptions}
-                  onSelectException={(exc) => setSelectedException(exc)}
-                  onReasonChange={handleExceptionReason}
-                  selectedReason={exceptionReason}
-                />
-              )}
-
-              {activeTab === "evaluation" && (
-                <EvaluationView metrics={metrics} summary={summary} />
-              )}
-
-              {activeTab === "qa" && (
-                <div className="max-w-3xl mx-auto">
-                  <ChatPanel threadId={activeThreadId} runId={runId || undefined} />
+              {/* Tabs */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 w-fit overflow-x-auto" role="tablist">
+                  {TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = activeTab === tab.id;
+                    const badge =
+                      tab.id === "matches" ? (latestRun ? totalMatches.toLocaleString() : null)
+                      : tab.id === "exceptions" ? (latestRun && totalExceptions > 0 ? totalExceptions.toLocaleString() : null)
+                      : null;
+                    return (
+                      <button
+                        key={tab.id}
+                        role="tab"
+                        aria-selected={isActive}
+                        onClick={() => setActiveTab(tab.id)}
+                        className={`flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-medium transition-all cursor-pointer whitespace-nowrap ${
+                          isActive ? "bg-white text-slate-900 shadow-sm font-semibold" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
+                        }`}
+                      >
+                        <Icon className={`w-3.5 h-3.5 ${isActive ? "text-blue-600" : "text-slate-400"}`} />
+                        <span>{tab.label}</span>
+                        {badge !== null && (
+                          <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${isActive ? "bg-blue-50 text-blue-700" : "bg-slate-200 text-slate-600"}`}>
+                            {badge}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
                 </div>
-              )}
 
-              {activeTab === "audit" && (
-                <div className="max-w-3xl mx-auto">
-                  <AuditTrailView threadId={activeThreadId} />
+                <div className="animate-fade-in">
+                  {activeTab === "overview" && latestRun === null && documents.length === 0 && (
+                    <EmptyWorkspace onUpload={() => setDocsOpen(true)} />
+                  )}
+                  {activeTab === "overview" && latestRun === null && documents.length > 0 && (
+                    <PendingRunNotice onRun={handleRunReconciliation} disabled={isRunning} />
+                  )}
+                  {activeTab === "overview" && latestRun !== null && (
+                    <RunSummary latestRun={latestRun} onJumpExceptions={() => jumpToExceptions({ category: "MATERIAL" })} />
+                  )}
+
+                  {activeTab === "matches" && (
+                    <ResultsView
+                      matches={matches}
+                      totalMatches={totalMatches}
+                      onSearchChange={(q) => {
+                        setMatchSearch(q);
+                        if (activeThreadId) void loadResults(activeThreadId, matchCategory, q);
+                      }}
+                      onCategoryChange={(cat) => {
+                        setMatchCategory(cat);
+                        if (activeThreadId) void loadResults(activeThreadId, cat, matchSearch);
+                      }}
+                      selectedCategory={matchCategory}
+                      isLoading={matchesLoading}
+                    />
+                  )}
+
+                  {activeTab === "exceptions" && (
+                    <ExceptionInvestigator
+                      exceptions={exceptions}
+                      totalExceptions={totalExceptions}
+                      onReasonChange={(reason) => {
+                        setExceptionReason(reason);
+                        if (activeThreadId) void loadExceptions(activeThreadId, reason, exceptionCategory);
+                      }}
+                      selectedReason={exceptionReason}
+                      onCategoryChange={(cat) => {
+                        setExceptionCategory(cat);
+                        if (activeThreadId) void loadExceptions(activeThreadId, exceptionReason, cat);
+                      }}
+                      onOpenRecord={handleOpenRecord}
+                      isLoading={exceptionsLoading}
+                      presetFilter={presetFilter}
+                      onClearPreset={() => {
+                        setPresetFilter(null);
+                        setExceptionCategory("ALL");
+                        if (activeThreadId) void loadExceptions(activeThreadId, exceptionReason, "ALL");
+                      }}
+                    />
+                  )}
+
+                  {activeTab === "evaluation" && (
+                    <EvaluationView threadId={activeThreadId} hasRun={!!latestRun} />
+                  )}
+
+                  {activeTab === "qa" && (
+                    <div className="max-w-3xl mx-auto">
+                      <ChatPanel
+                        threadId={activeThreadId}
+                        runId={runId}
+                        onOpenRecord={handleOpenRecord}
+                        onReconciled={() => loadThreadData(activeThreadId)}
+                      />
+                    </div>
+                  )}
+
+                  {activeTab === "audit" && (
+                    <div className="max-w-3xl mx-auto">
+                      <AuditTrailView threadId={activeThreadId} />
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-          </div>
+              </div>
+            </>
+          )}
         </main>
       </div>
 
-      {/* Document Registry Drawer Modal */}
-      <DocumentDrawer
-        isOpen={docDrawerOpen}
-        onClose={() => setDocDrawerOpen(false)}
+      <DocumentWorkspace
+        isOpen={docsOpen}
+        onClose={() => setDocsOpen(false)}
+        threadId={activeThreadId || ""}
         documents={documents}
-        onUploadFiles={handleUploadFiles}
-        onLoadSyntheticBatch={handleRunReconciliation}
-      />
-
-      {/* Exception Detail Inspector Modal */}
-      <ExceptionDetailModal
-        exception={selectedException}
-        onClose={() => setSelectedException(null)}
+        onDocumentsChanged={() => {
+          if (activeThreadId) {
+            api.getThread(activeThreadId).then((th) => {
+              setDocuments(th.documents || []);
+              setLatestRun(th.latest_run);
+            }).catch(() => undefined);
+          }
+        }}
       />
     </div>
   );
 }
+
+/* ── Empty state ── */
+const EmptyWorkspace: React.FC<{ onUpload: () => void }> = ({ onUpload }) => (
+  <div className="card p-12 text-center space-y-4">
+    <div className="w-14 h-14 mx-auto bg-blue-50 rounded-2xl flex items-center justify-center">
+      <FileText className="w-7 h-7 text-blue-500" />
+    </div>
+    <h3 className="text-base font-bold text-slate-900">Start a new reconciliation</h3>
+    <p className="text-sm text-slate-500 max-w-md mx-auto leading-relaxed">
+      Upload your source documents — for example an internal ledger export and the corresponding
+      bank statement. The engine will parse, fingerprint, and reconcile them deterministically.
+    </p>
+    <button
+      onClick={onUpload}
+      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all cursor-pointer"
+    >
+      <FileText className="w-4 h-4" />
+      Upload documents
+    </button>
+  </div>
+);
+
+const PendingRunNotice: React.FC<{ onRun: () => void; disabled: boolean }> = ({ onRun, disabled }) => (
+  <div className="card p-8 text-center space-y-3">
+    <AlertTriangle className="w-10 h-10 mx-auto text-amber-400" />
+    <h3 className="text-sm font-bold text-slate-900">Documents ready — reconciliation pending</h3>
+    <p className="text-xs text-slate-500">
+      Your documents are parsed and fingerprinted. Run the reconciliation to produce matches and exceptions.
+    </p>
+    <button
+      onClick={onRun}
+      disabled={disabled}
+      className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all cursor-pointer"
+    >
+      <CheckCircle2 className="w-4 h-4" />
+      Run Reconciliation
+    </button>
+  </div>
+);
+
+const RunSummary: React.FC<{ latestRun: LatestRun; onJumpExceptions: () => void }> = ({ latestRun, onJumpExceptions }) => (
+  <div className="card p-5">
+    <div className="flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <div className="flex items-center gap-2">
+          <span className="pill bg-emerald-50 text-emerald-700 border border-emerald-200">Completed</span>
+          <span className="text-xs font-mono text-slate-400">run {latestRun.id}</span>
+        </div>
+        <h3 className="text-sm font-bold text-slate-900 mt-2">
+          {latestRun.matched_count.toLocaleString()} matched · {latestRun.exceptions_count.toLocaleString()} exceptions ·{" "}
+          {latestRun.match_rate.toFixed(1)}% match rate
+        </h3>
+        <p className="text-xs text-slate-500 mt-1">
+          {latestRun.total_records.toLocaleString()} records processed in {latestRun.processing_time_sec.toFixed(2)}s
+          {" "}({latestRun.throughput_records_sec.toFixed(0)} rec/s)
+          {latestRun.evaluated
+            ? " · evaluated against authorized benchmark ground truth"
+            : " · evaluation N/A (no authorized ground truth for user documents)"}
+        </p>
+      </div>
+      {latestRun.exceptions_count > 0 && (
+        <button
+          onClick={onJumpExceptions}
+          className="flex items-center gap-2 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all cursor-pointer"
+        >
+          <AlertTriangle className="w-4 h-4" />
+          Investigate {latestRun.exceptions_count} exception{latestRun.exceptions_count === 1 ? "" : "s"}
+        </button>
+      )}
+    </div>
+  </div>
+);

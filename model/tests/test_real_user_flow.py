@@ -93,7 +93,7 @@ def test_real_user_upload_reconciliation_and_qa_flow(db_session):
     # ── Step 4: Run Reconciliation on Actual Uploaded Documents ──
     rec_result = api_reconcile_thread(
         thread_id=thread_a.id,
-        req=ReconcileRequest(use_synthetic_batch=False),
+        req=ReconcileRequest(document_ids=None),
         db=db
     )
     assert rec_result["status"] == "success"
@@ -162,4 +162,4 @@ def test_real_user_upload_reconciliation_and_qa_flow(db_session):
         req=SendMessageRequest(content="What is the amount of TX_001?"),
         db=db
     )
-    assert "No record matching" in qa_b["assistant_message"]["content"] or "not found" in qa_b["assistant_message"]["content"].lower()
+    assert "No such transaction" in qa_b["assistant_message"]["content"] or "not enough" in qa_b["assistant_message"]["content"].lower()

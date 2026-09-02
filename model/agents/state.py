@@ -22,6 +22,7 @@ class ReconciliationState(TypedDict):
     step_progress: List[str]
     error: Optional[str]
     db_session: Optional[Any]
+    ground_truth: Optional[Any]  # explicit, authorized ground truth (dict or path) for benchmark runs only
 
 
 class QAState(TypedDict):
@@ -30,7 +31,8 @@ class QAState(TypedDict):
     question: str
     guardrail_passed: bool
     guardrail_refusal: Optional[str]
-    query_type: str  # SPECIFIC_RECORD, METRIC_QUERY, DISCREPANCY_QUERY, EXCEPTION_QUERY, MATERIAL_EXCEPTIONS, SUMMARY_QUERY, GENERAL
+    guardrail_layer: Optional[str]
+    query_type: str  # SPECIFIC_RECORD, METRIC_QUERY, DISCREPANCY_QUERY, EXCEPTION_QUERY, MATERIAL_EXCEPTIONS, SUMMARY_QUERY, DOCUMENT_QUERY, AMBIGUOUS_QUERY, GENERAL, OFF_TOPIC
     extracted_entities: List[str]
     extracted_record_ids: List[str]
     retrieved_records: List[Dict[str, Any]]
@@ -40,4 +42,5 @@ class QAState(TypedDict):
     evidence: Dict[str, Any]
     tools_called: List[str]
     answer: str
+    answer_source: str  # "deterministic" | "llm_validated" | "refusal"
     db_session: Optional[Any]

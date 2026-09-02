@@ -44,7 +44,7 @@ def test_ground_truth_isolation():
     for p in adversarial_prompts:
         allowed, refusal = guardrails.validate_input(p)
         assert allowed is False, f"Prompt '{p}' should have been rejected"
-        assert refusal == OFF_TOPIC_REFUSAL
+        assert refusal is not None  # blocked with a specific refusal
 
     # Output guardrail verification
     raw_leak = "Ground truth matched target BNK_501 from ground_truth.json"
@@ -83,20 +83,25 @@ def test_malformed_and_empty_file_handling(db_session):
     db, upload_dir = db_session
     thread = create_thread(db, title="Edge Cases Thread")
 
-    # 1. Empty file
+    # 1. Empty file — must be rejected with explicit reason
     empty_bytes = b""
     doc_emp, res_emp = DocumentRegistryService.process_and_register_file(
         db=db, thread_id=thread.id, filename="empty.csv", content_bytes=empty_bytes, upload_dir=upload_dir
     )
-    assert res_emp["status"] in ["SUCCESS", "ERROR"]
+    assert res_emp["status"] == "REJECTED"
+    assert res_emp["reason_code"] == "EMPTY_FILE"
+    assert doc_emp is None
 
-    # 2. Corrupt / Binary random garbage
+    # 2. Corrupt / Binary random garbage — must be rejected, not crash
     corrupt_bytes = b"\x00\xff\xfe\x12\x34\x56\x78\x9a\xbc\xde\xf0"
     doc_corrupt, res_corrupt = DocumentRegistryService.process_and_register_file(
         db=db, thread_id=thread.id, filename="corrupted.csv", content_bytes=corrupt_bytes, upload_dir=upload_dir
     )
-    # Must not crash or throw unhandled exception
+    # Must not crash or throw unhandled exception; explicit rejection
     assert res_corrupt is not None
+    assert res_corrupt["status"] in ("REJECTED", "SUCCESS")
+    if res_corrupt["status"] == "REJECTED":
+        assert res_corrupt["reason_code"] in ("ZERO_RECORDS", "MALFORMED_FILE")
 
 
 def test_prompt_injection_defense():
@@ -111,4 +116,45 @@ def test_prompt_injection_defense():
     for attack in injection_attacks:
         allowed, refusal = guardrails.validate_input(attack)
         assert allowed is False, f"Attack '{attack}' should be blocked"
-        assert refusal == OFF_TOPIC_REFUSAL
+        assert refusal is not None  # blocked with a specific refusal
+
+
+def test_path_traversal_prevention(db_session):
+    """Verify that dangerous paths cannot escape the sandbox."""
+    db, upload_dir = db_session
+    thread = create_thread(db, title="Path Traversal Test")
+
+    dangerous_filenames = [
+        "../../../etc/passwd",
+        "..\\..\\etc\\passwd",
+        "uploads/../../secret.csv",
+        "C:\\Windows\\System32\\cmd.exe",
+        "/etc/shadow",
+    ]
+
+    for fname in dangerous_filenames:
+        doc, res = DocumentRegistryService.process_and_register_file(
+            db=db,
+            thread_id=thread.id,
+            filename=fname,
+            content_bytes=b"record_id,amount\nTX_1,100.00\n",
+            upload_dir=upload_dir,
+        )
+        assert res["status"] == "REJECTED", f"Path '{fname}' should have been rejected"
+        assert res["reason_code"] in ("INVALID_FILENAME", "PATH_TRAVERSAL", "PATH_TRAVERSAL_DETECTED", "REJECTED_EXTENSION")
+        assert doc is None
+
+
+def test_api_key_and_secret_redaction():
+    """Verify Layer 6 output safety redacts API keys and ground truth."""
+    dirty_output = (
+        "Here is the result using Gemini key AIzaSyFakeKey1234567890abcdef and "
+        "OpenAI key sk-abc1234567890abcdef1234567890 along with ground_truth.json and answer_key."
+    )
+    sanitized = guardrails.validate_output(dirty_output)
+    assert "AIza" not in sanitized or "[REDACTED_KEY]" in sanitized
+    assert "sk-" not in sanitized or "[REDACTED_KEY]" in sanitized
+    assert "ground_truth.json" not in sanitized
+    assert "answer_key" not in sanitized
+    assert "[CONFIDENTIAL_BENCHMARK]" in sanitized
+

@@ -1,19 +1,33 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, MessageSquare, Trash2, Edit2, Check, X, Shield, Layers, FileText } from "lucide-react";
+import { Plus, Trash2, Check, X, Shield, FileText, MessageSquare, Pencil, Layers } from "lucide-react";
 import { ThreadItem } from "@/lib/api";
 
 interface ThreadSidebarProps {
   threads: ThreadItem[];
-  activeThreadId: string;
+  activeThreadId: string | null;
   onSelectThread: (id: string) => void;
   onCreateThread: () => void;
   onDeleteThread: (id: string) => void;
+  onRenameThread: (id: string, title: string) => void;
   isOpen: boolean;
   onToggleOpen: () => void;
-  documentCount?: number;
-  onOpenDocumentPanel?: () => void;
+  disabled?: boolean;
+}
+
+function groupLabel(dateStr?: string): string {
+  if (!dateStr) return "Earlier";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return "Earlier";
+  const now = new Date();
+  const day = 86400000;
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const t = d.getTime();
+  if (t >= midnight) return "Today";
+  if (t >= midnight - day) return "Yesterday";
+  if (t >= midnight - 7 * day) return "Previous 7 days";
+  return "Earlier";
 }
 
 export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
@@ -22,18 +36,42 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
   onSelectThread,
   onCreateThread,
   onDeleteThread,
+  onRenameThread,
   isOpen,
   onToggleOpen,
-  documentCount = 0,
-  onOpenDocumentPanel
+  disabled = false,
 }) => {
+  const [renamingId, setRenamingId] = useState<string | null>(null);
+  const [renameValue, setRenameValue] = useState("");
+
+  const startRename = (t: ThreadItem) => {
+    setRenamingId(t.id);
+    setRenameValue(t.title);
+  };
+
+  const commitRename = (id: string) => {
+    const title = renameValue.trim();
+    if (title) onRenameThread(id, title);
+    setRenamingId(null);
+  };
+
+  // Group threads by activity date
+  const groups: { label: string; threads: ThreadItem[] }[] = [];
+  for (const t of threads) {
+    const label = groupLabel(t.updated_at || t.created_at);
+    const g = groups.find((x) => x.label === label);
+    if (g) g.threads.push(t);
+    else groups.push({ label, threads: [t] });
+  }
+
   return (
     <aside
       className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-slate-900 text-slate-200 flex flex-col border-r border-slate-800 transition-transform duration-300 ${
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       }`}
+      aria-label="Threads"
     >
-      {/* Brand Header */}
+      {/* Brand */}
       <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md shadow-blue-500/20">
@@ -41,99 +79,180 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
           </div>
           <div>
             <span className="font-bold text-white text-sm">Finance Controller</span>
-            <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-medium">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Deterministic Core</span>
-            </div>
+            <div className="text-[10px] text-slate-500 font-medium">Reconciliation Workspace</div>
           </div>
         </div>
         <button
           onClick={onToggleOpen}
           className="lg:hidden text-slate-400 hover:text-white p-1 rounded-md"
+          aria-label="Close sidebar"
         >
           <X className="w-4 h-4" />
         </button>
       </div>
 
-      {/* New Chat Button */}
+      {/* New Analysis */}
       <div className="p-3">
         <button
           onClick={onCreateThread}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-blue-600/20 cursor-pointer active:scale-[0.98]"
+          disabled={disabled}
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-blue-600/20 cursor-pointer active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
-          <span>New Thread</span>
+          <span>New Analysis</span>
         </button>
       </div>
 
-      {/* Thread List */}
-      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-1">
-        <div className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider px-2.5 py-1">
-          Recent Threads
-        </div>
-
+      {/* Thread list grouped by date */}
+      <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-4" role="list">
         {threads.length === 0 ? (
           <div className="px-3 py-6 text-center text-xs text-slate-500">
-            No threads yet. Click &quot;New Thread&quot; to begin.
+            No threads yet. Click &quot;New Analysis&quot; to begin.
           </div>
         ) : (
-          threads.map((t) => {
-            const isActive = t.id === activeThreadId;
-            return (
-              <div
-                key={t.id}
-                onClick={() => onSelectThread(t.id)}
-                className={`group flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium cursor-pointer transition-all ${
-                  isActive
-                    ? "bg-slate-800 text-white shadow-xs font-semibold"
-                    : "text-slate-400 hover:bg-slate-800/60 hover:text-slate-200"
-                }`}
-              >
-                <div className="flex items-center gap-2.5 truncate">
-                  <MessageSquare className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-blue-400" : "text-slate-500"}`} />
-                  <span className="truncate">{t.title}</span>
-                </div>
-
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (threads.length > 1) {
-                        onDeleteThread(t.id);
+          groups.map((group) => (
+            <div key={group.label} className="space-y-1">
+              <div className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider px-2.5 py-1">
+                {group.label}
+              </div>
+              {group.threads.map((t) => {
+                const isActive = t.id === activeThreadId;
+                const isRenaming = renamingId === t.id;
+                const runStatus = t.latest_run_status?.status;
+                const excCount = t.latest_run_status?.exceptions_count;
+                return (
+                  <div
+                    key={t.id}
+                    role="listitem"
+                    onClick={() => !isRenaming && onSelectThread(t.id)}
+                    onKeyDown={(e) => {
+                      if (!isRenaming && (e.key === "Enter" || e.key === " ")) {
+                        e.preventDefault();
+                        onSelectThread(t.id);
                       }
                     }}
-                    className="p-1 hover:text-red-400 rounded transition-colors"
-                    title="Delete thread"
+                    tabIndex={0}
+                    className={`group px-3 py-2.5 rounded-xl transition-all outline-none ${
+                      isActive
+                        ? "bg-slate-800 shadow-xs"
+                        : "hover:bg-slate-800/60 cursor-pointer"
+                    }`}
                   >
-                    <Trash2 className="w-3 h-3" />
-                  </button>
-                </div>
-              </div>
-            );
-          })
+                    {isRenaming ? (
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          autoFocus
+                          value={renameValue}
+                          onChange={(e) => setRenameValue(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") commitRename(t.id);
+                            if (e.key === "Escape") setRenamingId(null);
+                          }}
+                          className="flex-1 bg-slate-950 border border-blue-500 rounded-lg px-2 py-1 text-xs text-white focus:outline-none min-w-0"
+                          aria-label="Rename thread"
+                        />
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            commitRename(t.id);
+                          }}
+                          className="p-1 text-emerald-400 hover:text-emerald-300"
+                          aria-label="Save name"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRenamingId(null);
+                          }}
+                          className="p-1 text-slate-400 hover:text-white"
+                          aria-label="Cancel rename"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <MessageSquare
+                              className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-blue-400" : "text-slate-500"}`}
+                            />
+                            <span
+                              className={`truncate text-xs ${
+                                isActive ? "text-white font-semibold" : "text-slate-300 font-medium"
+                              }`}
+                            >
+                              {t.title}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 mt-1.5 pl-6 text-[10px] text-slate-500">
+                            {typeof t.document_count === "number" && (
+                              <span className="inline-flex items-center gap-1">
+                                <FileText className="w-3 h-3" />
+                                {t.document_count} doc{t.document_count === 1 ? "" : "s"}
+                              </span>
+                            )}
+                            {runStatus && (
+                              <span
+                                className={`inline-flex items-center gap-1 font-medium ${
+                                  runStatus === "COMPLETED"
+                                    ? excCount && excCount > 0
+                                      ? "text-amber-400"
+                                      : "text-emerald-400"
+                                    : "text-blue-400"
+                                }`}
+                              >
+                                <Layers className="w-3 h-3" />
+                                {runStatus === "COMPLETED"
+                                  ? excCount && excCount > 0
+                                    ? `${excCount} exception${excCount === 1 ? "" : "s"}`
+                                    : "Completed"
+                                  : runStatus.toLowerCase()}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startRename(t);
+                            }}
+                            className="p-1 text-slate-400 hover:text-blue-300 rounded transition-colors"
+                            title="Rename thread"
+                            aria-label={`Rename ${t.title}`}
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onDeleteThread(t.id);
+                            }}
+                            className="p-1 text-slate-400 hover:text-red-400 rounded transition-colors"
+                            title="Delete thread"
+                            aria-label={`Delete ${t.title}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          ))
         )}
       </div>
 
-      {/* Footer Info / Document Registry Button */}
-      <div className="p-3 border-t border-slate-800/80 space-y-2">
-        {onOpenDocumentPanel && (
-          <button
-            onClick={onOpenDocumentPanel}
-            className="w-full flex items-center justify-between px-3 py-2 bg-slate-800/80 hover:bg-slate-800 rounded-xl text-xs text-slate-300 font-medium transition-all cursor-pointer"
-          >
-            <div className="flex items-center gap-2">
-              <FileText className="w-3.5 h-3.5 text-blue-400" />
-              <span>Document Registry</span>
-            </div>
-            <span className="bg-slate-700 text-slate-300 text-[10px] font-bold px-2 py-0.5 rounded-full">
-              {documentCount}
-            </span>
-          </button>
-        )}
-
+      {/* Footer */}
+      <div className="p-3 border-t border-slate-800/80">
         <div className="flex items-center gap-2 px-2 text-[11px] text-slate-500">
           <Shield className="w-3.5 h-3.5 text-slate-400" />
-          <span>Strict Thread Isolation</span>
+          <span>Strict thread isolation enforced</span>
         </div>
       </div>
     </aside>

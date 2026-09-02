@@ -115,4 +115,8 @@ def test_get_reconciliation_summary(test_db):
     summary = get_reconciliation_summary_tool(test_db, thread_id="thr_qa_test")
     assert summary["matched_count"] == 85
     assert summary["match_rate"] == 85.0
-    assert summary["precision"] == 100.0
+    # Evaluation metrics are never fabricated for non-benchmark runs
+    assert summary["evaluated"] is False
+    assert summary["precision"] is None
+    assert summary["recall"] is None
+    assert summary["f1_score"] is None

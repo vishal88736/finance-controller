@@ -1,30 +1,39 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Send, Copy, Check, Sparkles, User, ShieldAlert } from "lucide-react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
+import { Send, Copy, Check, Sparkles, User, ShieldAlert, Wrench, Link2, RefreshCw } from "lucide-react";
 import { api, MessageItem } from "@/lib/api";
 
 interface ChatPanelProps {
   threadId: string;
-  runId?: string;
+  runId?: string | null;
+  onOpenRecord?: (recordId: string) => void;
+  onReconciled?: () => void;
 }
 
-// ── Rich Markdown Renderer for Financial QA Messages ──
-const FormattedMessage: React.FC<{ content: string; isUser: boolean }> = ({ content, isUser }) => {
-  const parseInline = (text: string): React.ReactNode[] => {
+// Evidence reference parsed from answers like `TXN-1023` — clickable
+const ID_PATTERN = /\b([A-Za-z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)+)\b/;
+
+interface EvidenceRef {
+  id: string;
+}
+
+/* ── Rich markdown-ish renderer (bold, code, lists, headers) ── */
+const FormattedMessage: React.FC<{ content: string; isUser: boolean; onOpenRecord?: (id: string) => void }> = ({
+  content,
+  isUser,
+  onOpenRecord,
+}) => {
+  const renderInline = (text: string): React.ReactNode[] => {
     const parts: React.ReactNode[] = [];
     let remaining = text;
     let keyIdx = 0;
 
     while (remaining.length > 0) {
-      // 1. Bold: **text**
       const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-      // 2. Inline Code: `code`
       const codeMatch = remaining.match(/`(.+?)`/);
-      // 3. Italic: *text* or _text_
-      const italicMatch = remaining.match(/(?<!\*)\*([^*]+?)\*(?!\*)|(?<!_)_([^_]+?)_(?!_)/);
 
-      let earliest: { index: number; length: number; type: "bold" | "code" | "italic"; matchText: string } | null = null;
+      let earliest: { index: number; length: number; type: "bold" | "code"; matchText: string } | null = null;
 
       if (boldMatch && boldMatch.index !== undefined) {
         earliest = { index: boldMatch.index, length: boldMatch[0].length, type: "bold", matchText: boldMatch[1] };
@@ -32,60 +41,55 @@ const FormattedMessage: React.FC<{ content: string; isUser: boolean }> = ({ cont
       if (codeMatch && codeMatch.index !== undefined && (!earliest || codeMatch.index < earliest.index)) {
         earliest = { index: codeMatch.index, length: codeMatch[0].length, type: "code", matchText: codeMatch[1] };
       }
-      if (italicMatch && italicMatch.index !== undefined && (!earliest || italicMatch.index < earliest.index)) {
-        earliest = {
-          index: italicMatch.index,
-          length: italicMatch[0].length,
-          type: "italic",
-          matchText: italicMatch[1] || italicMatch[2]
-        };
-      }
 
       if (!earliest) {
+        // look for clickable record ids in the tail (local regex instance — safe for concurrency)
+        const idMatch = remaining.match(new RegExp(ID_PATTERN.source));
+        if (idMatch && onOpenRecord) {
+          const id = idMatch[1];
+          const idx = remaining.indexOf(idMatch[0]);
+          if (idx > 0) parts.push(remaining.substring(0, idx));
+          parts.push(
+            <button
+              key={`id_${keyIdx++}`}
+              onClick={() => onOpenRecord(id)}
+              className={`font-mono font-semibold underline decoration-dotted underline-offset-2 hover:text-blue-700 transition-colors cursor-pointer ${
+                isUser ? "text-blue-100" : "text-blue-600"
+              }`}
+              title={`Open ${id}`}
+            >
+              {id}
+            </button>
+          );
+          remaining = remaining.substring(idx + idMatch[0].length);
+          continue;
+        }
         parts.push(remaining);
         break;
       }
 
-      if (earliest.index > 0) {
-        parts.push(remaining.substring(0, earliest.index));
-      }
-
+      if (earliest.index > 0) parts.push(remaining.substring(0, earliest.index));
       if (earliest.type === "bold") {
+        const inner = renderInline(earliest.matchText);
         parts.push(
-          <strong
-            key={`b_${keyIdx++}`}
-            className={isUser ? "font-bold text-white" : "font-semibold text-slate-900"}
-          >
-            {earliest.matchText}
+          <strong key={`b_${keyIdx++}`} className={isUser ? "font-bold text-white" : "font-semibold text-slate-900"}>
+            {inner}
           </strong>
         );
-      } else if (earliest.type === "code") {
+      } else {
         parts.push(
           <code
             key={`c_${keyIdx++}`}
             className={`px-1.5 py-0.5 rounded font-mono text-[11px] font-semibold ${
-              isUser
-                ? "bg-blue-700/80 text-blue-100"
-                : "bg-slate-100 text-blue-700 border border-slate-200/80"
+              isUser ? "bg-blue-700/80 text-blue-100" : "bg-slate-100 text-blue-700 border border-slate-200/80"
             }`}
           >
             {earliest.matchText}
           </code>
         );
-      } else if (earliest.type === "italic") {
-        parts.push(
-          <em
-            key={`i_${keyIdx++}`}
-            className={isUser ? "italic text-blue-100" : "italic text-slate-500"}
-          >
-            {earliest.matchText}
-          </em>
-        );
       }
-
       remaining = remaining.substring(earliest.index + earliest.length);
     }
-
     return parts;
   };
 
@@ -108,113 +112,79 @@ const FormattedMessage: React.FC<{ content: string; isUser: boolean }> = ({ cont
 
   lines.forEach((line, idx) => {
     const trimmed = line.trim();
-
-    // Empty line
     if (!trimmed) {
       flushList(idx);
       elements.push(<div key={`blank_${idx}`} className="h-1.5" />);
       return;
     }
 
-    // Header: ### or ## or #
     const headerMatch = trimmed.match(/^(#{1,3})\s+(.*)$/);
     if (headerMatch) {
       flushList(idx);
-      const level = headerMatch[1].length;
-      const title = headerMatch[2];
       elements.push(
-        <h4
-          key={`head_${idx}`}
-          className={`font-bold mt-2.5 mb-1.5 ${
-            level === 1 ? "text-base" : "text-sm"
-          } ${isUser ? "text-white" : "text-slate-900"}`}
-        >
-          {parseInline(title)}
+        <h4 key={`head_${idx}`} className={`font-bold mt-2.5 mb-1.5 ${headerMatch[1].length === 1 ? "text-base" : "text-sm"} ${isUser ? "text-white" : "text-slate-900"}`}>
+          {renderInline(headerMatch[2])}
         </h4>
       );
       return;
     }
 
-    // Bullet line: starts with "- " or "* " or "• "
     if (trimmed.startsWith("- ") || trimmed.startsWith("* ") || trimmed.startsWith("• ")) {
       inList = true;
-      const bulletText = trimmed.substring(2);
       currentList.push(
         <li key={`li_${idx}`} className="flex items-start gap-2 text-xs leading-relaxed">
-          <span
-            className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${
-              isUser ? "bg-blue-200" : "bg-blue-500"
-            }`}
-          />
-          <span className="flex-1">{parseInline(bulletText)}</span>
+          <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isUser ? "bg-blue-200" : "bg-blue-500"}`} />
+          <span className="flex-1">{renderInline(trimmed.substring(2))}</span>
         </li>
       );
       return;
     }
 
-    // Regular paragraph line
     flushList(idx);
     elements.push(
       <p key={`p_${idx}`} className="leading-relaxed">
-        {parseInline(trimmed)}
+        {renderInline(trimmed)}
       </p>
     );
   });
 
   flushList("end");
-
   return <div className="space-y-1">{elements}</div>;
 };
 
-export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
-  const [messages, setMessages] = useState<MessageItem[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Finance Operations Copilot ready for this thread. I query only verified reconciliation records, fee deductions, and benchmark metrics in the database. Ask any question about transactions, exceptions, or reconciliation accuracy."
-    }
-  ]);
+export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRecord, onReconciled }) => {
+  const [messages, setMessages] = useState<MessageItem[]>([]);
+  const [messagesError, setMessagesError] = useState<string | null>(null);
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [suggestionsState, setSuggestionsState] = useState<string>("NO_DOCUMENTS");
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [lastToolActivity, setLastToolActivity] = useState<string[] | null>(null);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
+  const [needsReconcileMsg, setNeedsReconcileMsg] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const sampleQuestions = [
-    "Why wasn't TXN-LEDGER-1184 matched?",
-    "Show all payment gateway fee deductions",
-    "What is our overall accuracy vs ground truth?",
-    "Show me the most serious material exceptions",
-    "Write me a poem"
-  ];
-
-  // Load thread messages on mount or threadId change
-  useEffect(() => {
-    async function loadHistory() {
-      if (!threadId) return;
-      const history = await api.getMessages(threadId);
-      if (history.length > 0) {
-        setMessages(history);
-      } else {
-        setMessages([
-          {
-            id: `welcome_${threadId}`,
-            role: "assistant",
-            content:
-              "Finance Operations Copilot ready for this thread. I query only verified reconciliation records, fee deductions, and benchmark metrics in the database. Ask any question about transactions, exceptions, or reconciliation accuracy."
-          }
-        ]);
-      }
+  const loadHistory = useCallback(async () => {
+    setMessagesError(null);
+    try {
+      const [history, sugg] = await Promise.all([
+        api.getMessages(threadId),
+        api.getSuggestions(threadId),
+      ]);
+      setMessages(history);
+      setSuggestions(sugg.suggestions || []);
+      setSuggestionsState(sugg.state);
+    } catch (e: any) {
+      setMessagesError(e?.message || "Could not load conversation.");
     }
-    loadHistory();
   }, [threadId]);
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  useEffect(() => {
+    loadHistory();
+  }, [threadId, loadHistory]);
 
   useEffect(() => {
-    scrollToBottom();
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
 
   const copyMessage = (id: string, text: string) => {
@@ -231,28 +201,46 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
       id: `temp_user_${Date.now()}`,
       role: "user",
       content: question,
-      created_at: new Date().toISOString()
+      created_at: new Date().toISOString(),
     };
-
     setMessages((prev) => [...prev, tempUserMsg]);
     setInput("");
     setIsLoading(true);
+    setLastToolActivity(null);
+    setNeedsReconcileMsg(false);
 
     try {
-      const response = await api.sendMessage(threadId, question, runId);
-      if (response && response.assistant_message) {
-        setMessages((prev) => [
-          ...prev.filter((m) => m.id !== tempUserMsg.id),
-          response.user_message,
-          response.assistant_message
-        ]);
+      const response = await api.sendMessage(threadId, question, runId || undefined);
+      setMessages((prev) => [
+        ...prev.filter((m) => m.id !== tempUserMsg.id),
+        response.user_message,
+        response.assistant_message,
+      ]);
+      if (response.intent === "RECONCILIATION" && onReconciled) onReconciled();
+
+      // Surface tool activity when present
+      const meta = response.assistant_message?.metadata;
+      if (meta?.tools_called?.length) {
+        setLastToolActivity(meta.tools_called);
       }
-    } catch (err: any) {
+      if (response.intent === "QA") {
+        // refresh suggestions (thread state may have changed after reconciliation chat)
+        api
+          .getSuggestions(threadId)
+          .then((s) => {
+            setSuggestions(s.suggestions || []);
+            setSuggestionsState(s.state);
+          })
+          .catch(() => undefined);
+      }
+    } catch (e: any) {
       const errorMsg: MessageItem = {
         id: `err_${Date.now()}`,
         role: "assistant",
-        content: "I can help with reconciliation, settlement analysis, financial exceptions, and questions about the data in this thread.",
-        created_at: new Date().toISOString()
+        content:
+          e?.message ||
+          "I couldn't reach the reconciliation service. Please retry — I won't guess financial answers.",
+        created_at: new Date().toISOString(),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -260,8 +248,24 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
     }
   };
 
+  // External "ask copilot" requests (e.g., from evidence links elsewhere in the app).
+  // Latest-ref pattern keeps the listener stable while always invoking the
+  // current closure of handleSend.
+  const handleSendRef = useRef(handleSend);
+  useEffect(() => {
+    handleSendRef.current = handleSend;
+  });
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.question) void handleSendRef.current(detail.question);
+    };
+    window.addEventListener("copilot:ask", handler as EventListener);
+    return () => window.removeEventListener("copilot:ask", handler as EventListener);
+  }, []);
+
   return (
-    <div className="card flex flex-col h-[560px] overflow-hidden">
+    <div className="card flex flex-col h-[640px] overflow-hidden">
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
@@ -269,35 +273,52 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <span className="text-sm font-semibold text-slate-900">Financial QA Copilot</span>
+            <span className="text-sm font-semibold text-slate-900">Financial Copilot</span>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span className="relative flex h-1.5 w-1.5">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60"></span>
                 <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
               </span>
-              <span className="text-[11px] text-slate-400 font-mono">Thread: {threadId}</span>
+              <span className="text-[11px] text-slate-400 font-mono">Evidence-grounded · thread {threadId}</span>
             </div>
           </div>
         </div>
+        <button
+          onClick={loadHistory}
+          className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
+          aria-label="Reload conversation"
+          title="Reload conversation"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
       </div>
 
-      {/* Message List */}
+      {/* Message list */}
       <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4 bg-slate-50/40">
+        {messagesError && (
+          <div className="mx-auto max-w-md bg-red-50 border border-red-200 text-red-800 rounded-xl px-4 py-3 text-xs text-center">
+            <div className="font-semibold mb-1">Conversation unavailable</div>
+            {messagesError}
+            <button onClick={loadHistory} className="mt-2 block mx-auto text-red-700 underline font-medium cursor-pointer">
+              Retry
+            </button>
+          </div>
+        )}
+
+        {!messagesError && messages.length === 0 && (
+          <div className="text-center py-12 text-xs text-slate-400 space-y-2">
+            <Sparkles className="w-8 h-8 mx-auto text-slate-200" />
+            <div>Ask about this thread&apos;s transactions, exceptions, or reconciliation results.</div>
+          </div>
+        )}
+
         {messages.map((m) => {
-          const isGuardrail = m.content.includes("I can help with reconciliation, settlement analysis");
+          const isGuardrail = m.metadata?.intent === "OFF_TOPIC" || m.metadata?.answer_source === "refusal";
           return (
-            <div
-              key={m.id}
-              className={`flex items-start gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""} animate-slide-up`}
-            >
-              {/* Avatar */}
+            <div key={m.id} className={`flex items-start gap-2.5 ${m.role === "user" ? "flex-row-reverse" : ""} animate-slide-up`}>
               <div
                 className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
-                  m.role === "user"
-                    ? "bg-blue-600"
-                    : isGuardrail
-                    ? "bg-amber-500 text-white"
-                    : "bg-white border border-slate-200 shadow-xs"
+                  m.role === "user" ? "bg-blue-600" : isGuardrail ? "bg-amber-500 text-white" : "bg-white border border-slate-200 shadow-xs"
                 }`}
               >
                 {m.role === "user" ? (
@@ -309,31 +330,38 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
                 )}
               </div>
 
-              {/* Message Bubble */}
-              <div
-                className={`max-w-[82%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
-                  m.role === "user"
-                    ? "bg-blue-600 text-white"
-                    : isGuardrail
+              <div className={`max-w-[82%] rounded-xl px-4 py-3 text-sm leading-relaxed ${
+                m.role === "user"
+                  ? "bg-blue-600 text-white"
+                  : isGuardrail
                     ? "bg-amber-50 border border-amber-200 text-amber-900"
                     : "bg-white text-slate-800 border border-slate-200 shadow-xs"
-                }`}
-              >
-                <FormattedMessage content={m.content} isUser={m.role === "user"} />
+              }`}>
+                <FormattedMessage content={m.content} isUser={m.role === "user"} onOpenRecord={onOpenRecord} />
 
-                <div
-                  className={`flex items-center justify-between pt-2 mt-2 border-t text-[11px] ${
-                    m.role === "user"
-                      ? "border-blue-500/30 text-blue-200"
-                      : isGuardrail
+                {m.role === "assistant" && (m.metadata?.tools_called?.length ?? 0) > 0 && (
+                  <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-slate-100 text-[10px] text-slate-400 flex-wrap">
+                    <Wrench className="w-3 h-3" />
+                    {(m.metadata?.tools_called ?? []).map((t: string) => (
+                      <code key={t} className="bg-slate-100 border border-slate-200 rounded px-1 py-0.5 font-mono">
+                        {t.replace("_tool", "")}
+                      </code>
+                    ))}
+                  </div>
+                )}
+
+                <div className={`flex items-center justify-between pt-2 mt-2 border-t text-[11px] ${
+                  m.role === "user"
+                    ? "border-blue-500/30 text-blue-200"
+                    : isGuardrail
                       ? "border-amber-200 text-amber-700"
                       : "border-slate-100 text-slate-400"
-                  }`}
-                >
+                }`}>
                   <span>
-                    {m.created_at
-                      ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-                      : ""}
+                    {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
+                    {m.role === "assistant" && m.metadata?.answer_source === "llm_validated" && (
+                      <span className="ml-1.5" title="LLM answer validated against retrieved evidence">· verified</span>
+                    )}
                   </span>
                   {m.role === "assistant" && (
                     <button
@@ -342,13 +370,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
                       className="hover:text-blue-600 flex items-center gap-1 cursor-pointer transition-colors"
                     >
                       {copiedMsgId === m.id ? (
-                        <span className="text-emerald-600 flex items-center gap-0.5">
-                          <Check className="w-3 h-3" /> Copied
-                        </span>
+                        <span className="text-emerald-600 flex items-center gap-0.5"><Check className="w-3 h-3" /> Copied</span>
                       ) : (
-                        <span className="flex items-center gap-0.5">
-                          <Copy className="w-3 h-3" /> Copy
-                        </span>
+                        <span className="flex items-center gap-0.5"><Copy className="w-3 h-3" /> Copy</span>
                       )}
                     </button>
                   )}
@@ -370,7 +394,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "150ms" }}></span>
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-bounce" style={{ animationDelay: "300ms" }}></span>
                 </div>
-                <span>Querying financial database & evidence...</span>
+                <span>Querying this thread&apos;s financial evidence…</span>
               </div>
             </div>
           </div>
@@ -378,21 +402,30 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Suggested Quick Prompt Chips */}
+      {/* Suggested questions (backend-driven, guardrail-safe) */}
       <div className="px-4 py-2.5 bg-white border-t border-slate-100 flex items-center gap-2 overflow-x-auto">
-        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide shrink-0">Prompts:</span>
-        {sampleQuestions.map((q, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleSend(q)}
-            className="whitespace-nowrap text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-xs font-medium transition-all cursor-pointer"
-          >
-            {q}
-          </button>
-        ))}
+        <span className="text-[10px] text-slate-400 font-semibold uppercase tracking-wide shrink-0">Try:</span>
+        {suggestions.length === 0 ? (
+          <span className="text-[11px] text-slate-400 italic">
+            {suggestionsState === "NO_DOCUMENTS"
+              ? "Suggestions appear once you upload documents."
+              : "Suggestions appear after reconciliation."}
+          </span>
+        ) : (
+          suggestions.map((q, idx) => (
+            <button
+              key={idx}
+              onClick={() => handleSend(q)}
+              disabled={isLoading}
+              className="whitespace-nowrap disabled:opacity-50 text-slate-600 hover:text-slate-900 bg-slate-50 hover:bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-slate-300 text-xs font-medium transition-all cursor-pointer"
+            >
+              {q}
+            </button>
+          ))
+        )}
       </div>
 
-      {/* Chat Input */}
+      {/* Input */}
       <div className="p-4 bg-white border-t border-slate-100">
         <form
           onSubmit={(e) => {
@@ -405,8 +438,9 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId }) => {
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask about transactions, fee deductions, or benchmark accuracy..."
+            placeholder="Ask about transactions, exceptions, or reconciliation results…"
             className="flex-1 bg-slate-50 border border-slate-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-500/10 rounded-xl px-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all"
+            aria-label="Ask a financial question"
           />
           <button
             type="submit"

@@ -39,13 +39,18 @@ def evaluate_reconciliation(
     ground_truth_path_or_dict: Any
 ) -> EvaluationReport:
     """
-    Evaluates matches and exceptions against ground truth dataset.
+    Evaluates matches and exceptions against an EXPLICIT ground truth source.
+
+    Security: the caller must pass the ground truth explicitly (dict or path).
+    This function never silently substitutes the bundled benchmark file — if
+    the given path does not exist, it raises rather than fabricating metrics.
     """
     if isinstance(ground_truth_path_or_dict, str):
         if not os.path.exists(ground_truth_path_or_dict):
-            alt_path = os.path.join(os.path.dirname(__file__), "..", "synthetic", "ground_truth.json")
-            if os.path.exists(alt_path):
-                ground_truth_path_or_dict = alt_path
+            raise FileNotFoundError(
+                f"Ground truth file not found: {ground_truth_path_or_dict}. "
+                "Refusing to silently fall back to bundled benchmark data."
+            )
         with open(ground_truth_path_or_dict, "r", encoding="utf-8") as f:
             gt_data = json.load(f)
     else:

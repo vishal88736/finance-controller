@@ -21,7 +21,7 @@ import os
 import json
 import time
 from decimal import Decimal
-from typing import Dict, Any, List
+from typing import Any, Dict, List, Optional
 from langgraph.graph import StateGraph, START, END
 
 from ..agents.state import ReconciliationState
@@ -59,25 +59,16 @@ def analyze_request_node(state: ReconciliationState) -> Dict[str, Any]:
 
 def load_documents_node(state: ReconciliationState) -> Dict[str, Any]:
     """
-    Node 2: Ingest all uploaded files or synthetic files into raw document records.
-    Pure Python — no LLM.
+    Node 2: Ingest the files explicitly provided for this run.
+
+    IMPORTANT: This node NEVER falls back to the bundled synthetic dataset.
+    If no files were supplied, it returns an empty document list and the graph
+    completes with zero records (honest empty run). Synthetic/demo data may
+    only be loaded when the caller explicitly passes those files in
+    `uploaded_files` (e.g., the explicit demo batch endpoint).
     """
     uploaded_files = list(state.get("uploaded_files", []))
     documents: List[Dict[str, Any]] = []
-
-    # If no files passed, load synthetic files by default
-    if not uploaded_files:
-        synth_dir = os.path.join(os.path.dirname(__file__), "..", "synthetic")
-        fa = os.path.join(synth_dir, "source_a_ledger.csv")
-        fb = os.path.join(synth_dir, "source_b_bank.csv")
-        if not os.path.exists(fa):
-            from ..synthetic.generator import generate_synthetic_dataset
-            generate_synthetic_dataset(synth_dir)
-
-        uploaded_files = [
-            {"path": fa, "filename": "source_a_ledger.csv", "source_label": "source_a_ledger"},
-            {"path": fb, "filename": "source_b_bank.csv", "source_label": "source_b_bank"},
-        ]
 
     for f_info in uploaded_files:
         f_path = f_info.get("path")
@@ -251,59 +242,54 @@ def create_exceptions_node(state: ReconciliationState) -> Dict[str, Any]:
 
 def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
     """
-    Node 8: Calculate benchmark metrics against ground truth.
-    Pure Python — Precision, Recall, Accuracy, F1, Throughput.
+    Node 8: Compute run metrics.
+
+    Evaluation against ground truth happens ONLY when the caller explicitly
+    supplied a ground truth source for this run (state['ground_truth']).
+    Runs over user documents never touch the bundled benchmark ground truth —
+    for those, precision/recall/f1 are None and evaluated=false. We never
+    fabricate evaluation metrics.
     """
     matches = [ReconciliationMatch(**m) for m in state.get("matches", [])]
     exceptions = [ReconciliationException(**e) for e in state.get("exceptions", [])]
     summary = ReconciliationSummary(**state.get("metrics", {}))
 
-    gt_path = os.path.join(
-        os.path.dirname(__file__), "..", "synthetic", "ground_truth.json"
-    )
-    has_gt_cases = False
-    if os.path.exists(gt_path):
+    gt_source = state.get("ground_truth")  # explicit dict | path | None
+    eval_report: Optional[dict] = None
+    if gt_source:
         try:
-            with open(gt_path, "r", encoding="utf-8") as f:
-                gt_data = json.load(f)
-                gt_cases = gt_data.get("cases", {})
-                has_gt_cases = any(
-                    m.record_id_a in gt_cases or m.record_id_b in gt_cases for m in matches
-                ) or any(e.record_id in gt_cases for e in exceptions)
-        except Exception:
-            has_gt_cases = False
+            eval_report = evaluate_reconciliation(matches, exceptions, summary, gt_source)
+            eval_report = eval_report.model_dump()
+        except Exception as e:
+            print(f"Warning: explicit evaluation failed: {e}")
+            eval_report = None
 
-    if has_gt_cases:
-        eval_report = evaluate_reconciliation(
-            matches, exceptions, summary, gt_path
-        )
-        final_metrics = eval_report.model_dump()
+    if eval_report is not None:
+        final_metrics = dict(eval_report)
+        final_metrics["evaluated"] = True
     else:
+        # No authorized ground truth for this run: do not manufacture metrics.
         final_metrics = {
+            "evaluated": False,
             "total_ground_truth_cases": 0,
             "records_processed": summary.total_records_processed,
-            "true_positives": len(matches),
-            "false_positives": 0,
-            "false_negatives": 0,
-            "true_negatives": len(exceptions),
-            "precision": 100.0 if len(matches) > 0 else 0.0,
-            "recall": 100.0 if len(matches) > 0 else 0.0,
-            "f1_score": 100.0 if len(matches) > 0 else 0.0,
-            "accuracy": summary.match_rate,
+            "true_positives": None,
+            "false_positives": None,
+            "false_negatives": None,
+            "true_negatives": None,
+            "precision": None,
+            "recall": None,
+            "f1_score": None,
+            "accuracy": None,
             "match_rate": summary.match_rate,
             "processing_time_sec": summary.processing_time_sec,
             "throughput_records_sec": summary.throughput_records_sec,
             "category_breakdown": {},
-            "detailed_metrics_json": {
-                "confusion_matrix": {
-                    "TP": len(matches),
-                    "FP": 0,
-                    "FN": 0,
-                    "TN": len(exceptions)
-                }
-            }
+            "detailed_metrics_json": {"confusion_matrix": {}},
         }
 
+    evaluated = bool(final_metrics.get("evaluated"))
+    accuracy_value = final_metrics.get("accuracy")
     final_report = {
         "run_id": state.get("run_id"),
         "user_request": state.get("user_request"),
@@ -311,10 +297,11 @@ def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
         "matched_count": summary.matched_count,
         "exceptions_count": summary.unresolved_exceptions_count,
         "match_rate": summary.match_rate,
-        "accuracy": final_metrics.get("accuracy", summary.match_rate),
-        "precision": final_metrics.get("precision", 0.0),
-        "recall": final_metrics.get("recall", 0.0),
-        "f1_score": final_metrics.get("f1_score", 0.0),
+        "evaluated": evaluated,
+        "accuracy": accuracy_value if accuracy_value is not None else None,
+        "precision": final_metrics.get("precision"),
+        "recall": final_metrics.get("recall"),
+        "f1_score": final_metrics.get("f1_score"),
         "processing_time_sec": summary.processing_time_sec,
         "throughput_records_sec": summary.throughput_records_sec,
         "total_amount_processed": summary.total_amount_processed,
@@ -325,8 +312,8 @@ def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
 
     progress = list(state.get("step_progress", []))
     progress.append(
-        f"Completed evaluation: Match Rate {summary.match_rate}%, "
-        f"Accuracy {final_report['accuracy']}%"
+        f"Completed run: Match Rate {summary.match_rate}%"
+        + (f", Accuracy {final_report['accuracy']}%" if evaluated else " (no ground truth associated — evaluation metrics unavailable)")
     )
 
     return {

@@ -1,10 +1,50 @@
+/**
+ * API client for the AI Finance Controller.
+ *
+ * Every method throws on failure — the UI renders honest error/empty/loading
+ * states. NO fabricated fallback data is ever returned.
+ */
+
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.status = status;
+  }
+}
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, init);
+  } catch (e) {
+    throw new ApiError("Cannot reach the Finance Controller backend. Is it running on port 8000?", 0);
+  }
+  if (!res.ok) {
+    let detail = `Request failed (${res.status})`;
+    try {
+      const body = await res.json();
+      if (body && body.detail) detail = typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail);
+    } catch {
+      /* no body */
+    }
+    throw new ApiError(detail, res.status);
+  }
+  return res.json() as Promise<T>;
+}
+
+// ─────────────────────────────────────────────────────────────
+// Types
+// ─────────────────────────────────────────────────────────────
 
 export interface ThreadItem {
   id: string;
   title: string;
   document_count?: number;
   message_count?: number;
+  latest_run_status?: { status: string; exceptions_count: number } | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -17,9 +57,36 @@ export interface ThreadDocumentItem {
   document_type: string;
   processing_status: string;
   sha256: string;
-  dataset_fingerprint?: string;
+  dataset_fingerprint?: string | null;
   size_bytes?: number;
+  duplicate?: boolean;
   uploaded_at?: string;
+}
+
+export interface LatestRun {
+  id: string;
+  status: string;
+  total_records: number;
+  matched_count: number;
+  exceptions_count: number;
+  match_rate: number;
+  evaluated: boolean;
+  accuracy: number | null;
+  precision: number | null;
+  recall: number | null;
+  f1_score: number | null;
+  processing_time_sec: number;
+  throughput_records_sec: number;
+  created_at?: string;
+}
+
+export interface ThreadDetail {
+  id: string;
+  title: string;
+  created_at?: string;
+  updated_at?: string;
+  documents: ThreadDocumentItem[];
+  latest_run: LatestRun | null;
 }
 
 export interface MessageItem {
@@ -32,21 +99,18 @@ export interface MessageItem {
 
 export interface ReconciliationRunSummary {
   run_id?: string;
-  id?: string;
-  created_at?: string;
-  status: string;
-  user_prompt?: string;
   total_records: number;
-  matched_records: number;
-  unmatched_records: number;
-  exception_records: number;
+  matched_count: number;
+  exceptions_count: number;
   match_rate: number;
-  accuracy: number;
-  precision?: number;
-  recall?: number;
-  f1_score?: number;
+  evaluated: boolean;
+  accuracy: number | null;
+  precision: number | null;
+  recall: number | null;
+  f1_score: number | null;
   processing_time_sec: number;
   throughput_records_sec: number;
+  [key: string]: any;
 }
 
 export interface MatchItem {
@@ -85,18 +149,22 @@ export interface ExceptionItem {
   evidence?: Record<string, any>;
 }
 
-export interface EvaluationMetricData {
+export interface MetricsData {
   run_id: string;
-  total_ground_truth_cases: number;
-  true_positives: number;
-  false_positives: number;
-  false_negatives: number;
-  true_negatives: number;
-  precision: number;
-  recall: number;
-  f1_score: number;
-  accuracy: number;
+  evaluated: boolean;
+  total_ground_truth_cases: number | null;
+  true_positives: number | null;
+  false_positives: number | null;
+  false_negatives: number | null;
+  true_negatives: number | null;
+  precision: number | null;
+  recall: number | null;
+  f1_score: number | null;
+  accuracy: number | null;
   match_rate: number;
+  total_records: number;
+  matched_count: number;
+  exceptions_count: number;
   processing_time_sec: number;
   throughput_records_sec: number;
   confusion_matrix?: Record<string, any>;
@@ -104,17 +172,20 @@ export interface EvaluationMetricData {
 
 export interface AuditLogItem {
   id: string;
+  run_id?: string | null;
   action: string;
   agent?: string;
   tool?: string;
   parameters?: Record<string, any>;
   result_summary?: string;
+  details?: Record<string, any>;
   timestamp?: string;
 }
 
 export interface UploadOutcome {
-  status: "SUCCESS" | "DUPLICATE_EXACT" | "DUPLICATE_LOGICAL" | "ERROR";
+  status: "SUCCESS" | "DUPLICATE_EXACT" | "DUPLICATE_LOGICAL" | "REJECTED";
   message: string;
+  reason_code?: string;
   duplicate_type?: "EXACT_FILE" | "LOGICAL_DATASET" | null;
   document?: {
     id: string;
@@ -127,192 +198,147 @@ export interface UploadOutcome {
   };
 }
 
+export interface SendMessageResponse {
+  user_message: MessageItem;
+  assistant_message: MessageItem;
+  intent: string;
+  answer_source?: string;
+  retrieved_records?: any[];
+  retrieved_exceptions?: any[];
+  retrieved_metrics?: Record<string, any>;
+}
+
+export interface SuggestionsData {
+  thread_id: string;
+  state: "NO_DOCUMENTS" | "PENDING_RECONCILIATION" | "READY";
+  suggestions: string[];
+}
+
+export interface LangsmithStatus {
+  tracing_active: boolean;
+  project: string;
+  endpoint: string;
+}
+
+export interface HealthStatus {
+  status: string;
+  service: string;
+  version: string;
+  llm_configured: boolean;
+}
+
+// ─────────────────────────────────────────────────────────────
+// API
+// ─────────────────────────────────────────────────────────────
+
 export const api = {
-  // ── THREADS ──
+  // ── System ──
+  async health(): Promise<HealthStatus> {
+    return request<HealthStatus>("/health");
+  },
+
+  async langsmithStatus(): Promise<LangsmithStatus> {
+    return request<LangsmithStatus>("/observability/langsmith");
+  },
+
+  // ── Threads ──
   async listThreads(): Promise<ThreadItem[]> {
-    try {
-      const res = await fetch(`${API_BASE}/threads`);
-      if (!res.ok) throw new Error("Failed to list threads");
-      return await res.json();
-    } catch (e) {
-      return [{ id: "thr_default", title: "Reconciliation Workspace", document_count: 3, message_count: 2 }];
-    }
+    return request<ThreadItem[]>("/threads");
   },
 
   async createThread(title = "New Financial Investigation"): Promise<ThreadItem> {
-    try {
-      const res = await fetch(`${API_BASE}/threads`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title })
-      });
-      if (!res.ok) throw new Error("Failed to create thread");
-      return await res.json();
-    } catch (e) {
-      return { id: `thr_${Date.now()}`, title };
-    }
+    return request<ThreadItem>("/threads", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
   },
 
-  async getThread(threadId: string) {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}`);
-      if (!res.ok) throw new Error("Failed to fetch thread");
-      return await res.json();
-    } catch (e) {
-      return null;
-    }
+  async getThread(threadId: string): Promise<ThreadDetail> {
+    return request<ThreadDetail>(`/threads/${threadId}`);
+  },
+
+  async renameThread(threadId: string, title: string): Promise<{ id: string; title: string }> {
+    return request(`/threads/${threadId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title }),
+    });
   },
 
   async deleteThread(threadId: string): Promise<boolean> {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}`, { method: "DELETE" });
-      return res.ok;
-    } catch (e) {
-      return false;
-    }
+    await request(`/threads/${threadId}`, { method: "DELETE" });
+    return true;
   },
 
-  // ── MESSAGES / CHAT ──
+  // ── Messages / Chat ──
   async getMessages(threadId: string): Promise<MessageItem[]> {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/messages`);
-      if (!res.ok) throw new Error("Failed to fetch messages");
-      return await res.json();
-    } catch (e) {
-      return [];
-    }
+    return request<MessageItem[]>(`/threads/${threadId}/messages`);
   },
 
-  async sendMessage(threadId: string, content: string, runId?: string) {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content, run_id: runId })
-      });
-      if (!res.ok) throw new Error("Failed to send message");
-      return await res.json();
-    } catch (e) {
-      return {
-        user_message: { id: `msg_${Date.now()}`, role: "user", content },
-        assistant_message: {
-          id: `msg_${Date.now() + 1}`,
-          role: "assistant",
-          content: "I can help with reconciliation, settlement analysis, financial exceptions, and questions about the data in this thread."
-        }
-      };
-    }
+  async sendMessage(threadId: string, content: string, runId?: string): Promise<SendMessageResponse> {
+    return request<SendMessageResponse>(`/threads/${threadId}/messages`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ content, run_id: runId }),
+    });
   },
 
-  // ── DOCUMENTS & DUPLICATES ──
+  // ── Suggestions ──
+  async getSuggestions(threadId: string): Promise<SuggestionsData> {
+    return request<SuggestionsData>(`/threads/${threadId}/suggestions`);
+  },
+
+  // ── Documents & Duplicates ──
   async getDocuments(threadId: string): Promise<ThreadDocumentItem[]> {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/documents`);
-      if (!res.ok) throw new Error("Failed to fetch documents");
-      return await res.json();
-    } catch (e) {
-      return [];
-    }
+    return request<ThreadDocumentItem[]>(`/threads/${threadId}/documents`);
   },
 
-  async uploadDocuments(threadId: string, files: File[]): Promise<{ uploaded_count: number; results: UploadOutcome[] }> {
+  async uploadDocuments(
+    threadId: string,
+    files: File[]
+  ): Promise<{ uploaded_count: number; duplicate_count: number; rejected_count: number; results: UploadOutcome[] }> {
     const formData = new FormData();
     files.forEach((f) => formData.append("files", f));
-
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/documents`, {
-        method: "POST",
-        body: formData
-      });
-      if (!res.ok) throw new Error("Failed to upload files");
-      return await res.json();
-    } catch (e) {
-      return {
-        uploaded_count: 0,
-        results: [{ status: "ERROR", message: "Failed to connect to upload server." }]
-      };
-    }
+    return request(`/threads/${threadId}/documents`, {
+      method: "POST",
+      body: formData,
+    });
   },
 
-  // ── RECONCILIATION ──
-  async reconcileThread(threadId: string, userPrompt?: string, useSyntheticBatch = true) {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/reconcile`, {
+  // ── Reconciliation (never fabricates: throws on failure) ──
+  async reconcileThread(threadId: string, userPrompt?: string, documentIds?: string[]) {
+    return request<{ status: string; run_id: string; summary: ReconciliationRunSummary; step_progress: string[]; document_ids?: string[] }>(
+      `/threads/${threadId}/reconcile`,
+      {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_prompt: userPrompt,
-          use_synthetic_batch: useSyntheticBatch
-        })
-      });
-      if (!res.ok) throw new Error("Failed to run reconciliation");
-      return await res.json();
-    } catch (e) {
-      return {
-        status: "success",
-        run_id: "run_fallback",
-        summary: {
-          total_records: 380,
-          matched_count: 154,
-          exceptions_count: 35,
-          match_rate: 81.1,
-          accuracy: 96.9,
-          precision: 100.0,
-          recall: 96.2,
-          f1_score: 98.1,
-          processing_time_sec: 0.61,
-          throughput_records_sec: 622.5
-        },
-        step_progress: ["Analyzed request", "Normalized records", "Matched pairs", "Calculated metrics"]
-      };
-    }
+        body: JSON.stringify({ user_prompt: userPrompt, document_ids: documentIds ?? null }),
+      }
+    );
   },
 
-  // ── RESULTS, EXCEPTIONS, METRICS, AUDIT ──
-  async getResults(threadId: string, category?: string, search?: string) {
-    try {
-      let url = `${API_BASE}/threads/${threadId}/results?limit=250`;
-      if (category && category !== "ALL") url += `&category=${encodeURIComponent(category)}`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch results");
-      return await res.json();
-    } catch (e) {
-      return { total: 0, matches: [] };
-    }
+  // ── Results / Exceptions / Metrics / Audit ──
+  async getResults(threadId: string, category?: string, search?: string, limit = 250) {
+    let url = `/threads/${threadId}/results?limit=${limit}`;
+    if (category && category !== "ALL") url += `&category=${encodeURIComponent(category)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return request<{ total: number; matches: MatchItem[] }>(url);
   },
 
-  async getExceptions(threadId: string, reason?: string, category?: string, search?: string) {
-    try {
-      let url = `${API_BASE}/threads/${threadId}/exceptions?limit=200`;
-      if (reason && reason !== "ALL") url += `&reason=${encodeURIComponent(reason)}`;
-      if (category && category !== "ALL") url += `&category=${encodeURIComponent(category)}`;
-      if (search) url += `&search=${encodeURIComponent(search)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Failed to fetch exceptions");
-      return await res.json();
-    } catch (e) {
-      return { total: 0, exceptions: [] };
-    }
+  async getExceptions(threadId: string, reason?: string, category?: string, search?: string, limit = 200) {
+    let url = `/threads/${threadId}/exceptions?limit=${limit}`;
+    if (reason && reason !== "ALL") url += `&reason=${encodeURIComponent(reason)}`;
+    if (category && category !== "ALL") url += `&category=${encodeURIComponent(category)}`;
+    if (search) url += `&search=${encodeURIComponent(search)}`;
+    return request<{ total: number; exceptions: ExceptionItem[] }>(url);
   },
 
-  async getMetrics(threadId: string): Promise<EvaluationMetricData | null> {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/metrics`);
-      if (!res.ok) return null;
-      return await res.json();
-    } catch (e) {
-      return null;
-    }
+  async getMetrics(threadId: string): Promise<MetricsData> {
+    return request<MetricsData>(`/threads/${threadId}/metrics`);
   },
 
-  async getAuditTrail(threadId: string): Promise<AuditLogItem[]> {
-    try {
-      const res = await fetch(`${API_BASE}/threads/${threadId}/audit`);
-      if (!res.ok) return [];
-      return await res.json();
-    } catch (e) {
-      return [];
-    }
-  }
+  async getAuditTrail(threadId: string, limit = 100): Promise<AuditLogItem[]> {
+    return request<AuditLogItem[]>(`/threads/${threadId}/audit?limit=${limit}`);
+  },
 };

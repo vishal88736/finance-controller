@@ -37,22 +37,36 @@ def test_full_reconciliation_agent_workflow(tmp_path):
     assert len(output["matches"]) > 100
     assert len(output["exceptions"]) > 10
     assert output["final_report"]["match_rate"] > 70.0
-    assert output["final_report"]["accuracy"] > 80.0
     assert output["final_report"]["throughput_records_sec"] > 10.0
+    # No explicit ground truth supplied → must NOT fabricate evaluation
+    assert output["final_report"]["evaluated"] is False
+    assert output["final_report"]["accuracy"] is None
+    assert output["final_report"]["precision"] is None
+    assert output["final_report"]["recall"] is None
 
 def test_qa_agent_metric_response():
     init_db()
     qa_input = {
+        "thread_id": "thr_missing",
         "run_id": "TEST-RUN-001",
         "question": "What is our current match rate and accuracy?",
+        "guardrail_passed": True,
+        "guardrail_refusal": None,
+        "guardrail_layer": None,
         "query_type": "GENERAL",
         "extracted_entities": [],
         "extracted_record_ids": [],
         "retrieved_records": [],
         "retrieved_exceptions": [],
         "retrieved_metrics": {},
-        "answer": ""
+        "retrieved_documents": [],
+        "evidence": {},
+        "tools_called": [],
+        "answer": "",
+        "answer_source": "deterministic",
+        "db_session": None,
     }
+    # No DB session passed → graph must refuse to query rather than open its own
     output = qa_graph.invoke(qa_input)
     assert output["answer"] is not None
-    assert len(output["answer"]) > 10
+    assert "database session" in output["answer"].lower()

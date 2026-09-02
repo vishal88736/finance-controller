@@ -1,6 +1,6 @@
 {
   "dataset_name": "Multi-Source Financial Reconciliation Benchmark",
-  "generated_at": "2026-08-31T20:13:00.598355+00:00",
+  "generated_at": "2026-09-02T09:14:52.505521+00:00",
   "total_cases": 200,
   "cases": {
     "TXN-LEDGER-1001": {
