@@ -160,3 +160,18 @@ def test_forecast_negative_baseline_not_clamped(db_session):
     assert res["status"] == "COMPLETED"
     assert res["baseline_source"] == "HISTORY_DERIVED"
     assert res["current_cash_balance"] == -2000.0
+
+
+def test_forecast_data_context_stale_detection():
+    """Stale test-data dates must be flagged with a clear analysis-date label."""
+    from model.services.cash_forecaster import forecast_data_context
+
+    proj = [{"date": "2026-08-27", "projected_inflow": 0.0, "projected_outflow": 0.0}]
+    ctx = forecast_data_context(proj, analysis_date="2026-09-03")
+    assert ctx["historical_window_end"] == "2026-08-26"
+    assert ctx["dataset_is_stale"] is True
+    assert ctx["stale_note"] is not None
+
+    non_stale = forecast_data_context(proj, analysis_date="2026-08-26")
+    assert non_stale["dataset_is_stale"] is False
+    assert non_stale["stale_note"] is None
