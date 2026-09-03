@@ -151,6 +151,13 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
         </div>
       )}
 
+      {forecast?.dataset_is_stale && (
+        <div className="p-4 bg-sky-50 border border-sky-200 rounded-xl text-xs text-sky-800 flex items-start gap-2">
+          <AlertCircle className="w-4 h-4 text-sky-600 shrink-0 mt-0.5" />
+          <span>{forecast.stale_note}</span>
+        </div>
+      )}
+
       {/* ── Metric Summary Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Baseline Cash */}
@@ -163,7 +170,7 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
               {forecast?.baseline_source === "USER_PROVIDED"
                 ? "PROVIDED"
                 : forecast?.baseline_source === "HISTORY_DERIVED"
-                ? "DERIVED"
+                ? "ASSUMED"
                 : "ACTUAL"}
             </span>
           </div>
@@ -174,7 +181,7 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
             {forecast?.baseline_source === "USER_PROVIDED"
               ? "Opening cash position provided by the user"
               : forecast?.baseline_source === "HISTORY_DERIVED"
-              ? "Derived from net historical cash flows (no opening balance provided)"
+              ? "Not provided — assumed from net historical cash flows"
               : "Starting operating cash position"}
           </div>
         </div>
@@ -211,7 +218,9 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
             -${(forecast?.projected_outflows ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-slate-500 mt-2">
-            MDR gateway fees, refunds, and operating deductions
+            {forecast?.outflows_observed
+              ? "Observed fee, refund, and operating deductions"
+              : "No outflow records observed — projected as $0 (assumption)"}
           </div>
         </div>
 

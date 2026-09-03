@@ -66,7 +66,7 @@ from ..agents.orchestrator import orchestrator
 from ..services.reconciliation_service import run_reconciliation, ReconciliationError
 from ..observability import langsmith as langsmith_obs
 from ..agents.groq_client import groq_client
-from ..services.cash_forecaster import cash_forecaster
+from ..services.cash_forecaster import cash_forecaster, forecast_data_context
 from ..services.tax_matcher import tax_matcher
 from ..database.models import CashForecastResult, TaxMatchResult
 from ..reconciliation.pandas_reconciler import clean_for_json
@@ -572,6 +572,8 @@ def api_get_forecast(
         .first()
     )
     if latest and latest.horizon_days == horizon_days:
+        daily = json.loads(latest.daily_forecast_json) if latest.daily_forecast_json else []
+        context = forecast_data_context(daily)
         return {
             "status": "COMPLETED",
             "forecast_id": latest.id,
@@ -586,7 +588,12 @@ def api_get_forecast(
             "confidence_level": latest.confidence_level,
             "methodology": latest.methodology,
             "assumptions": json.loads(latest.assumptions_json) if latest.assumptions_json else [],
-            "daily_projections": json.loads(latest.daily_forecast_json) if latest.daily_forecast_json else [],
+            "analysis_date": context["analysis_date"],
+            "historical_window_end": context["historical_window_end"],
+            "dataset_is_stale": context["dataset_is_stale"],
+            "stale_note": context["stale_note"],
+            "outflows_observed": bool(latest.projected_outflows and latest.projected_outflows > 0),
+            "daily_projections": daily,
             "created_at": latest.created_at.isoformat() if latest.created_at else None,
         }
     return cash_forecaster.run_forecast(db=db, thread_id=thread_id, horizon_days=horizon_days)

@@ -180,3 +180,39 @@ def test_tax_net_variance_signed_and_absolute(db_session):
     res = tax_matcher.run_tax_matching(db_session, thread_id, tax_rate=0.18)
     assert res["total_tax_discrepancy"] == 60.0   # absolute
     assert res["net_tax_variance"] == -60.0        # signed (reported - expected)
+
+
+def test_tax_source_rate_overrides_default(db_session):
+    """A source-level tax_rate must override the default statutory rate."""
+    thread_id = f"thr_tax_src_{uuid.uuid4().hex[:8]}"
+    th = Thread(id=thread_id, title="Tax Src")
+    db_session.add(th)
+    doc = Document(
+        id=f"doc_tax_src_{uuid.uuid4().hex[:8]}",
+        thread_id=thread_id,
+        filename="invoices.csv",
+        file_type="csv",
+        content_hash_sha256=f"tax_src_hash_{uuid.uuid4().hex[:8]}",
+    )
+    db_session.add(doc)
+    # Source specifies 12% (0.12); default passed in is 18%.
+    db_session.add(DocumentRecord(
+        id=f"dr_tax_src_{uuid.uuid4().hex[:8]}",
+        document_id=doc.id,
+        thread_id=thread_id,
+        record_id="INV-SRC",
+        source="invoices",
+        amount=1000.0,
+        raw_data_json=json.dumps({"taxable_amount": 1000.0, "tax_amount": 120.0, "tax_rate": 0.12}),
+    ))
+    db_session.commit()
+
+    res = tax_matcher.run_tax_matching(db_session, thread_id, tax_rate=0.18)
+
+    assert res["status"] == "COMPLETED"
+    assert res["matched_count"] == 1
+    line = res["tax_lines"][0]
+    assert line["status"] == "MATCH"
+    assert line["tax_rate"] == 0.12
+    assert line["tax_rate_source"] == "SOURCE_DATA"
+    assert line["expected_tax"] == 120.0  # 1000 * 0.12, NOT 1000 * 0.18

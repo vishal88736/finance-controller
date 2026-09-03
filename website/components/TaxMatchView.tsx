@@ -170,8 +170,37 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
         </div>
       )}
 
-      {/* ── Summary KPI Cards ── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* ── No taxable lines: explicit empty state (never "0.0%") ── */}
+      {taxData && taxData.tax_eligible_count === 0 && taxData.total_records > 0 ? (
+        <div className="card p-10 text-center space-y-5">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-500 mx-auto">
+            <Percent className="w-6 h-6" />
+          </div>
+          <div>
+            <h3 className="text-base font-bold text-slate-900">No tax-bearing lines found</h3>
+            <p className="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+              This thread has financial records, but none carry tax evidence
+              (tax/gst/vat/taxable/tax_rate fields). Tax matching is not applicable.
+            </p>
+          </div>
+          <dl className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-left max-w-2xl mx-auto">
+            {[
+              ["Taxable lines", String(taxData.tax_eligible_count ?? 0)],
+              ["Evaluated lines", String(taxData.matched_count ?? 0)],
+              ["Mismatches", String(taxData.mismatched_count ?? 0)],
+              ["Status", "Not applicable"],
+            ].map(([label, value]) => (
+              <div key={label} className="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3">
+                <div className="text-[10px] uppercase tracking-wide font-bold text-slate-400">{label}</div>
+                <div className="text-sm font-bold font-mono text-slate-800 mt-1">{value}</div>
+              </div>
+            ))}
+          </dl>
+        </div>
+      ) : (
+        <>
+          {/* ── Summary KPI Cards ── */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
         {/* Match Rate */}
         <div className="card p-4 border-t-4 border-t-emerald-500 bg-white">
           <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -328,7 +357,8 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
           </table>
         </div>
       </div>
-
+      </>
+      )}
       {/* ── Slide-Out Detail Drawer ── */}
       {selected && (
         <div

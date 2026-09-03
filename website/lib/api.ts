@@ -407,6 +407,11 @@ export interface CashForecastData {
   methodology?: string;
   assumptions?: string[];
   limitations?: string[];
+  analysis_date?: string;
+  historical_window_end?: string | null;
+  dataset_is_stale?: boolean;
+  stale_note?: string | null;
+  outflows_observed?: boolean;
   daily_projections?: Array<{
     day_number: number;
     date: string;

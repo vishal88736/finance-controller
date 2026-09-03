@@ -33,6 +33,55 @@ def _round_dec(val: Decimal) -> Decimal:
     return val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
+def forecast_data_context(daily_projections: List[Dict[str, Any]], analysis_date: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Derive demonstration-facing context from persisted daily projections:
+    - analysis_date: today (server date), or an explicit override
+    - historical_window_end: the date one day before the first projection row
+    - dataset_is_stale: True when the historical window ends before analysis_date
+      (i.e. the projections are anchored to a past / test-data vintage)
+    - stale_note: a human-readable label when the dataset is stale
+    """
+    today = analysis_date or datetime.now().date().isoformat()
+    if not daily_projections:
+        return {
+            "analysis_date": today,
+            "historical_window_end": None,
+            "dataset_is_stale": False,
+            "stale_note": None,
+        }
+    first_date_str = daily_projections[0].get("date")
+    if not first_date_str:
+        return {
+            "analysis_date": today,
+            "historical_window_end": None,
+            "dataset_is_stale": False,
+            "stale_note": None,
+        }
+    try:
+        hist_end_dt = datetime.fromisoformat(first_date_str).date() - timedelta(days=1)
+    except Exception:
+        return {
+            "analysis_date": today,
+            "historical_window_end": None,
+            "dataset_is_stale": False,
+            "stale_note": None,
+        }
+    hist_end = hist_end_dt.isoformat()
+    dataset_is_stale = hist_end < today
+    stale_note = (
+        f"Based on uploaded test dataset dated {hist_end}; the projection window "
+        f"starts before today's analysis date ({today})."
+        if dataset_is_stale else None
+    )
+    return {
+        "analysis_date": today,
+        "historical_window_end": hist_end,
+        "dataset_is_stale": dataset_is_stale,
+        "stale_note": stale_note,
+    }
+
+
 class CashForecastingError(Exception):
     """Raised when cash forecasting cannot be performed."""
     pass
@@ -260,6 +309,8 @@ class CashForecasterService:
         net_projected_change = total_proj_inflow - total_proj_outflow
         ending_balance = running_balance
 
+        context = forecast_data_context(daily_projections)
+
         # Determine confidence level
         if date_span_days >= 14 and total_source_records >= 20:
             confidence = "HIGH"
@@ -350,6 +401,11 @@ class CashForecasterService:
             "methodology": methodology_desc,
             "assumptions": assumptions_list,
             "limitations": limitations_list,
+            "analysis_date": context["analysis_date"],
+            "historical_window_end": context["historical_window_end"],
+            "dataset_is_stale": context["dataset_is_stale"],
+            "stale_note": context["stale_note"],
+            "outflows_observed": bool(base_daily_outflow > Decimal("0.00")),
             "historical_baseline": {
                 "total_source_records": total_source_records,
                 "date_span_days": date_span_days,
