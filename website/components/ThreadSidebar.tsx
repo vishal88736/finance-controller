@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { Plus, Trash2, Check, X, Shield, FileText, MessageSquare, Pencil, Layers } from "lucide-react";
 import { ThreadItem } from "@/lib/api";
+import { BrandLogo } from "./BrandLogo";
 
 interface ThreadSidebarProps {
   threads: ThreadItem[];
@@ -17,17 +18,17 @@ interface ThreadSidebarProps {
 }
 
 function groupLabel(dateStr?: string): string {
-  if (!dateStr) return "Earlier";
+  if (!dateStr) return "EARLIER";
   const d = new Date(dateStr);
-  if (isNaN(d.getTime())) return "Earlier";
+  if (isNaN(d.getTime())) return "EARLIER";
   const now = new Date();
   const day = 86400000;
   const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const t = d.getTime();
-  if (t >= midnight) return "Today";
-  if (t >= midnight - day) return "Yesterday";
-  if (t >= midnight - 7 * day) return "Previous 7 days";
-  return "Earlier";
+  if (t >= midnight) return "TODAY";
+  if (t >= midnight - day) return "YESTERDAY";
+  if (t >= midnight - 7 * day) return "PREVIOUS 7 DAYS";
+  return "EARLIER";
 }
 
 export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
@@ -73,15 +74,7 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
     >
       {/* Brand */}
       <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xs shadow-md shadow-blue-500/20">
-            FC
-          </div>
-          <div>
-            <span className="font-bold text-white text-sm">Finance Controller</span>
-            <div className="text-[10px] text-slate-500 font-medium">Reconciliation Workspace</div>
-          </div>
-        </div>
+        <BrandLogo />
         <button
           onClick={onToggleOpen}
           className="lg:hidden text-slate-400 hover:text-white p-1 rounded-md"

@@ -215,15 +215,16 @@ def compute_dataset_fingerprint(records: List[NormalizedRecord]) -> str:
 def detect_document_type(filename: str, records: List[NormalizedRecord]) -> str:
     """
     Determine semantic financial document type from filename tokens and column patterns.
+    Uses generic domain keywords only — never dataset-specific filenames.
     """
     fn = filename.lower()
-    if any(kw in fn for kw in ["ledger", "journal", "general_ledger", "source_a", "erp"]):
+    if any(kw in fn for kw in ["ledger", "journal", "general_ledger", "erp"]):
         return "TRANSACTIONS"
     elif any(kw in fn for kw in ["invoice", "bill", "ar_", "ap_"]):
         return "INVOICES"
-    elif any(kw in fn for kw in ["settlement", "payout", "gateway", "stripe", "razorpay", "source_c"]):
+    elif any(kw in fn for kw in ["settlement", "payout", "gateway", "stripe", "razorpay"]):
         return "SETTLEMENTS"
-    elif any(kw in fn for kw in ["bank", "statement", "source_b", "feed"]):
+    elif any(kw in fn for kw in ["bank", "statement", "feed"]):
         return "BANK_STATEMENTS"
 
     # Inspect record entities/descriptions
@@ -235,6 +236,28 @@ def detect_document_type(filename: str, records: List[NormalizedRecord]) -> str:
             return "INVOICES"
 
     return "TRANSACTIONS"
+
+
+def classify_document_role(filename: str, records: List[NormalizedRecord]):
+    """
+    Determine a document's domain role using the deterministic role classifier.
+    Falls back to (UNKNOWN, 0.0, "") when classification is unavailable.
+    """
+    try:
+        import pandas as pd
+        from ..reconciliation.role_classifier import role_classifier
+
+        raw_rows = [r.raw_data for r in records if r.raw_data]
+        df = pd.DataFrame(raw_rows) if raw_rows else pd.DataFrame()
+        cls = role_classifier.classify_document(
+            df=df,
+            document_id="pending",
+            filename=filename,
+            source_label=None,
+        )
+        return cls.document_role.value, cls.confidence, cls.reason
+    except Exception:
+        return "UNKNOWN", 0.0, ""
 
 
 class DocumentRegistryService:
@@ -358,6 +381,7 @@ class DocumentRegistryService:
 
         # ── Save File to Disk (server-generated UUID name; user filename never touches disk) ──
         doc_type = detect_document_type(safe_display_name, normalized_records)
+        role, role_conf, role_reason = classify_document_role(safe_display_name, normalized_records)
         storage_name = generate_storage_name(thread_id, uuid.uuid4().hex[:16], ext)
         file_path = os.path.join(upload_dir, storage_name)
         with open(file_path, "wb") as f:
@@ -373,6 +397,9 @@ class DocumentRegistryService:
             size_bytes=size_bytes,
             file_path=file_path,
             document_type=doc_type,
+            document_role=role,
+            role_confidence=role_conf,
+            role_reason=role_reason,
             dataset_fingerprint=dataset_fp,
             record_count=len(normalized_records),
             processing_status="PROCESSED"

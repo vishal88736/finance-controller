@@ -297,7 +297,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                           {doc.filename}
                         </div>
                         <div className="text-[11px] text-slate-400 font-mono">
-                          {doc.record_count} records · {doc.document_type} · {formatSize(doc.size_bytes)}
+                          {doc.record_count} records · {doc.document_role || doc.document_type} · {formatSize(doc.size_bytes)}
                         </div>
                       </div>
                     </div>
@@ -390,6 +390,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                     ["File type", selectedDoc.file_type.toUpperCase()],
                     ["Size", formatSize(selectedDoc.size_bytes)],
                     ["Detected type", selectedDoc.document_type],
+                    ["Detected role", selectedDoc.document_role || "UNKNOWN"],
                     ["Uploaded", selectedDoc.uploaded_at ? new Date(selectedDoc.uploaded_at).toLocaleString() : "—"],
                   ].map(([k, v]) => (
                     <div key={k as string} className="flex justify-between gap-3">

@@ -28,7 +28,7 @@ from .guardrails import (
     INJECTION_REFUSAL,
     GuardrailVerdict,
 )
-from .gemini_client import gemini_client, LLM_UNAVAILABLE
+from .groq_client import groq_client, LLM_UNAVAILABLE
 from ..database.repositories import log_audit
 from ..observability.langsmith import traced_operation
 from ..tools.qa_tools import (
@@ -39,6 +39,8 @@ from ..tools.qa_tools import (
     get_transaction_result_tool,
     get_material_exceptions_tool,
     get_metrics_tool,
+    run_cash_forecast_tool,
+    run_tax_match_tool,
 )
 
 
@@ -113,6 +115,10 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
     query_type = "GENERAL"
     if txn_matches:
         query_type = "SPECIFIC_RECORD"
+    elif any(kw in lower for kw in ["cash forecast", "forecast cash", "forecast my cash", "cash position", "projected cash", "future cash", "inflow forecast", "outflow forecast", "ending cash", "forecast for the next", "forecast my"]):
+        query_type = "CASH_FORECAST"
+    elif any(kw in lower for kw in ["tax match", "tax-line", "tax line", "tax mismatch", "tax rate", "check whether tax", "show me tax", "tax differences", "gst", "vat", "tds"]):
+        query_type = "TAX_MATCH"
     elif any(kw in lower for kw in ["material", "serious", "high priority", "critical", "severe"]):
         query_type = "MATERIAL_EXCEPTIONS"
     elif any(kw in lower for kw in ["ambiguous", "multiple candidate", "held"]):
@@ -146,6 +152,8 @@ def retrieve_relevant_records_node(state: QAState) -> Dict[str, Any]:
     """
     thread_id = state.get("thread_id", "")
     run_id = state.get("run_id")
+    question = state.get("question", "")
+    lower = question.lower()
     query_type = state.get("query_type", "GENERAL")
     record_ids = state.get("extracted_record_ids", [])
     db = state.get("db_session")
@@ -263,7 +271,26 @@ def retrieve_relevant_records_node(state: QAState) -> Dict[str, Any]:
         )
         retrieved_documents.extend(docs or [])
 
-    # 8. GENERAL / SUMMARY
+    # 8. CASH FORECAST QUERY
+    elif query_type == "CASH_FORECAST":
+        h_days = 30 if ("30" in lower or "month" in lower) else 7
+        fct_res = run_tool(
+            "run_cash_forecast_tool",
+            lambda: run_cash_forecast_tool(db, thread_id=thread_id, horizon_days=h_days),
+        )
+        if fct_res:
+            retrieved_metrics["cash_forecast"] = fct_res
+
+    # 9. TAX-LINE MATCH QUERY
+    elif query_type == "TAX_MATCH":
+        tax_res = run_tool(
+            "run_tax_match_tool",
+            lambda: run_tax_match_tool(db, thread_id=thread_id),
+        )
+        if tax_res:
+            retrieved_metrics["tax_match"] = tax_res
+
+    # 10. GENERAL / SUMMARY
     else:
         retrieved_metrics = run_tool(
             "get_reconciliation_summary_tool",
@@ -304,6 +331,80 @@ def format_deterministic_answer(state: QAState) -> str:
     thread_id = state.get("thread_id", "")
 
     # ── Honest no-data states ──
+    if query_type == "CASH_FORECAST":
+        fct = metrics.get("cash_forecast") or {}
+        if fct.get("status") == "INSUFFICIENT_DATA":
+            return fct.get("message", "Insufficient historical transactions or settlement records in this thread to project future cash flows.")
+        horizon = fct.get("horizon_days", 7)
+        curr = _fmt_amount(fct.get("current_cash_balance", 0.0))
+        baseline_src = (fct.get("baseline_source") or "UNAVAILABLE").replace("_", " ").title()
+        inflows = _fmt_amount(fct.get("projected_inflows", 0.0))
+        outflows = _fmt_amount(fct.get("projected_outflows", 0.0))
+        net = _fmt_amount(fct.get("net_projected_change", 0.0))
+        ending = _fmt_amount(fct.get("projected_ending_cash", 0.0))
+        confidence = fct.get("confidence_level", "MEDIUM")
+
+        lines = [
+            f"**Deterministic Cash Position Forecast ({horizon}-Day Horizon)**",
+            "",
+            f"• **Current / Baseline Cash:** {curr} (Source: {baseline_src})",
+            f"• **Expected Inflows:** {inflows} (Forecast)",
+            f"• **Expected Outflows / Fees:** {outflows} (Forecast)",
+            f"• **Net Projected Change:** {net}",
+            f"• **Projected Ending Cash Position:** {ending} (FORECAST)",
+            f"• **Confidence Level:** {confidence}",
+            "",
+            "**Forecasting Methodology:**",
+            f"{fct.get('methodology', 'Deterministic moving average')}",
+            "",
+            "**Assumptions:**",
+        ]
+        for a in fct.get("assumptions", []):
+            lines.append(f"• {a}")
+        return "\n".join(lines)
+
+    if query_type == "TAX_MATCH":
+        tax_res = metrics.get("tax_match") or {}
+        if tax_res.get("status") == "NO_DATA":
+            return tax_res.get("message", "No financial records found in this thread to perform tax matching.")
+        tot = tax_res.get("total_records", 0)
+        eligible = tax_res.get("tax_eligible_count", tot)
+        matched = tax_res.get("matched_count", 0)
+        mismatched = tax_res.get("mismatched_count", 0)
+        missing = tax_res.get("missing_count", 0)
+        not_applicable = tax_res.get("not_applicable_count", 0)
+        unavailable = tax_res.get("unavailable_count", 0)
+        rate = tax_res.get("tax_match_rate", 0.0)
+        exp_tax = _fmt_amount(tax_res.get("total_tax_expected", 0.0))
+        rep_tax = _fmt_amount(tax_res.get("total_tax_reported", 0.0))
+        diff = _fmt_amount(tax_res.get("total_tax_discrepancy", 0.0))
+        net_var = _fmt_amount(tax_res.get("net_tax_variance", 0.0))
+
+        lines = [
+            f"**Tax-Line Matching Analysis ({rate:.1f}% Match Rate)**",
+            "",
+            f"• **Total Financial Records Analyzed:** {tot}",
+            f"• **Tax-Eligible Lines:** {eligible}",
+            f"• **Matched Lines:** {matched} ({rate:.1f}% of eligible)",
+            f"• **Tax Mismatches:** {mismatched}",
+            f"• **Missing Tax Lines:** {missing}",
+            f"• **Not Tax Applicable:** {not_applicable}",
+        ]
+        if unavailable:
+            lines.append(f"• **Tax Data Unavailable:** {unavailable}")
+        lines += [
+            f"• **Total Expected Tax:** {exp_tax} (Calculated: taxable × rate)",
+            f"• **Total Reported Tax:** {rep_tax}",
+            f"• **Absolute Tax Variance:** {diff}",
+            f"• **Net (Signed) Tax Variance:** {net_var}",
+        ]
+        if mismatched > 0 or missing > 0:
+            lines.append("\n**Discrepancy Details:**")
+            discrepancies = [t for t in tax_res.get("tax_lines", []) if t.get("status") in ("MISMATCH", "MISSING")][:5]
+            for d in discrepancies:
+                lines.append(f"• Record `{d.get('record_id')}` ({d.get('status')}): {d.get('explanation')}")
+        return "\n".join(lines)
+
     if query_type == "METRIC_QUERY" or query_type == "SUMMARY_QUERY" or query_type == "GENERAL":
         if metrics.get("status") == "NO_DATA":
             return "There is not enough processed data in this thread to answer that question. No documents have been uploaded and no reconciliation has been run."
@@ -364,12 +465,14 @@ def format_deterministic_answer(state: QAState) -> str:
         if not exceptions:
             return "There are no material exceptions in this thread."
         lines = [f"Found **{len(exceptions)}** material discrepancies requiring controller review:"]
-        for e in exceptions[:5]:
+        limit = 25
+        for e in exceptions[:limit]:
             lines.append(
                 f"- **{e.get('record_id')}** ({e.get('source')}): {e.get('explanation')}"
             )
-        if len(exceptions) > 5:
-            lines.append(f"...and {len(exceptions) - 5} more.")
+        if len(exceptions) > limit:
+            lines.append(f"...and {len(exceptions) - limit} more.")
+            lines.append("[View all exceptions in Investigator](action:view_exceptions)")
         return "\n".join(lines)
 
     # ── EXCEPTION / DISCREPANCY QUERY ──
@@ -385,12 +488,14 @@ def format_deterministic_answer(state: QAState) -> str:
         for rc, count in sorted(reason_counts.items()):
             if rc == "AMOUNT_MISMATCH":
                 lines.append(f"- **{count}** have amount mismatches (fee deductions or partial settlements).")
-            elif rc == "AMBIGUOUS_CANDIDATES":
+            elif rc == "AMBIGUOUS_CANDIDATE_CONFLICT":
                 lines.append(f"- **{count}** have multiple candidate matches with close scores.")
             elif rc == "MISSING_COUNTERPART":
                 lines.append(f"- **{count}** have no counterpart transaction in the other source.")
-            elif rc == "DUPLICATE":
+            elif rc == "DUPLICATE_TRANSACTION":
                 lines.append(f"- **{count}** are duplicate bookings.")
+            elif rc == "UNRECORDED_TRANSACTION":
+                lines.append(f"- **{count}** were processed by the counterpart but are unrecorded in the ledger.")
             else:
                 lines.append(f"- **{count}** classified under `{rc}`.")
         if query_type == "DISCREPANCY_QUERY":
@@ -425,6 +530,21 @@ def format_deterministic_answer(state: QAState) -> str:
             f"- **Exceptions**: {metrics.get('exceptions_count', 0)}",
             f"- **Match Rate**: {metrics.get('match_rate', 0):.1f}%",
         ]
+        diag = metrics.get("diagnostics", {})
+        if diag and isinstance(diag, dict):
+            zero_diag = diag.get("zero_match_diagnostics")
+            if zero_diag:
+                lines.append(f"- **Diagnostics**: {zero_diag}")
+            brk = diag.get("rejection_breakdown", {})
+            if brk and isinstance(brk, dict):
+                active_rejections = [f"{k}: {v}" for k, v in brk.items() if v > 0]
+                if active_rejections:
+                    lines.append(f"- **Rejection Breakdown**: {', '.join(active_rejections)}")
+
+        mapped = metrics.get("mapped_columns", {})
+        if mapped and isinstance(mapped, dict):
+            lines.append(f"- **Semantic Column Mappings**: Active across {len(mapped)} document(s)")
+
         if evaluated:
             lines += [
                 f"- **Accuracy**: {metrics.get('accuracy', 0):.1f}%",
@@ -506,8 +626,8 @@ def generate_answer_node(state: QAState) -> Dict[str, Any]:
     answer = deterministic_answer
     answer_source = "deterministic"
 
-    # 2) Optional LLM synthesis — ONLY over the retrieved evidence
-    if gemini_client.is_available:
+    # 2) Optional LLM synthesis via Groq — ONLY over the retrieved evidence
+    if groq_client.is_available:
         evidence_prompt = (
             f"Thread ID: {thread_id}\n"
             f"User Question: {question}\n"
@@ -523,8 +643,8 @@ def generate_answer_node(state: QAState) -> Dict[str, Any]:
             "3. Cite the relevant transaction / exception / document ids from the evidence.\n"
             "4. If the evidence is empty or a NO_DATA/PENDING status is present, say there is not enough processed data.\n"
         )
-        with traced_operation("gemini_answer", thread_id=thread_id, operation="llm_answer"):
-            llm_answer = gemini_client.generate_text(
+        with traced_operation("groq_answer", thread_id=thread_id, operation="llm_answer"):
+            llm_answer = groq_client.generate_text(
                 prompt=evidence_prompt,
                 system_instruction=(
                     "You are the AI Finance Controller Copilot. Answer financial reconciliation "

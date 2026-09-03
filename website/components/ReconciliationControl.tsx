@@ -18,14 +18,13 @@ interface ReconciliationControlProps {
  * Documents → Parsing → Normalization → Matching → Exception Analysis → Persistence → Complete
  * The step list shows real progress returned by the reconciliation graph.
  */
-const PIPELINE_STEPS = [
-  { key: "loaded", label: "Documents", match: /Loaded \d+ raw records/i },
-  { key: "normalized", label: "Parsing & Normalization", match: /Normalized \d+ transaction records/i },
-  { key: "candidates", label: "Candidate Generation", match: /Generated \d+ potential pairs/i },
-  { key: "matched", label: "Matching", match: /Completed deterministic matching/i },
-  { key: "verified", label: "Verification", match: /Verified \d+ unique pairwise matches/i },
-  { key: "exceptions", label: "Exception Analysis", match: /Classified \d+ exceptions/i },
-  { key: "complete", label: "Complete", match: /Completed run/i },
+export const PIPELINE_STEPS = [
+  { key: "upload", label: "Upload", match: /(?:Upload|Loaded|Ingested)/i },
+  { key: "schema", label: "Schema Detection", match: /Schema Detection/i },
+  { key: "mapping", label: "Column Mapping", match: /Column Mapping/i },
+  { key: "reconciliation", label: "Python Reconciliation", match: /(?:Python Reconciliation|deterministic matching)/i },
+  { key: "results", label: "Results", match: /(?:Results|Compiled structured)/i },
+  { key: "qa", label: "Q&A Ready", match: /(?:Finalized|Completed run|Pipeline Finalized)/i },
 ];
 
 export const ReconciliationControl: React.FC<ReconciliationControlProps> = ({
@@ -167,6 +166,52 @@ export const ReconciliationControl: React.FC<ReconciliationControlProps> = ({
               );
             })}
           </ol>
+        </div>
+      )}
+
+      {/* Schema & Semantic Column Mapping Inspection */}
+      {latestRun?.mapped_columns && Object.keys(latestRun.mapped_columns).length > 0 && (
+        <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-3.5 text-xs space-y-2.5">
+          <div className="flex items-center justify-between">
+            <span className="font-bold text-slate-700 flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-blue-600" />
+              Detected Schemas &amp; Semantic Column Mappings
+            </span>
+            <span className="text-[10px] font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+              Deterministic Python (Pandas/NumPy)
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {Object.entries(latestRun.mapped_columns).map(([docId, mappings]) => {
+              const docItem = documents.find((d) => d.id === docId);
+              return (
+                <div key={docId} className="bg-white border border-slate-200 rounded-lg p-2.5">
+                  <div className="font-semibold text-slate-900 truncate mb-1.5 flex items-center justify-between">
+                    <span>{docItem?.filename || docId}</span>
+                    <span className="text-[10px] text-slate-400 font-normal">
+                      {Object.keys(mappings).length} fields mapped
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 font-mono text-[10px]">
+                    {Object.entries(mappings).map(([semantic, rawCol]) => (
+                      <span key={semantic} className="bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded border border-slate-200">
+                        <span className="text-blue-600 font-semibold">{semantic}</span>: {rawCol}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Diagnostics for zero match or rejections */}
+          {latestRun.diagnostics?.zero_match_diagnostics && (
+            <div className="bg-amber-50 border border-amber-200 text-amber-800 rounded-lg p-2.5 text-xs">
+              <span className="font-bold">Reconciliation Diagnostics: </span>
+              {latestRun.diagnostics.zero_match_diagnostics}
+            </div>
+          )}
         </div>
       )}
 

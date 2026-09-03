@@ -23,6 +23,9 @@ class ReconciliationState(TypedDict):
     error: Optional[str]
     db_session: Optional[Any]
     ground_truth: Optional[Any]  # explicit, authorized ground truth (dict or path) for benchmark runs only
+    document_tables: Optional[List[Any]]
+    schema_result: Optional[Any]
+    recon_output: Optional[Any]
 
 
 class QAState(TypedDict):

@@ -16,8 +16,8 @@ interface ResultsViewProps {
 const categories = [
   { id: "ALL", label: "All" },
   { id: "EXACT_MATCH", label: "Exact" },
+  { id: "TOLERANCE_MATCH", label: "Tolerance" },
   { id: "FUZZY_MATCH", label: "Fuzzy" },
-  { id: "DATE_LAG", label: "Settlement lag" },
 ];
 
 export const ResultsView: React.FC<ResultsViewProps> = ({

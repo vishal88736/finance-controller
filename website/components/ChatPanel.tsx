@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Copy, Check, Sparkles, User, ShieldAlert, Wrench, Link2, RefreshCw } from "lucide-react";
+import { Send, Copy, Check, Sparkles, User, ShieldAlert, Wrench, Link2, RefreshCw, ExternalLink, ArrowUpRight } from "lucide-react";
 import { api, MessageItem } from "@/lib/api";
 
 interface ChatPanelProps {
@@ -136,6 +136,50 @@ const FormattedMessage: React.FC<{ content: string; isUser: boolean; onOpenRecor
           <span className={`w-1.5 h-1.5 rounded-full mt-1.5 shrink-0 ${isUser ? "bg-blue-200" : "bg-blue-500"}`} />
           <span className="flex-1">{renderInline(trimmed.substring(2))}</span>
         </li>
+      );
+      return;
+    }
+
+    const moreMatch = trimmed.match(/^\.{2,3}\s*and\s+(\d+)\s+more/i);
+    if (moreMatch) {
+      flushList(idx);
+      const count = moreMatch[1];
+      elements.push(
+        <div key={`more_${idx}`} className="pt-2 pb-1">
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent("navigation:jump-tab", { detail: { tab: "exceptions", category: "MATERIAL" } })
+              );
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 hover:text-blue-800 border border-blue-200/80 rounded-lg transition-all shadow-2xs cursor-pointer group"
+          >
+            <span>View {count} more in Exception Investigator</span>
+            <ExternalLink className="w-3.5 h-3.5 text-blue-500 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
+      );
+      return;
+    }
+
+    if (trimmed.includes("action:view_exceptions") || trimmed.toLowerCase().includes("view all exceptions")) {
+      flushList(idx);
+      elements.push(
+        <div key={`action_view_${idx}`} className="pt-2 pb-1">
+          <button
+            type="button"
+            onClick={() => {
+              window.dispatchEvent(
+                new CustomEvent("navigation:jump-tab", { detail: { tab: "exceptions", category: "MATERIAL" } })
+              );
+            }}
+            className="inline-flex items-center gap-2 px-3.5 py-2 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-all shadow-xs cursor-pointer group"
+          >
+            <span>Open Exception Investigator</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-blue-200 group-hover:translate-x-0.5 transition-transform" />
+          </button>
+        </div>
       );
       return;
     }

@@ -164,6 +164,9 @@ def register_document(
     size_bytes: int,
     file_path: Optional[str] = None,
     document_type: str = "UNKNOWN",
+    document_role: str = "UNKNOWN",
+    role_confidence: float = 0.0,
+    role_reason: Optional[str] = None,
     dataset_fingerprint: Optional[str] = None,
     record_count: int = 0,
     processing_status: str = "PENDING"
@@ -180,6 +183,9 @@ def register_document(
         size_bytes=size_bytes,
         record_count=record_count,
         document_type=document_type,
+        document_role=document_role,
+        role_confidence=role_confidence,
+        role_reason=role_reason,
         processing_status=processing_status,
         file_path=file_path,
         uploaded_at=utc_now()

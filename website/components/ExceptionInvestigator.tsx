@@ -21,9 +21,9 @@ interface ExceptionInvestigatorProps {
 const REASONS = [
   { id: "ALL", label: "All" },
   { id: "AMOUNT_MISMATCH", label: "Amount mismatch" },
-  { id: "AMBIGUOUS_CANDIDATES", label: "Ambiguous" },
+  { id: "AMBIGUOUS_CANDIDATE_CONFLICT", label: "Ambiguous" },
   { id: "MISSING_COUNTERPART", label: "Missing counterpart" },
-  { id: "DUPLICATE", label: "Duplicate" },
+  { id: "DUPLICATE_TRANSACTION", label: "Duplicate" },
 ];
 
 const CATEGORIES = [
@@ -76,10 +76,12 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
     switch (reason) {
       case "AMOUNT_MISMATCH":
         return <span className="pill bg-red-50 text-red-700 border border-red-200">Amount mismatch</span>;
-      case "AMBIGUOUS_CANDIDATES":
+      case "AMBIGUOUS_CANDIDATE_CONFLICT":
         return <span className="pill bg-purple-50 text-purple-700 border border-purple-200">Ambiguous</span>;
-      case "DUPLICATE":
+      case "DUPLICATE_TRANSACTION":
         return <span className="pill bg-amber-50 text-amber-700 border border-amber-200">Duplicate</span>;
+      case "UNRECORDED_TRANSACTION":
+        return <span className="pill bg-blue-50 text-blue-700 border border-blue-200">Unrecorded</span>;
       default:
         return <span className="pill bg-slate-100 text-slate-600 border border-slate-200">Missing counterpart</span>;
     }
@@ -297,39 +299,167 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <Stat label="Amount" value={selected.amount !== undefined && selected.amount !== null ? `$${selected.amount.toFixed(2)}` : "N/A"} />
-                <Stat
-                  label="Difference"
-                  value={selected.amount_discrepancy > 0 ? `Δ $${selected.amount_discrepancy.toFixed(2)}` : "—"}
-                  danger={selected.amount_discrepancy > 0}
-                />
-                <Stat label="Date" value={selected.date || "—"} />
-                <Stat label="Match score" value={`${selected.confidence.toFixed(1)}%`} />
-              </div>
+              {/* ── SECTION 1: WHY THIS IS AN EXCEPTION ── */}
+              <div className="bg-slate-50/80 border border-slate-200 rounded-xl p-4 space-y-3">
+                <div className="flex items-center justify-between border-b border-slate-200/80 pb-2">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Why This is an Exception
+                  </h4>
+                  <span
+                    className={`pill ${
+                      selected.discrepancy_category === "MATERIAL"
+                        ? "bg-red-50 text-red-700 border border-red-200"
+                        : "bg-slate-100 text-slate-600 border border-slate-200"
+                    }`}
+                  >
+                    {selected.discrepancy_category || "MATERIAL"}
+                  </span>
+                </div>
 
-              <div className="space-y-2">
-                <h4 className="text-sm font-semibold text-slate-800">Explanation</h4>
-                <div className="bg-slate-50 border border-slate-200 p-4 rounded-xl text-sm text-slate-700 leading-relaxed">
-                  {selected.explanation}
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div>
+                    <span className="text-slate-400 block uppercase tracking-wide text-[10px] font-semibold">
+                      Transaction Record
+                    </span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">
+                      {selected.record_id}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-400 block uppercase tracking-wide text-[10px] font-semibold">
+                      Recorded Amount
+                    </span>
+                    <span className="font-mono font-bold text-slate-900 text-sm">
+                      {selected.amount !== undefined && selected.amount !== null
+                        ? `$${selected.amount.toFixed(2)}`
+                        : "N/A"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-400 block uppercase tracking-wide text-[10px] font-semibold">
+                      Discrepancy Delta
+                    </span>
+                    <span
+                      className={`font-mono font-bold text-sm ${
+                        selected.amount_discrepancy > 0 ? "text-red-600" : "text-slate-600"
+                      }`}
+                    >
+                      {selected.amount_discrepancy > 0 ? `Δ $${selected.amount_discrepancy.toFixed(2)}` : "None"}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span className="text-slate-400 block uppercase tracking-wide text-[10px] font-semibold">
+                      Reason Code
+                    </span>
+                    <span className="font-mono font-bold text-slate-800 text-xs">
+                      {selected.reason_code}
+                    </span>
+                  </div>
                 </div>
               </div>
 
+              {/* ── SECTION 2: AI INVESTIGATION & REASONING ── */}
+              <div className="bg-white border border-blue-200/90 rounded-xl p-4 shadow-xs space-y-3.5">
+                <div className="flex items-center justify-between border-b border-blue-100 pb-2">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 rounded-full bg-blue-600" />
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">
+                      AI Investigation &amp; Evidence
+                    </h4>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    Deterministic
+                  </span>
+                </div>
+
+                <div className="text-xs text-slate-700 leading-relaxed bg-slate-50 border border-slate-200/70 p-3 rounded-lg">
+                  {selected.explanation}
+                </div>
+
+                {/* Evidence Sources Breakdown */}
+                <div className="space-y-1.5 pt-1">
+                  <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400 block">
+                    Verified Sources
+                  </span>
+                  <div className="space-y-1 text-xs font-mono">
+                    <div className="flex items-center gap-2 text-slate-700">
+                      <span className="text-emerald-600 font-bold">✓</span>
+                      <span className="text-slate-500">Source:</span>
+                      <span className="font-semibold">{selected.source}</span>
+                      <span className="text-slate-300">•</span>
+                      <span className="text-slate-500">ID:</span>
+                      <span className="font-semibold">{selected.record_id}</span>
+                    </div>
+
+                    {selected.candidates && selected.candidates.length > 0 ? (
+                      <div className="flex items-center gap-2 text-slate-700">
+                        <span className="text-purple-600 font-bold">✓</span>
+                        <span className="text-slate-500">Counterpart Candidate:</span>
+                        <span className="font-semibold">{selected.candidates[0].target_record_id}</span>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-500">Amount:</span>
+                        <span className="font-semibold">${(selected.candidates[0].target_amount ?? 0).toFixed(2)}</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-amber-700">
+                        <span className="text-amber-500 font-bold">⚠</span>
+                        <span>No counterpart record found in opposite source.</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Mathematical Calculation Box */}
+                {selected.amount_discrepancy > 0 && selected.candidates && selected.candidates.length > 0 && (
+                  <div className="bg-slate-900 text-slate-100 rounded-lg p-3 font-mono text-xs space-y-1">
+                    <span className="text-[10px] uppercase tracking-wider text-slate-400 block">
+                      Deterministic Calculation
+                    </span>
+                    <div className="text-emerald-400 font-semibold">
+                      ${selected.amount?.toFixed(2)} (Ledger) − ${(selected.candidates[0].target_amount ?? 0).toFixed(2)} (Settlement)
+                    </div>
+                    <div className="text-red-400 font-bold pt-1 border-t border-slate-800">
+                      = ${selected.amount_discrepancy.toFixed(2)} (Fee deduction / Variance)
+                    </div>
+                  </div>
+                )}
+
+                {/* Recommendation */}
+                <div className="pt-2 border-t border-slate-100 text-xs text-slate-600">
+                  <span className="font-bold text-slate-900">Controller Action: </span>
+                  {selected.reason_code === "AMOUNT_MISMATCH"
+                    ? "Verify standard payment gateway MDR fee schedule (typically 2.0% - 2.5%) or request fee adjustment note."
+                    : selected.reason_code === "AMBIGUOUS_CANDIDATE_CONFLICT"
+                    ? "Review candidate reference IDs to select the definitive settlement entry."
+                    : selected.reason_code === "DUPLICATE_TRANSACTION"
+                    ? "Inspect journal entry for double posting; reverse redundant transaction if confirmed."
+                    : selected.reason_code === "UNRECORDED_TRANSACTION"
+                    ? "Post the missing journal entry into the internal ledger."
+                    : "Initiate settlement tracer with payment processor for unrecorded counterpart transaction."}
+                </div>
+              </div>
+
+              {/* ── Candidate matches (if any) ── */}
               {selected.candidates && selected.candidates.length > 0 && (
                 <div className="space-y-2.5">
-                  <h4 className="text-sm font-semibold text-slate-800">Candidate matches ({selected.candidates.length})</h4>
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700">
+                    Candidate Matches ({selected.candidates.length})
+                  </h4>
                   <div className="space-y-2">
                     {selected.candidates.map((cand: any, idx: number) => (
-                      <div key={idx} className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                      <div key={idx} className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-2">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="font-bold text-sm text-slate-900 font-[family-name:var(--font-geist-mono)] truncate">
+                          <span className="font-bold text-xs text-slate-900 font-mono truncate">
                             Candidate {String.fromCharCode(65 + idx)}: {cand.target_record_id}
                           </span>
                           <span className="pill bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                             {cand.confidence_score?.toFixed(1) ?? "—"}% score
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-3 text-xs font-[family-name:var(--font-geist-mono)] text-slate-500 pt-2 border-t border-slate-200">
+                        <div className="grid grid-cols-3 gap-2 text-xs font-mono text-slate-500 pt-2 border-t border-slate-200">
                           <div>Amount: <span className="font-bold text-slate-900">${(cand.target_amount ?? 0).toFixed(2)}</span></div>
                           <div>Date: <span className="font-bold text-slate-900">{cand.target_date || "N/A"}</span></div>
                           <div>Δ: <span className={`font-bold ${(cand.amount_diff ?? 0) > 0 ? "text-red-600" : "text-slate-900"}`}>${(cand.amount_diff ?? 0).toFixed(2)}</span></div>
@@ -340,13 +470,13 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
                 </div>
               )}
 
-              {/* Evidence JSON */}
+              {/* ── Collapsible Evidence JSON ── */}
               {selected.evidence && Object.keys(selected.evidence).length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-                    <ShieldAlert className="w-4 h-4 text-slate-400" /> Evidence
+                <div className="space-y-1.5">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+                    <ShieldAlert className="w-3.5 h-3.5 text-slate-400" /> Raw Audit Evidence
                   </h4>
-                  <pre className="bg-slate-950 text-slate-200 text-[11px] rounded-xl p-4 overflow-x-auto font-mono leading-relaxed">
+                  <pre className="bg-slate-950 text-slate-200 text-[11px] rounded-xl p-3.5 overflow-x-auto font-mono leading-relaxed max-h-48">
                     {JSON.stringify(selected.evidence, null, 2)}
                   </pre>
                 </div>

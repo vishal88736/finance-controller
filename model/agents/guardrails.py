@@ -135,7 +135,7 @@ _OFF_TOPIC_PATTERNS = [
     r"\b(jokes?|funny\s+(story|haiku)|riddles?|puns?)\b",
     r"\bwrite\s+(me\s+)?a?\s*(song|lyrics?|lullaby)\b",
     r"\b(recipes?|cook(ing)?|baking|ingredients?|cocktails?|dinner\s+ideas)\b",
-    r"\b(weather|forecast|rain\s+today|temperature\s+in|hurricane|snowfall)\b",
+    r"\b(weather|weather\s+forecast|rain\s+today|temperature\s+in|hurricane|snowfall)\b",
     r"\b(president|election|prime\s+minister|democrat|republican|parliament|politics|vote\s+for)\b",
     r"\b(quantum|black\s*holes?|astronomy|astrology|horoscope|zodiac)\b",
     r"\b(football|cricket\s+score|stock\s+price\s+of\s+apple|cryptocurrency\s+price)\b",
@@ -157,6 +157,9 @@ _FINANCE_TERMS = [
     "currency", "fx", "wire", "transfer", "deposit", "debit", "credit",
     "vendor", "merchant", "entity", "payable", "receivable", "ar ", "ap ",
     "journal", "posting", "audit", "run", "process", "compare",
+    "forecast", "cash", "cashflow", "cash flow", "inflow", "outflow",
+    "project", "horizon", "liquidity", "tax", "tax-line", "taxline",
+    "gst", "vat", "tds", "withholding", "taxable", "subtotal", "sales tax",
 ]
 
 _SHORT_ALLOWED = {
@@ -235,6 +238,8 @@ ALLOWED_QA_TOOLS = frozenset({
     "get_transaction_result_tool",
     "get_material_exceptions_tool",
     "get_metrics_tool",
+    "run_cash_forecast_tool",
+    "run_tax_match_tool",
 })
 
 
@@ -255,16 +260,22 @@ def check_tool_permission(tool_name: str) -> Tuple[GuardrailVerdict, Optional[st
 _ID_FIELDS = (
     "record_id", "record_id_a", "record_id_b", "exception_id", "match_id",
     "document_id", "reference_id", "target_record_id", "filename", "source",
+    "forecast_id", "id",
 )
 _AMOUNT_FIELDS = (
     "amount", "amount_a", "amount_b", "amount_discrepancy", "amount_difference",
     "total_amount_processed", "total_amount_matched", "total_amount_discrepancy",
-    "fee_delta", "target_amount",
+    "fee_delta", "target_amount", "current_cash_balance", "projected_inflows",
+    "projected_outflows", "net_projected_change", "projected_ending_cash",
+    "projected_inflow", "projected_outflow", "taxable_amount", "expected_tax",
+    "reported_tax", "tax_difference", "total_tax_expected", "total_tax_reported",
+    "total_tax_discrepancy",
 )
 _COUNT_FIELDS = (
     "total_records", "matched_count", "exceptions_count", "unmatched_count",
     "record_count", "total", "count", "true_positives", "false_positives",
-    "false_negatives", "true_negatives", "candidate_count",
+    "false_negatives", "true_negatives", "candidate_count", "horizon_days",
+    "mismatched_count", "missing_count", "ambiguous_count", "tax_match_rate",
 )
 
 
@@ -283,6 +294,27 @@ def _extract_facts(obj: Any, facts: Dict[str, float]) -> None:
     elif isinstance(obj, list):
         for item in obj:
             _extract_facts(item, facts)
+
+
+def _collect_id_strings(obj: Any, ids: set) -> None:
+    """Recursively collect candidate identifier strings from evidence."""
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if k in _ID_FIELDS and isinstance(v, (str, int)) and str(v).strip():
+                ids.add(str(v).strip().strip("`\"'").lower())
+            else:
+                _collect_id_strings(v, ids)
+    elif isinstance(obj, list):
+        for item in obj:
+            _collect_id_strings(item, ids)
+
+
+# Identifier-like token: must contain a letter, a digit, and a separator
+# (e.g. TXN-1001, INV-2026-2002). Excludes plain numbers, dates, and prose.
+_ID_TOKEN = re.compile(
+    r"\b(?=[A-Za-z0-9_-]*[A-Za-z])(?=[A-Za-z0-9_-]*[0-9])"
+    r"[A-Za-z0-9]+[-_][A-Za-z0-9_-]+\b"
+)
 
 
 _NUM_IN_ANSWER = re.compile(
@@ -320,7 +352,24 @@ def check_evidence_consistency(
     _extract_facts(retrieved_documents, evidence)
     evidence_values = set(evidence.values())
 
-    for match in _NUM_IN_ANSWER.finditer(answer):
+    # Identifier consistency: a proposed ID token must be present in evidence.
+    evidence_ids: set = set()
+    _collect_id_strings(retrieved_records, evidence_ids)
+    _collect_id_strings(retrieved_exceptions, evidence_ids)
+    _collect_id_strings(retrieved_metrics, evidence_ids)
+    _collect_id_strings(retrieved_documents, evidence_ids)
+    for tok in _ID_TOKEN.findall(answer):
+        if tok.strip().strip("`\"'").lower() not in evidence_ids:
+            return (
+                GuardrailVerdict.BLOCK,
+                f"Answer contains identifier '{tok}' that is not present in the retrieved evidence.",
+            )
+
+    # Mask identifiers before numeric scanning so a digit embedded inside an
+    # ID (e.g. the "1001" in "TXN-1001") is not misread as a free number.
+    masked_answer = _ID_TOKEN.sub(" ", answer)
+
+    for match in _NUM_IN_ANSWER.finditer(masked_answer):
         val = _parse_number(match.group(0))
         if val is None:
             continue

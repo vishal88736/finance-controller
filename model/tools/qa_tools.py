@@ -62,6 +62,8 @@ def get_thread_documents_tool(db: Session, thread_id: str) -> List[Dict[str, Any
         "file_type": d.file_type,
         "record_count": d.record_count,
         "document_type": d.document_type,
+        "document_role": d.document_role,
+        "role_confidence": d.role_confidence,
         "processing_status": d.processing_status,
         "sha256": d.content_hash_sha256,
         "dataset_fingerprint": d.dataset_fingerprint,
@@ -119,6 +121,12 @@ def get_reconciliation_summary_tool(db: Session, thread_id: str, run_id: Optiona
         "total_amount_processed": run.total_amount_processed,
         "total_amount_matched": run.total_amount_matched,
         "total_amount_discrepancy": run.total_amount_discrepancy,
+        "detected_schemas": summary_data.get("detected_schemas", {}),
+        "mapped_columns": summary_data.get("mapped_columns", {}),
+        "candidate_pairs_evaluated": summary_data.get("candidate_pairs_evaluated", 0),
+        "mismatch_reasons": summary_data.get("mismatch_reasons", {}),
+        "diagnostics": summary_data.get("diagnostics", {}),
+        "documents_processed": summary_data.get("documents_processed", []),
         "created_at": run.created_at.isoformat() if run.created_at else None,
         "_meta": _tool_meta("get_reconciliation_summary_tool", thread_id, run_id=run.id),
     }
@@ -165,7 +173,7 @@ def get_ambiguous_transactions_tool(
         db.query(ExceptionItemResult)
         .filter(
             ExceptionItemResult.thread_id == thread_id,
-            ExceptionItemResult.reason_code == "AMBIGUOUS_CANDIDATES"
+            ExceptionItemResult.reason_code == "AMBIGUOUS_CANDIDATE_CONFLICT"
         )
         .limit(safe_limit)
         .all()
@@ -228,7 +236,7 @@ def get_transaction_result_tool(
                 ],
                 "_meta": _tool_meta("get_transaction_result_tool", thread_id, record_id=clean_id),
             }
-        m = matches[0]
+        (m,) = matches
         return {
             "type": "MATCHED",
             "match_id": m.id,
@@ -374,3 +382,45 @@ def get_material_exceptions_tool(
 def get_metrics_tool(db: Session, thread_id: str) -> Dict[str, Any]:
     """Retrieve reconciliation run metrics for the active thread (evaluated metrics only if evaluation ran)."""
     return get_reconciliation_summary_tool(db, thread_id)
+
+
+def run_cash_forecast_tool(
+    db: Session,
+    thread_id: str,
+    horizon_days: int = 7,
+    current_cash: Optional[float] = None,
+) -> Dict[str, Any]:
+    """
+    Execute deterministic forward cash forecasting for 7, 14, or 30 days.
+    Calculates expected inflows, outflows, and projected closing cash position.
+    """
+    from ..services.cash_forecaster import cash_forecaster
+    result = cash_forecaster.run_forecast(
+        db=db,
+        thread_id=thread_id,
+        horizon_days=horizon_days,
+        current_cash_balance=current_cash,
+    )
+    result["_meta"] = _tool_meta("run_cash_forecast_tool", thread_id, horizon_days=horizon_days)
+    return result
+
+
+def run_tax_match_tool(
+    db: Session,
+    thread_id: str,
+    tax_rate: Optional[float] = None,
+    tolerance: Optional[float] = None,
+) -> Dict[str, Any]:
+    """
+    Execute deterministic tax-line matching comparing taxable amounts against
+    reported tax lines and statutory deductions (GST/VAT/sales tax).
+    """
+    from ..services.tax_matcher import tax_matcher
+    result = tax_matcher.run_tax_matching(
+        db=db,
+        thread_id=thread_id,
+        tax_rate=tax_rate,
+        tolerance=tolerance,
+    )
+    result["_meta"] = _tool_meta("run_tax_match_tool", thread_id, tax_rate=tax_rate)
+    return result

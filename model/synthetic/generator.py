@@ -86,6 +86,22 @@ def generate_synthetic_dataset(output_dir: str = None, total_records: int = 200)
         date_str = date_obj.strftime("%Y-%m-%d")
         currency = CURRENCIES[i % len(CURRENCIES)]
 
+        # Tax details for tax-line matcher capability
+        taxable_amt = amount
+        if i % 15 == 3:
+            t_rate = 0.18
+            t_amt = 0.0  # Missing tax
+        elif i % 15 == 7:
+            t_rate = 0.12  # Mismatched rate (12% vs 18%)
+            t_amt = round(taxable_amt * 0.12, 2)
+        elif i % 15 == 11:
+            t_rate = 0.18  # Arithmetic discrepancy
+            t_amt = round(taxable_amt * 0.18 + 15.50, 2)
+        else:
+            t_rate = 0.18  # Exact match
+            t_amt = round(taxable_amt * 0.18, 2)
+        tot_amt = round(taxable_amt + t_amt, 2)
+
         records_a.append({
             "record_id": txn_id_a,
             "reference_id": common_ref,
@@ -93,6 +109,10 @@ def generate_synthetic_dataset(output_dir: str = None, total_records: int = 200)
             "entity": vendor_info[0],
             "description": f"Payment for {vendor_info[0]} - {common_ref}",
             "amount": amount,
+            "taxable_amount": taxable_amt,
+            "tax_rate": t_rate,
+            "tax_amount": t_amt,
+            "total_amount": tot_amt,
             "currency": currency,
             "source": "source_a_ledger"
         })

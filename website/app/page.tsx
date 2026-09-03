@@ -10,22 +10,27 @@ import { ExceptionInvestigator } from "@/components/ExceptionInvestigator";
 import { EvaluationView } from "@/components/EvaluationView";
 import { ChatPanel } from "@/components/ChatPanel";
 import { AuditTrailView } from "@/components/AuditTrailView";
+import { AgentActivityPanel } from "@/components/AgentActivityPanel";
+import { CashForecastView } from "@/components/CashForecastView";
+import { TaxMatchView } from "@/components/TaxMatchView";
 import {
   CheckCircle2, AlertTriangle, BarChart3, MessageSquare, ShieldCheck,
-  Menu, FileText, WifiOff,
+  Menu, FileText, WifiOff, TrendingUp, Percent,
 } from "lucide-react";
 import {
-  api, ThreadItem, ThreadDocumentItem, LatestRun, MatchItem, ExceptionItem,
+  api, ThreadItem, ThreadDocumentItem, LatestRun, MatchItem, ExceptionItem, AuditLogItem, HealthStatus,
 } from "@/lib/api";
 
-type Tab = "overview" | "matches" | "exceptions" | "evaluation" | "qa" | "audit";
+type Tab = "overview" | "matches" | "qa" | "forecast" | "tax" | "exceptions" | "evaluation" | "audit";
 
 const TABS = [
   { id: "overview" as const, label: "Overview", icon: FileText },
-  { id: "matches" as const, label: "Matched", icon: CheckCircle2 },
+  { id: "matches" as const, label: "Reconciliation", icon: CheckCircle2 },
+  { id: "qa" as const, label: "Settlement Q&A", icon: MessageSquare },
+  { id: "forecast" as const, label: "Cash Forecast", icon: TrendingUp },
+  { id: "tax" as const, label: "Tax Matcher", icon: Percent },
   { id: "exceptions" as const, label: "Exceptions", icon: AlertTriangle },
   { id: "evaluation" as const, label: "Evaluation", icon: BarChart3 },
-  { id: "qa" as const, label: "Copilot", icon: MessageSquare },
   { id: "audit" as const, label: "Audit", icon: ShieldCheck },
 ];
 
@@ -58,6 +63,9 @@ export default function Home() {
   const [runError, setRunError] = useState<string | null>(null);
   const [stepProgress, setStepProgress] = useState<string[]>([]);
   const [runId, setRunId] = useState<string | null>(null);
+  const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
+  const [healthData, setHealthData] = useState<HealthStatus | null>(null);
+  const [langsmithActive, setLangsmithActive] = useState(false);
 
   // ── Initial load ──
   const refreshThreads = useCallback(async (): Promise<ThreadItem[]> => {
@@ -69,8 +77,10 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       try {
-        await api.health();
+        const h = await api.health();
+        setHealthData(h);
         setBackendDown(false);
+        void api.langsmithStatus().then((ls) => setLangsmithActive(ls.tracing_active)).catch(() => {});
         const list = await refreshThreads();
         if (list.length > 0) {
           setActiveThreadId(list[0].id);
@@ -141,6 +151,7 @@ export default function Home() {
     setRunId(th.latest_run?.id ?? null);
     if (th.latest_run) void loadResults(threadId, "ALL", "");
     void loadExceptions(threadId, "ALL", "ALL");
+    void api.getAuditTrail(threadId).then(setAuditLogs).catch(() => setAuditLogs([]));
   }, [loadResults, loadExceptions]);
 
   useEffect(() => {
@@ -197,6 +208,7 @@ export default function Home() {
       await Promise.all([
         loadResults(activeThreadId, "ALL", ""),
         loadExceptions(activeThreadId, "ALL", "ALL"),
+        api.getAuditTrail(activeThreadId).then(setAuditLogs).catch(() => {}),
       ]);
       await refreshThreads();
     } catch (e: any) {
@@ -215,13 +227,28 @@ export default function Home() {
     );
   };
 
-  const jumpToExceptions = (filter?: { category?: string }) => {
+  const jumpToExceptions = useCallback((filter?: { category?: string }) => {
     setPresetFilter(filter?.category ? { category: filter.category } : null);
     setExceptionCategory(filter?.category || "ALL");
     setExceptionReason("ALL");
     if (activeThreadId) void loadExceptions(activeThreadId, "ALL", filter?.category || "ALL");
     setActiveTab("exceptions");
-  };
+  }, [activeThreadId, loadExceptions]);
+
+  useEffect(() => {
+    const handleJumpTab = (e: Event) => {
+      const detail = (e as CustomEvent).detail;
+      if (detail?.tab) {
+        if (detail.tab === "exceptions") {
+          jumpToExceptions(detail.category ? { category: detail.category } : undefined);
+        } else {
+          setActiveTab(detail.tab);
+        }
+      }
+    };
+    window.addEventListener("navigation:jump-tab", handleJumpTab as EventListener);
+    return () => window.removeEventListener("navigation:jump-tab", handleJumpTab as EventListener);
+  }, [jumpToExceptions]);
 
   const threadTitle = threads.find((t) => t.id === activeThreadId)?.title || "…";
 
@@ -283,6 +310,8 @@ export default function Home() {
                 </span>
               </div>
             </div>
+
+
 
             <div className="flex items-center gap-2.5 shrink-0">
               <button
@@ -373,14 +402,23 @@ export default function Home() {
                 </div>
 
                 <div className="animate-fade-in">
-                  {activeTab === "overview" && latestRun === null && documents.length === 0 && (
-                    <EmptyWorkspace onUpload={() => setDocsOpen(true)} />
-                  )}
-                  {activeTab === "overview" && latestRun === null && documents.length > 0 && (
-                    <PendingRunNotice onRun={handleRunReconciliation} disabled={isRunning} />
-                  )}
-                  {activeTab === "overview" && latestRun !== null && (
-                    <RunSummary latestRun={latestRun} onJumpExceptions={() => jumpToExceptions({ category: "MATERIAL" })} />
+                  {activeTab === "overview" && (
+                    <div className="space-y-4">
+                      <AgentActivityPanel
+                        auditLogs={auditLogs}
+                        isRunning={isRunning}
+                        stepProgress={stepProgress}
+                      />
+                      {latestRun === null && documents.length === 0 && (
+                        <EmptyWorkspace onUpload={() => setDocsOpen(true)} />
+                      )}
+                      {latestRun === null && documents.length > 0 && (
+                        <PendingRunNotice onRun={handleRunReconciliation} disabled={isRunning} />
+                      )}
+                      {latestRun !== null && (
+                        <RunSummary latestRun={latestRun} onJumpExceptions={() => jumpToExceptions({ category: "MATERIAL" })} />
+                      )}
+                    </div>
                   )}
 
                   {activeTab === "matches" && (
@@ -437,6 +475,22 @@ export default function Home() {
                         onReconciled={() => loadThreadData(activeThreadId)}
                       />
                     </div>
+                  )}
+
+                  {activeTab === "forecast" && (
+                    <CashForecastView
+                      threadId={activeThreadId}
+                      hasDocuments={documents.length > 0}
+                      onUploadClick={() => setDocsOpen(true)}
+                    />
+                  )}
+
+                  {activeTab === "tax" && (
+                    <TaxMatchView
+                      threadId={activeThreadId}
+                      hasDocuments={documents.length > 0}
+                      onUploadClick={() => setDocsOpen(true)}
+                    />
                   )}
 
                   {activeTab === "audit" && (

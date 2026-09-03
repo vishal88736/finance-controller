@@ -65,6 +65,11 @@ from ..ingestion.registry import DocumentRegistryService, MAX_UPLOAD_BYTES, SUPP
 from ..agents.orchestrator import orchestrator
 from ..services.reconciliation_service import run_reconciliation, ReconciliationError
 from ..observability import langsmith as langsmith_obs
+from ..agents.groq_client import groq_client
+from ..services.cash_forecaster import cash_forecaster
+from ..services.tax_matcher import tax_matcher
+from ..database.models import CashForecastResult, TaxMatchResult
+from ..reconciliation.pandas_reconciler import clean_for_json
 
 from contextlib import asynccontextmanager
 
@@ -82,11 +87,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# CORS for the Next.js frontend
-_allowed_origins = os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",")
+# CORS for the Next.js frontend. Never fall back to a wildcard origin while
+# credentials are enabled — default to the local dev origin instead.
+_configured_origins = [o.strip() for o in os.environ.get("ALLOWED_ORIGINS", "http://localhost:3000").split(",") if o.strip()]
+_allowed_origins = _configured_origins or ["http://localhost:3000"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in _allowed_origins if o.strip()] or ["*"],
+    allow_origins=_allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -116,6 +123,16 @@ class ReconcileRequest(BaseModel):
     document_ids: Optional[List[str]] = None
 
 
+class ForecastRequest(BaseModel):
+    horizon_days: int = 7
+    current_cash_balance: Optional[float] = None
+
+
+class TaxMatchRequest(BaseModel):
+    tax_rate: Optional[float] = 0.18
+    tolerance: Optional[float] = 0.05
+
+
 def _require_thread(db: Session, thread_id: str) -> Thread:
     thread = get_thread(db, thread_id)
     if not thread:
@@ -130,6 +147,9 @@ def _doc_brief(d: Document) -> Dict[str, Any]:
         "file_type": d.file_type,
         "record_count": d.record_count,
         "document_type": d.document_type,
+        "document_role": d.document_role,
+        "role_confidence": d.role_confidence,
+        "role_reason": d.role_reason,
         "processing_status": d.processing_status,
         "sha256": d.content_hash_sha256,
         "dataset_fingerprint": d.dataset_fingerprint,
@@ -149,7 +169,9 @@ def health_check():
         "status": "ok",
         "service": "AI Finance Controller API",
         "version": "2.1.0",
-        "llm_configured": bool(os.environ.get("GEMINI_API_KEY")),
+        "llm_provider": groq_client.provider_name,
+        "llm_model": groq_client.model_name,
+        "llm_configured": groq_client.is_available,
     }
 
 
@@ -223,6 +245,8 @@ def api_get_thread(thread_id: str, db: Session = Depends(get_db)):
             "id": latest_run.id,
             "status": latest_run.status,
             "total_records": latest_run.total_records,
+            "source_population": summary_data.get("source_population", latest_run.total_records),
+            "counterpart_population": summary_data.get("counterpart_population", 0),
             "matched_count": latest_run.matched_count,
             "exceptions_count": latest_run.exceptions_count,
             "match_rate": latest_run.match_rate,
@@ -233,6 +257,10 @@ def api_get_thread(thread_id: str, db: Session = Depends(get_db)):
             "f1_score": latest_run.f1_score if evaluated else None,
             "processing_time_sec": latest_run.processing_time_sec,
             "throughput_records_sec": latest_run.throughput_rec_sec,
+            "detected_schemas": summary_data.get("detected_schemas", {}),
+            "mapped_columns": summary_data.get("mapped_columns", {}),
+            "diagnostics": summary_data.get("diagnostics", {}),
+            "documents_processed": summary_data.get("documents_processed", []),
             "created_at": latest_run.created_at.isoformat() if latest_run.created_at else None,
         } if latest_run else None,
     }
@@ -400,8 +428,8 @@ def api_get_thread_results(
             "confidence_score": m.confidence_score,
             "match_category": m.match_category,
             "status": m.status,
-            "evidence": json.loads(m.evidence_json) if m.evidence_json else {},
-            "score_breakdown": json.loads(m.score_breakdown_json) if m.score_breakdown_json else {},
+            "evidence": clean_for_json(json.loads(m.evidence_json)) if m.evidence_json else {},
+            "score_breakdown": clean_for_json(json.loads(m.score_breakdown_json)) if m.score_breakdown_json else {},
         } for m in matches]
     }
 
@@ -448,8 +476,8 @@ def api_get_thread_exceptions(
             "decision": e.decision,
             "explanation": e.explanation,
             "amount_discrepancy": e.amount_discrepancy,
-            "candidates": json.loads(e.candidates_json) if e.candidates_json else [],
-            "evidence": json.loads(e.evidence_json) if e.evidence_json else {},
+            "candidates": clean_for_json(json.loads(e.candidates_json)) if e.candidates_json else [],
+            "evidence": clean_for_json(json.loads(e.evidence_json)) if e.evidence_json else {},
         } for e in exceptions]
     }
 
@@ -499,12 +527,141 @@ def api_get_thread_metrics(
         "accuracy": run.accuracy if evaluated else None,
         "match_rate": run.match_rate,
         "total_records": run.total_records,
+        "source_population": summary_data.get("source_population", run.total_records),
+        "counterpart_population": summary_data.get("counterpart_population", 0),
         "matched_count": run.matched_count,
         "exceptions_count": run.exceptions_count,
         "processing_time_sec": run.processing_time_sec,
         "throughput_records_sec": run.throughput_rec_sec,
         "confusion_matrix": eval_metrics.get("detailed_metrics_json", {}).get("confusion_matrix", {}) if evaluated else {},
     }
+
+
+# ─────────────────────────────────────────────────────────────
+# 4.5 CASH FORECASTING & TAX-LINE MATCHING ENDPOINTS
+# ─────────────────────────────────────────────────────────────
+
+@app.post("/api/threads/{thread_id}/forecast")
+def api_run_forecast(
+    thread_id: str,
+    req: ForecastRequest = ForecastRequest(),
+    db: Session = Depends(get_db),
+):
+    """Run deterministic forward cash forecasting for 7, 14, or 30 days."""
+    _require_thread(db, thread_id)
+    return cash_forecaster.run_forecast(
+        db=db,
+        thread_id=thread_id,
+        horizon_days=req.horizon_days,
+        current_cash_balance=req.current_cash_balance,
+    )
+
+
+@app.get("/api/threads/{thread_id}/forecast")
+def api_get_forecast(
+    thread_id: str,
+    horizon_days: int = 7,
+    db: Session = Depends(get_db),
+):
+    """Get latest cash forecast or generate fresh projection."""
+    _require_thread(db, thread_id)
+    latest = (
+        db.query(CashForecastResult)
+        .filter(CashForecastResult.thread_id == thread_id)
+        .order_by(CashForecastResult.created_at.desc())
+        .first()
+    )
+    if latest and latest.horizon_days == horizon_days:
+        return {
+            "status": "COMPLETED",
+            "forecast_id": latest.id,
+            "thread_id": latest.thread_id,
+            "horizon_days": latest.horizon_days,
+            "current_cash_balance": latest.current_cash_balance,
+            "baseline_source": latest.baseline_source,
+            "projected_inflows": latest.projected_inflows,
+            "projected_outflows": latest.projected_outflows,
+            "net_projected_change": latest.net_projected_change,
+            "projected_ending_cash": latest.projected_ending_cash,
+            "confidence_level": latest.confidence_level,
+            "methodology": latest.methodology,
+            "assumptions": json.loads(latest.assumptions_json) if latest.assumptions_json else [],
+            "daily_projections": json.loads(latest.daily_forecast_json) if latest.daily_forecast_json else [],
+            "created_at": latest.created_at.isoformat() if latest.created_at else None,
+        }
+    return cash_forecaster.run_forecast(db=db, thread_id=thread_id, horizon_days=horizon_days)
+
+
+@app.post("/api/threads/{thread_id}/tax-match")
+def api_run_tax_match(
+    thread_id: str,
+    req: TaxMatchRequest = TaxMatchRequest(),
+    db: Session = Depends(get_db),
+):
+    """Run deterministic tax-line matching on thread records."""
+    _require_thread(db, thread_id)
+    return tax_matcher.run_tax_matching(
+        db=db,
+        thread_id=thread_id,
+        tax_rate=req.tax_rate,
+        tolerance=req.tolerance,
+    )
+
+
+@app.get("/api/threads/{thread_id}/tax-match")
+def api_get_tax_match(
+    thread_id: str,
+    db: Session = Depends(get_db),
+):
+    """Get latest tax-line matching results for thread."""
+    _require_thread(db, thread_id)
+    lines = (
+        db.query(TaxMatchResult)
+        .filter(TaxMatchResult.thread_id == thread_id)
+        .order_by(TaxMatchResult.created_at.asc())
+        .all()
+    )
+    if lines:
+        matched_count = sum(1 for l in lines if l.status == "MATCH")
+        mismatched_count = sum(1 for l in lines if l.status == "MISMATCH")
+        missing_count = sum(1 for l in lines if l.status == "MISSING")
+        ambiguous_count = sum(1 for l in lines if l.status == "AMBIGUOUS")
+        not_applicable_count = sum(1 for l in lines if l.status == "NOT_TAX_APPLICABLE")
+        unavailable_count = sum(1 for l in lines if l.status == "TAX_DATA_UNAVAILABLE")
+        eligible_count = matched_count + mismatched_count + missing_count + ambiguous_count + unavailable_count
+        total = len(lines)
+        rate = (matched_count / eligible_count * 100.0) if eligible_count > 0 else 0.0
+        return {
+            "status": "COMPLETED",
+            "thread_id": thread_id,
+            "total_records": total,
+            "tax_eligible_count": eligible_count,
+            "matched_count": matched_count,
+            "mismatched_count": mismatched_count,
+            "missing_count": missing_count,
+            "ambiguous_count": ambiguous_count,
+            "not_applicable_count": not_applicable_count,
+            "unavailable_count": unavailable_count,
+            "tax_match_rate": round(rate, 2),
+            "total_tax_expected": sum(l.expected_tax for l in lines),
+            "total_tax_reported": sum(l.reported_tax for l in lines),
+            "total_tax_discrepancy": sum(l.tax_difference for l in lines),
+            "net_tax_variance": sum(l.reported_tax - l.expected_tax for l in lines),
+            "tax_lines": [{
+                "id": l.id,
+                "record_id": l.record_id,
+                "source": l.source,
+                "taxable_amount": l.taxable_amount,
+                "tax_rate": l.tax_rate if l.tax_rate else None,
+                "expected_tax": l.expected_tax,
+                "reported_tax": l.reported_tax,
+                "tax_difference": l.tax_difference,
+                "status": l.status,
+                "explanation": l.explanation,
+                "evidence": json.loads(l.evidence_json) if l.evidence_json else {},
+            } for l in lines],
+        }
+    return tax_matcher.run_tax_matching(db=db, thread_id=thread_id)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -658,7 +815,7 @@ def api_get_thread_suggestions(thread_id: str, db: Session = Depends(get_db)):
         db.query(ExceptionItemResult)
         .filter(
             ExceptionItemResult.thread_id == thread_id,
-            ExceptionItemResult.reason_code == "AMBIGUOUS_CANDIDATES",
+            ExceptionItemResult.reason_code == "AMBIGUOUS_CANDIDATE_CONFLICT",
         )
         .count()
     )

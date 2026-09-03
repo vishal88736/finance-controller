@@ -30,6 +30,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from sqlalchemy.orm import Session
 
+from ..reconciliation.pandas_reconciler import clean_for_json
+
 from ..database.models import (
     Document,
     ProcessingRun,
@@ -42,6 +44,7 @@ from ..database.repositories import (
     log_audit,
     add_message,
 )
+from ..agents.guardrails import guardrails
 from ..graph.reconciliation_graph import reconciliation_graph
 from ..observability.langsmith import get_langsmith_config, traced_operation
 
@@ -229,13 +232,13 @@ def run_reconciliation(
             total_amount_processed=final_report.get("total_amount_processed", 0.0),
             total_amount_matched=final_report.get("total_amount_matched", 0.0),
             total_amount_discrepancy=final_report.get("total_amount_discrepancy", 0.0),
-            summary_json=json.dumps(final_report),
+            summary_json=json.dumps(clean_for_json(final_report)),
         )
         db.add(run_record)
 
         for m in matches_list:
             mr = ReconciliationResult(
-                id=m.get("match_id", f"match_{uuid.uuid4().hex[:12]}"),
+                id=m.get("match_id", m.get("id", f"match_{uuid.uuid4().hex[:12]}")),
                 thread_id=thread_id,
                 run_id=run_id,
                 record_id_a=m["record_id_a"],
@@ -246,34 +249,42 @@ def run_reconciliation(
                 amount_b=m["amount_b"],
                 date_a=m.get("date_a"),
                 date_b=m.get("date_b"),
-                entity_a=m.get("entity_a"),
-                entity_b=m.get("entity_b"),
+                entity_a=m.get("entity_a") or "Unknown",
+                entity_b=m.get("entity_b") or "Unknown",
                 confidence_score=m["confidence_score"],
                 match_category=m.get("match_category", "EXACT_MATCH"),
                 status=m.get("status", "MATCHED"),
-                evidence_json=json.dumps(m.get("evidence", {})),
-                score_breakdown_json=json.dumps(m.get("score_breakdown", {})),
+                evidence_json=json.dumps(clean_for_json({
+                    **m.get("evidence", {}),
+                    "provenance_a": m.get("provenance_a", {}),
+                    "provenance_b": m.get("provenance_b", {}),
+                    "member_id_a": m.get("member_id_a"),
+                    "member_id_b": m.get("member_id_b"),
+                    "counterpart_document_id": m.get("counterpart_document_id"),
+                    "counterpart_row_index": m.get("counterpart_row_index"),
+                })),
+                score_breakdown_json=json.dumps(clean_for_json(m.get("score_breakdown", m.get("provenance_a", {})))),
             )
             db.add(mr)
 
         for e in exceptions_list:
             er = ExceptionItemResult(
-                id=e.get("exception_id", f"exc_{uuid.uuid4().hex[:12]}"),
+                id=e.get("exception_id", e.get("id", f"exc_{uuid.uuid4().hex[:12]}")),
                 thread_id=thread_id,
                 run_id=run_id,
                 record_id=e["record_id"],
                 source=e["source"],
-                amount=e.get("amount"),
-                entity=e.get("entity"),
+                amount=e.get("amount", e.get("amount_discrepancy", 0.0)),
+                entity=e.get("entity", "Unknown"),
                 date=e.get("date"),
                 reason_code=e["reason_code"],
-                discrepancy_category=e.get("discrepancy_category", "MATERIAL"),
+                discrepancy_category=e.get("discrepancy_category", e.get("discrepancy_level", "MATERIAL")),
                 confidence=e.get("confidence", 0.0),
                 decision=e.get("decision", "UNRESOLVED"),
                 explanation=e["explanation"],
                 amount_discrepancy=e.get("amount_discrepancy", 0.0),
-                candidates_json=json.dumps(e.get("candidates", [])),
-                evidence_json=json.dumps(e.get("evidence", {})),
+                candidates_json=json.dumps(clean_for_json(e.get("candidates", []))),
+                evidence_json=json.dumps(clean_for_json(e.get("evidence", {}))),
             )
             db.add(er)
 
@@ -289,6 +300,45 @@ def run_reconciliation(
             result_summary=f"Database persist error: {type(e).__name__}",
         )
         raise ReconciliationError(f"Failed to persist reconciliation results: {e}") from e
+
+    # ── Audit events for pipeline transparency ──
+    schemas = final_report.get("detected_schemas", {})
+    if schemas:
+        log_audit(
+            db=db,
+            thread_id=thread_id,
+            run_id=run_id,
+            action="SCHEMA_DETECTED",
+            agent="Reconciliation_Agent",
+            parameters={"schemas": schemas},
+            result_summary=f"Inspected schemas for {len(schemas)} document(s)",
+        )
+
+    mappings = final_report.get("mapped_columns", {})
+    if mappings:
+        log_audit(
+            db=db,
+            thread_id=thread_id,
+            run_id=run_id,
+            action="COLUMNS_MAPPED",
+            agent="Reconciliation_Agent",
+            parameters={"mapped_columns": mappings},
+            result_summary=f"Mapped semantic columns across {len(mappings)} document(s)",
+        )
+
+    log_audit(
+        db=db,
+        thread_id=thread_id,
+        run_id=run_id,
+        action="PYTHON_RECONCILIATION_COMPLETED",
+        agent="Reconciliation_Agent",
+        parameters={
+            "records_processed": final_report.get("total_records", 0),
+            "matched_count": final_report.get("matched_count", 0),
+            "exceptions_count": final_report.get("exceptions_count", 0),
+        },
+        result_summary=f"Deterministic Pandas engine matched {final_report.get('matched_count', 0)} pairs ({final_report.get('match_rate', 0.0):.1f}%)",
+    )
 
     log_audit(
         db=db,
@@ -329,7 +379,7 @@ def run_reconciliation(
             db=db,
             thread_id=thread_id,
             role="assistant",
-            content="\n".join(lines),
+            content=guardrails.validate_output("\n".join(lines)),
             metadata={"run_id": run_id, "summary": final_report, "event": "reconciliation_completed"},
         )
 

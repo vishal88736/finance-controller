@@ -39,6 +39,8 @@ class Thread(Base):
     processing_runs = relationship("ProcessingRun", back_populates="thread", cascade="all, delete-orphan", order_by="ProcessingRun.created_at.desc()")
     reconciliation_results = relationship("ReconciliationResult", back_populates="thread", cascade="all, delete-orphan")
     exceptions = relationship("ExceptionItemResult", back_populates="thread", cascade="all, delete-orphan")
+    cash_forecasts = relationship("CashForecastResult", back_populates="thread", cascade="all, delete-orphan", order_by="CashForecastResult.created_at.desc()")
+    tax_matches = relationship("TaxMatchResult", back_populates="thread", cascade="all, delete-orphan", order_by="TaxMatchResult.created_at.desc()")
 
 
 class Document(Base):
@@ -57,6 +59,9 @@ class Document(Base):
     size_bytes = Column(Integer, default=0)
     record_count = Column(Integer, default=0)
     document_type = Column(String, default="UNKNOWN")  # TRANSACTIONS, INVOICES, SETTLEMENTS, PAYMENTS
+    document_role = Column(String, default="UNKNOWN")  # Role from document-role classifier
+    role_confidence = Column(Float, default=0.0)
+    role_reason = Column(Text, nullable=True)
     processing_status = Column(String, default="PENDING")  # PENDING, PROCESSED, DUPLICATE, FAILED
     file_path = Column(String, nullable=True)
     metadata_json = Column(Text, nullable=True)
@@ -215,6 +220,57 @@ class Message(Base):
     created_at = Column(DateTime, default=utc_now)
 
     thread = relationship("Thread", back_populates="messages")
+
+
+class CashForecastResult(Base):
+    """
+    Deterministic forward cash forecasting projection scoped to thread.
+    Stores projected daily balances, inflows, outflows, assumptions, and confidence.
+    """
+    __tablename__ = "cash_forecast_results"
+
+    id = Column(String, primary_key=True)  # e.g., fct_...
+    thread_id = Column(String, ForeignKey("threads.id"), nullable=False, index=True)
+    run_id = Column(String, nullable=True, index=True)
+    horizon_days = Column(Integer, default=7)
+    current_cash_balance = Column(Float, default=0.0)
+    baseline_source = Column(String, nullable=True)  # USER_PROVIDED | HISTORY_DERIVED | UNAVAILABLE
+    projected_inflows = Column(Float, default=0.0)
+    projected_outflows = Column(Float, default=0.0)
+    net_projected_change = Column(Float, default=0.0)
+    projected_ending_cash = Column(Float, default=0.0)
+    confidence_level = Column(String, default="MEDIUM")  # HIGH, MEDIUM, LOW
+    methodology = Column(String, nullable=False)
+    assumptions_json = Column(Text, nullable=True)  # List of assumption strings
+    daily_forecast_json = Column(Text, nullable=True)  # List of daily projection objects
+    created_at = Column(DateTime, default=utc_now)
+
+    thread = relationship("Thread", back_populates="cash_forecasts")
+
+
+class TaxMatchResult(Base):
+    """
+    Deterministic tax-line matching result comparing transaction/invoice amounts
+    against reported tax deductions / lines.
+    """
+    __tablename__ = "tax_match_results"
+
+    id = Column(String, primary_key=True)  # e.g., tax_...
+    thread_id = Column(String, ForeignKey("threads.id"), nullable=False, index=True)
+    run_id = Column(String, nullable=True, index=True)
+    record_id = Column(String, nullable=False, index=True)
+    source = Column(String, nullable=False)
+    taxable_amount = Column(Float, default=0.0)
+    tax_rate = Column(Float, default=0.18)
+    expected_tax = Column(Float, default=0.0)
+    reported_tax = Column(Float, default=0.0)
+    tax_difference = Column(Float, default=0.0)
+    status = Column(String, default="MATCH")  # MATCH, MISMATCH, MISSING, AMBIGUOUS
+    evidence_json = Column(Text, nullable=True)
+    explanation = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=utc_now)
+
+    thread = relationship("Thread", back_populates="tax_matches")
 
 
 # ── Backward-Compatibility Aliases ──

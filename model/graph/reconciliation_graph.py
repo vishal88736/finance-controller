@@ -1,54 +1,37 @@
 """
-LangGraph Reconciliation Agent.
-Executes an 8-node StateGraph pipeline:
-START -> analyze_request -> load_documents -> normalize_records ->
-generate_candidates -> match_records -> verify_matches ->
-create_exceptions -> calculate_metrics -> END
+LangGraph Deterministic Python Reconciliation Pipeline.
+Executes the required deterministic processing flow:
+    Upload → Schema Detection → Column Mapping → Python Reconciliation → Results → Q&A
 
-IMPORTANT: Most nodes call ordinary Python functions, NOT LLM calls.
-
-    analyze_request     → Python (could use Gemini for NL understanding)
-    load_documents      → Python
-    normalize_records   → Python
-    generate_candidates → Python (deterministic candidate pairing)
-    match_records       → Python (deterministic scoring)
-    verify_matches      → Python (1:1 consistency check)
-    create_exceptions   → Python (exception enrichment)
-    calculate_metrics   → Python (evaluation against ground truth)
+Nodes:
+    1. analyze_request                → Request parsing & configuration
+    2. load_all_documents             → Reads all uploaded files into DataFrames
+    3. detect_schemas_and_map_columns → Semantic column mapper across all files
+    4. python_reconciliation          → Deterministic Pandas + NumPy multi-pass matching
+    5. compile_results_and_diagnostics→ Provenance tracking & rejection breakdown
+    6. calculate_metrics              → Evaluator (if benchmark ground truth provided)
 """
 
 import os
+import io
 import json
 import time
 from decimal import Decimal
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
+import pandas as pd
 from langgraph.graph import StateGraph, START, END
 
 from ..agents.state import ReconciliationState
-from ..ingestion.parser import parse_file
-from ..ingestion.normalizer import NormalizedRecord
-from ..reconciliation.engine import ReconciliationEngine
-from ..reconciliation.models import (
-    ReconciliationMatch,
-    ReconciliationException,
-    ReconciliationSummary,
-    CandidateMatch,
-)
+from ..reconciliation.schema_mapper import schema_mapper, SchemaMappingResult
+from ..reconciliation.pandas_reconciler import pandas_reconciler
 from ..evaluation.evaluator import evaluate_reconciliation
 
 
-# ----------------- NODE IMPLEMENTATIONS ----------------- #
-
-
 def analyze_request_node(state: ReconciliationState) -> Dict[str, Any]:
-    """
-    Node 1: Analyze user's natural language request to identify matching intent.
-    This is the one node where Gemini COULD be used for NL understanding.
-    Currently uses deterministic parsing.
-    """
-    user_prompt = state.get("user_request", "Reconcile these financial records.")
+    """Node 1: Analyze user's natural language request."""
     progress = list(state.get("step_progress", []))
-    progress.append("Analyzed user request")
+    progress.append("Analyzed user reconciliation request")
 
     return {
         "current_step": "analyze_request",
@@ -57,222 +40,232 @@ def analyze_request_node(state: ReconciliationState) -> Dict[str, Any]:
     }
 
 
-def load_documents_node(state: ReconciliationState) -> Dict[str, Any]:
+def load_all_documents_node(state: ReconciliationState) -> Dict[str, Any]:
     """
-    Node 2: Ingest the files explicitly provided for this run.
-
-    IMPORTANT: This node NEVER falls back to the bundled synthetic dataset.
-    If no files were supplied, it returns an empty document list and the graph
-    completes with zero records (honest empty run). Synthetic/demo data may
-    only be loaded when the caller explicitly passes those files in
-    `uploaded_files` (e.g., the explicit demo batch endpoint).
+    Node 2: [Upload Stage] Load ALL uploaded documents into DataFrames.
+    Does not restrict to a single file; loads every document registered for this thread.
     """
     uploaded_files = list(state.get("uploaded_files", []))
-    documents: List[Dict[str, Any]] = []
+    document_tables: List[Tuple[pd.DataFrame, str, str, str]] = []
+    loaded_docs: List[Dict[str, Any]] = []
 
     for f_info in uploaded_files:
         f_path = f_info.get("path")
         f_name = f_info.get("filename", "file.csv")
         source_label = f_info.get("source_label", os.path.splitext(f_name)[0])
+        doc_id = f_info.get("document_id", f"doc_{os.path.splitext(f_name)[0]}")
         f_bytes = f_info.get("content_bytes")
 
-        target = f_bytes if f_bytes else f_path
-        if target:
-            parsed = parse_file(target, f_name, source_label)
-            for p in parsed:
-                documents.append(p.model_dump())
+        target = io.BytesIO(f_bytes) if f_bytes else f_path
+        if not target:
+            continue
+
+        ext = os.path.splitext(f_name)[1].lower()
+        try:
+            if ext == ".csv":
+                df = pd.read_csv(target)
+            elif ext in [".xlsx", ".xls"]:
+                df = pd.read_excel(target)
+            elif ext == ".json":
+                df = pd.read_json(target)
+            else:
+                df = pd.read_csv(target)
+        except Exception as e:
+            df = pd.DataFrame()
+
+        document_tables.append((df, doc_id, f_name, source_label))
+        for r in df.to_dict(orient="records"):
+            r["source"] = source_label
+            r["document_id"] = doc_id
+            loaded_docs.append(r)
 
     progress = list(state.get("step_progress", []))
-    progress.append(f"Loaded {len(documents)} raw records across {len(uploaded_files)} files")
+    total_rows = sum(len(t[0]) for t in document_tables)
+    progress.append(f"Upload: Ingested {len(document_tables)} documents ({total_rows} total rows)")
 
     return {
         "uploaded_files": uploaded_files,
-        "documents": documents,
-        "current_step": "load_documents",
+        "documents": loaded_docs,
+        "document_tables": document_tables,
+        "current_step": "load_all_documents",
         "step_progress": progress,
     }
 
 
-def normalize_records_node(state: ReconciliationState) -> Dict[str, Any]:
+def detect_schemas_and_map_columns_node(state: ReconciliationState) -> Dict[str, Any]:
     """
-    Node 3: Normalize dates, amounts, reference tokens, and entities.
-    Pure Python using verification.normalizers — no LLM.
+    Node 3: [Schema Detection & Column Mapping Stages]
+    Inspects schemas of all uploaded documents and maps equivalent semantic columns:
+        transaction_id / txn_id / reference
+        amount / transaction_amount / debit_amount
+        date / transaction_date / value_date
+        description / narration / memo
     """
-    docs = state.get("documents", [])
-    normalized: List[Dict[str, Any]] = []
-
-    for d in docs:
-        norm = NormalizedRecord(**d)
-        normalized.append(norm.model_dump())
-
-    progress = list(state.get("step_progress", []))
-    progress.append(f"Normalized {len(normalized)} transaction records")
-
-    return {
-        "normalized_records": normalized,
-        "current_step": "normalize_records",
-        "step_progress": progress,
-    }
-
-
-def generate_candidates_node(state: ReconciliationState) -> Dict[str, Any]:
-    """
-    Node 4: Generate candidate pairs across sources.
-    This node now ACTUALLY generates candidates (was previously a no-op).
-    Pure Python — deterministic pairing based on references, amounts, dates.
-    """
-    norm_dicts = state.get("normalized_records", [])
-    records = [NormalizedRecord(**d) for d in norm_dicts]
-
-    # Split into sources
-    unique_sources = sorted(list(set(r.source for r in records)))
-    primary_source = None
-    for s in unique_sources:
-        if "ledger" in s.lower() or "source_a" in s.lower():
-            primary_source = s
-            break
-    if not primary_source:
-        primary_source = unique_sources[0] if unique_sources else "source_a"
-
-    records_a = [r for r in records if r.source == primary_source]
-    records_b = [r for r in records if r.source != primary_source]
-
-    if not records_b and len(records) > 1:
-        half = len(records) // 2
-        records_a = records[:half]
-        records_b = records[half:]
-
-    # Count potential candidate pairs for progress reporting
-    candidate_count = len(records_a) * len(records_b)
+    tables = state.get("document_tables") or []
+    schema_res = schema_mapper.inspect_and_map_all(tables)
 
     progress = list(state.get("step_progress", []))
     progress.append(
-        f"Generated {candidate_count} potential pairs from "
-        f"{len(records_a)} source A × {len(records_b)} source B records"
+        f"Schema Detection: Inspected {schema_res.documents_inspected} document schemas"
     )
-
-    return {
-        "candidates": [
-            {"source_a_count": len(records_a), "source_b_count": len(records_b)}
-        ],
-        "current_step": "generate_candidates",
-        "step_progress": progress,
-    }
-
-
-def match_records_node(state: ReconciliationState) -> Dict[str, Any]:
-    """
-    Node 5: Execute deterministic multi-pass reconciliation scoring.
-    Pure Python — no LLM. Uses ReconciliationEngine with 4-pass strategy.
-    """
-    norm_dicts = state.get("normalized_records", [])
-    records = [NormalizedRecord(**d) for d in norm_dicts]
-
-    engine = ReconciliationEngine(
-        confidence_threshold=80.0, ambiguity_delta=6.0
-    )
-    matches, exceptions, summary = engine.run_reconciliation(records)
-
-    progress = list(state.get("step_progress", []))
+    mapped_count = sum(len(s.mapped_columns) for s in schema_res.schemas.values())
     progress.append(
-        f"Completed deterministic matching: {len(matches)} matches found"
+        f"Column Mapping: Identified {mapped_count} semantic column mappings across files"
     )
 
     return {
-        "matches": [m.model_dump() for m in matches],
-        "exceptions": [e.model_dump() for e in exceptions],
-        "metrics": summary.model_dump(),
-        "current_step": "match_records",
+        "schema_result": schema_res,
+        "current_step": "detect_schemas_and_map_columns",
         "step_progress": progress,
     }
 
 
-def verify_matches_node(state: ReconciliationState) -> Dict[str, Any]:
+def python_reconciliation_node(state: ReconciliationState) -> Dict[str, Any]:
     """
-    Node 6: Verify match integrity — ensure 1-to-1 consistency.
-    Pure Python — no LLM.
+    Node 4: [Python Reconciliation Stage]
+    Execute deterministic Pandas + NumPy reconciliation engine.
+    Multi-pass matching, duplicate detection, and exception isolation.
     """
-    matches_dicts = list(state.get("matches", []))
-    verified_matches = []
-    seen_b_ids = set()
+    tables = state.get("document_tables") or []
+    run_id = state.get("run_id")
+    thread_id = state.get("thread_id")
 
-    for m in matches_dicts:
-        b_id = m.get("record_id_b", "")
-        if b_id not in seen_b_ids:
-            seen_b_ids.add(b_id)
-            m["status"] = "VERIFIED"
-            verified_matches.append(m)
+    recon_output = pandas_reconciler.reconcile_documents(
+        document_tables=tables,
+        run_id=run_id,
+        thread_id=thread_id,
+    )
 
     progress = list(state.get("step_progress", []))
-    progress.append(f"Verified {len(verified_matches)} unique pairwise matches")
+    matches_count = len(recon_output.get("matches", []))
+    exceptions_count = len(recon_output.get("exceptions", []))
+    match_rate = recon_output.get("match_rate", 0.0)
 
-    return {
-        "matches": verified_matches,
-        "current_step": "verify_matches",
-        "step_progress": progress,
-    }
-
-
-def create_exceptions_node(state: ReconciliationState) -> Dict[str, Any]:
-    """
-    Node 7: Enrich exceptions with actionable explanations.
-    Pure Python — no LLM needed for exception classification.
-    """
-    exceptions_dicts = list(state.get("exceptions", []))
-
-    # Enrichment is already done by the engine via get_exception_action()
-    # This node validates and counts by category
-    category_counts: Dict[str, int] = {}
-    for exc in exceptions_dicts:
-        reason = exc.get("reason_code", "UNKNOWN")
-        category_counts[reason] = category_counts.get(reason, 0) + 1
-
-    progress = list(state.get("step_progress", []))
     progress.append(
-        f"Classified {len(exceptions_dicts)} exceptions: "
-        + ", ".join(f"{k}={v}" for k, v in sorted(category_counts.items()))
+        f"Python Reconciliation: Executed Pandas + NumPy engine — {matches_count} matches ({match_rate:.1f}%), {exceptions_count} exceptions"
     )
 
     return {
-        "exceptions": exceptions_dicts,
-        "current_step": "create_exceptions",
+        "recon_output": recon_output,
+        "matches": recon_output.get("matches", []),
+        "exceptions": recon_output.get("exceptions", []),
+        "current_step": "python_reconciliation",
+        "step_progress": progress,
+    }
+
+
+def compile_results_and_diagnostics_node(state: ReconciliationState) -> Dict[str, Any]:
+    """
+    Node 5: [Results Stage]
+    Compile structured reconciliation result containing:
+        - documents processed
+        - detected schemas
+        - mapped columns
+        - records processed
+        - candidate pairs
+        - matched records
+        - unmatched records
+        - duplicates
+        - exceptions
+        - exact matches
+        - fuzzy matches
+        - mismatch reasons
+        - totals and summary statistics
+        - failure diagnostics (especially for 0% match scenarios)
+    """
+    recon_output = state.get("recon_output") or {}
+    diagnostics = recon_output.get("diagnostics", {})
+
+    progress = list(state.get("step_progress", []))
+    zero_match_diag = diagnostics.get("zero_match_diagnostics")
+    if zero_match_diag:
+        progress.append(f"Results: Diagnostics identified — {zero_match_diag}")
+    else:
+        progress.append(
+            f"Results: Compiled structured results with complete row provenance for {recon_output.get('records_processed', 0)} records"
+        )
+
+    return {
+        "metrics": recon_output.get("totals_and_statistics", {}),
+        "current_step": "compile_results_and_diagnostics",
         "step_progress": progress,
     }
 
 
 def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
     """
-    Node 8: Compute run metrics.
-
-    Evaluation against ground truth happens ONLY when the caller explicitly
-    supplied a ground truth source for this run (state['ground_truth']).
-    Runs over user documents never touch the bundled benchmark ground truth —
-    for those, precision/recall/f1 are None and evaluated=false. We never
-    fabricate evaluation metrics.
+    Node 6: Finalize evaluation against ground truth if authorized benchmark run.
+    Assembles the final comprehensive report.
     """
-    matches = [ReconciliationMatch(**m) for m in state.get("matches", [])]
-    exceptions = [ReconciliationException(**e) for e in state.get("exceptions", [])]
-    summary = ReconciliationSummary(**state.get("metrics", {}))
+    recon_output = state.get("recon_output") or {}
+    matches = recon_output.get("matches", [])
+    exceptions = recon_output.get("exceptions", [])
+    totals = recon_output.get("totals_and_statistics", {})
 
-    gt_source = state.get("ground_truth")  # explicit dict | path | None
+    gt_source = state.get("ground_truth")
     eval_report: Optional[dict] = None
+
     if gt_source:
         try:
-            eval_report = evaluate_reconciliation(matches, exceptions, summary, gt_source)
-            eval_report = eval_report.model_dump()
-        except Exception as e:
-            print(f"Warning: explicit evaluation failed: {e}")
+            from ..reconciliation.models import ReconciliationMatch, ReconciliationException, ReconciliationSummary
+            # Adapt to evaluator if ground truth provided
+            summary_obj = ReconciliationSummary(
+                total_records_processed=recon_output.get("records_processed", 0),
+                total_amount_processed=totals.get("total_primary_amount", 0.0) + totals.get("total_counterparty_amount", 0.0),
+                total_amount_matched=totals.get("matched_volume", 0.0),
+                total_amount_discrepancy=totals.get("total_discrepancy_amount", 0.0),
+                matched_count=len(matches),
+                unresolved_exceptions_count=len(exceptions),
+                match_rate=recon_output.get("match_rate", 0.0),
+                processing_time_sec=totals.get("processing_time_sec", 0.0),
+                throughput_records_sec=totals.get("throughput_records_sec", 0.0),
+            )
+            match_objs = [
+                ReconciliationMatch(
+                    match_id=m["id"],
+                    record_id_a=m["record_id_a"],
+                    record_id_b=m["record_id_b"],
+                    source_a=m["source_a"],
+                    source_b=m["source_b"],
+                    amount_a=m["amount_a"],
+                    amount_b=m["amount_b"],
+                    amount_diff=m["amount_diff"],
+                    date_a=m["date_a"],
+                    date_b=m["date_b"],
+                    days_diff=m["days_diff"],
+                    confidence_score=m["confidence_score"],
+                    match_category=m["match_category"],
+                    discrepancy_level=m["discrepancy_level"],
+                ) for m in matches
+            ]
+            eval_report = evaluate_reconciliation(match_objs, summary_obj, gt_source)
+        except Exception:
             eval_report = None
 
-    if eval_report is not None:
-        final_metrics = dict(eval_report)
-        final_metrics["evaluated"] = True
+    if eval_report:
+        final_metrics = {
+            "evaluated": True,
+            "total_ground_truth_cases": eval_report.total_ground_truth_cases,
+            "records_processed": recon_output.get("records_processed", 0),
+            "true_positives": eval_report.true_positives,
+            "false_positives": eval_report.false_positives,
+            "false_negatives": eval_report.false_negatives,
+            "true_negatives": eval_report.true_negatives,
+            "precision": eval_report.precision,
+            "recall": eval_report.recall,
+            "f1_score": eval_report.f1_score,
+            "accuracy": eval_report.accuracy,
+            "match_rate": recon_output.get("match_rate", 0.0),
+            "processing_time_sec": totals.get("processing_time_sec", 0.0),
+            "throughput_records_sec": totals.get("throughput_records_sec", 0.0),
+            "category_breakdown": eval_report.category_breakdown,
+            "detailed_metrics_json": eval_report.detailed_metrics_json,
+        }
     else:
-        # No authorized ground truth for this run: do not manufacture metrics.
         final_metrics = {
             "evaluated": False,
             "total_ground_truth_cases": 0,
-            "records_processed": summary.total_records_processed,
+            "records_processed": recon_output.get("records_processed", 0),
             "true_positives": None,
             "false_positives": None,
             "false_negatives": None,
@@ -281,39 +274,56 @@ def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
             "recall": None,
             "f1_score": None,
             "accuracy": None,
-            "match_rate": summary.match_rate,
-            "processing_time_sec": summary.processing_time_sec,
-            "throughput_records_sec": summary.throughput_records_sec,
+            "match_rate": recon_output.get("match_rate", 0.0),
+            "processing_time_sec": totals.get("processing_time_sec", 0.0),
+            "throughput_records_sec": totals.get("throughput_records_sec", 0.0),
             "category_breakdown": {},
             "detailed_metrics_json": {"confusion_matrix": {}},
         }
 
     evaluated = bool(final_metrics.get("evaluated"))
-    accuracy_value = final_metrics.get("accuracy")
+    accuracy_val = final_metrics.get("accuracy")
+
     final_report = {
         "run_id": state.get("run_id"),
+        "thread_id": state.get("thread_id"),
         "user_request": state.get("user_request"),
-        "total_records": summary.total_records_processed,
-        "matched_count": summary.matched_count,
-        "exceptions_count": summary.unresolved_exceptions_count,
-        "match_rate": summary.match_rate,
+        "total_records": recon_output.get("records_processed", 0),
+        "matched_count": len(matches),
+        "exceptions_count": len(exceptions),
+        "match_rate": recon_output.get("match_rate", 0.0),
         "evaluated": evaluated,
-        "accuracy": accuracy_value if accuracy_value is not None else None,
+        "accuracy": accuracy_val,
         "precision": final_metrics.get("precision"),
         "recall": final_metrics.get("recall"),
         "f1_score": final_metrics.get("f1_score"),
-        "processing_time_sec": summary.processing_time_sec,
-        "throughput_records_sec": summary.throughput_records_sec,
-        "total_amount_processed": summary.total_amount_processed,
-        "total_amount_matched": summary.total_amount_matched,
-        "total_amount_discrepancy": summary.total_amount_discrepancy,
+        "processing_time_sec": totals.get("processing_time_sec", 0.0),
+        "throughput_records_sec": totals.get("throughput_records_sec", 0.0),
+        "total_amount_processed": totals.get("total_primary_amount", 0.0) + totals.get("total_counterparty_amount", 0.0),
+        "total_amount_matched": totals.get("matched_volume", 0.0),
+        "total_amount_discrepancy": totals.get("total_discrepancy_amount", 0.0),
         "evaluation_metrics": final_metrics,
+        "documents_processed": recon_output.get("documents_processed", []),
+        "detected_schemas": recon_output.get("detected_schemas", {}),
+        "mapped_columns": recon_output.get("mapped_columns", {}),
+        "candidate_pairs_evaluated": recon_output.get("candidate_pairs_evaluated", 0),
+        "exact_matches_count": recon_output.get("exact_matches_count", 0),
+        "fuzzy_matches_count": recon_output.get("fuzzy_matches_count", 0),
+        "duplicates_count": recon_output.get("duplicates_count", 0),
+        "mismatch_reasons": recon_output.get("mismatch_reasons", {}),
+        "reconciliation_plan": recon_output.get("reconciliation_plan", {}),
+        "role_classifications": recon_output.get("role_classifications", {}),
+        "source_population": recon_output.get("source_population", recon_output.get("records_processed", 0)),
+        "counterpart_population": recon_output.get("counterpart_population", 0),
+        "enrichment_adjustments": recon_output.get("enrichment_adjustments", []),
+        "totals_and_statistics": totals,
+        "diagnostics": recon_output.get("diagnostics", {}),
     }
 
     progress = list(state.get("step_progress", []))
     progress.append(
-        f"Completed run: Match Rate {summary.match_rate}%"
-        + (f", Accuracy {final_report['accuracy']}%" if evaluated else " (no ground truth associated — evaluation metrics unavailable)")
+        f"Pipeline Finalized: Match Rate {recon_output.get('match_rate', 0.0)}%"
+        + (f", Accuracy {accuracy_val}%" if evaluated else " (unsupervised user run — ground truth unavailable)")
     )
 
     return {
@@ -324,29 +334,22 @@ def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
     }
 
 
-# ----------------- GRAPH COMPILATION ----------------- #
-
-
 def build_reconciliation_graph():
     builder = StateGraph(ReconciliationState)
 
     builder.add_node("analyze_request", analyze_request_node)
-    builder.add_node("load_documents", load_documents_node)
-    builder.add_node("normalize_records", normalize_records_node)
-    builder.add_node("generate_candidates", generate_candidates_node)
-    builder.add_node("match_records", match_records_node)
-    builder.add_node("verify_matches", verify_matches_node)
-    builder.add_node("create_exceptions", create_exceptions_node)
+    builder.add_node("load_all_documents", load_all_documents_node)
+    builder.add_node("detect_schemas_and_map_columns", detect_schemas_and_map_columns_node)
+    builder.add_node("python_reconciliation", python_reconciliation_node)
+    builder.add_node("compile_results_and_diagnostics", compile_results_and_diagnostics_node)
     builder.add_node("calculate_metrics", calculate_metrics_node)
 
     builder.add_edge(START, "analyze_request")
-    builder.add_edge("analyze_request", "load_documents")
-    builder.add_edge("load_documents", "normalize_records")
-    builder.add_edge("normalize_records", "generate_candidates")
-    builder.add_edge("generate_candidates", "match_records")
-    builder.add_edge("match_records", "verify_matches")
-    builder.add_edge("verify_matches", "create_exceptions")
-    builder.add_edge("create_exceptions", "calculate_metrics")
+    builder.add_edge("analyze_request", "load_all_documents")
+    builder.add_edge("load_all_documents", "detect_schemas_and_map_columns")
+    builder.add_edge("detect_schemas_and_map_columns", "python_reconciliation")
+    builder.add_edge("python_reconciliation", "compile_results_and_diagnostics")
+    builder.add_edge("compile_results_and_diagnostics", "calculate_metrics")
     builder.add_edge("calculate_metrics", END)
 
     return builder.compile()

@@ -65,3 +65,19 @@ def test_output_sanitization():
     assert "ground_truth.json" not in sanitized
     assert "[CONFIDENTIAL_BENCHMARK]" in sanitized
     assert "[REDACTED_KEY]" in sanitized
+
+
+def test_evidence_validation_blocks_invented_ids():
+    """Layer 5 must reject answers that cite IDs not present in evidence."""
+    records = [{"record_id_a": "TXN-1001", "record_id_b": "BNK-5002", "amount": 1500.0}]
+
+    ok, reason = guardrails.validate_evidence(
+        "Record TXN-1001 matched with BNK-9999.", retrieved_records=records
+    )
+    assert ok is False
+
+    # A correct, evidence-backed answer passes (IDs + amount all present).
+    ok2, _ = guardrails.validate_evidence(
+        "Record TXN-1001 matched with BNK-5002 for $1,500.00.", retrieved_records=records
+    )
+    assert ok2 is True

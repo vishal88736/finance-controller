@@ -55,6 +55,9 @@ export interface ThreadDocumentItem {
   file_type: string;
   record_count: number;
   document_type: string;
+  document_role?: string;
+  role_confidence?: number;
+  role_reason?: string;
   processing_status: string;
   sha256: string;
   dataset_fingerprint?: string | null;
@@ -67,6 +70,8 @@ export interface LatestRun {
   id: string;
   status: string;
   total_records: number;
+  source_population?: number;
+  counterpart_population?: number;
   matched_count: number;
   exceptions_count: number;
   match_rate: number;
@@ -77,6 +82,20 @@ export interface LatestRun {
   f1_score: number | null;
   processing_time_sec: number;
   throughput_records_sec: number;
+  detected_schemas?: Record<string, string[]>;
+  mapped_columns?: Record<string, Record<string, string>>;
+  diagnostics?: {
+    candidate_pairs_evaluated?: number;
+    rejection_breakdown?: Record<string, number>;
+    zero_match_diagnostics?: string | null;
+  };
+  documents_processed?: Array<{
+    document_id: string;
+    filename: string;
+    row_count: number;
+    detected_schema: string[];
+    mapped_columns: Record<string, string>;
+  }>;
   created_at?: string;
 }
 
@@ -163,6 +182,8 @@ export interface MetricsData {
   accuracy: number | null;
   match_rate: number;
   total_records: number;
+  source_population?: number;
+  counterpart_population?: number;
   matched_count: number;
   exceptions_count: number;
   processing_time_sec: number;
@@ -225,6 +246,8 @@ export interface HealthStatus {
   service: string;
   version: string;
   llm_configured: boolean;
+  llm_provider?: string;
+  llm_model?: string;
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -341,4 +364,93 @@ export const api = {
   async getAuditTrail(threadId: string, limit = 100): Promise<AuditLogItem[]> {
     return request<AuditLogItem[]>(`/threads/${threadId}/audit?limit=${limit}`);
   },
+
+  // ── Forward Cash Forecasting ──
+  async runForecast(threadId: string, horizonDays = 7, currentCash?: number): Promise<CashForecastData> {
+    return request<CashForecastData>(`/threads/${threadId}/forecast`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ horizon_days: horizonDays, current_cash_balance: currentCash }),
+    });
+  },
+
+  async getForecast(threadId: string, horizonDays = 7): Promise<CashForecastData> {
+    return request<CashForecastData>(`/threads/${threadId}/forecast?horizon_days=${horizonDays}`);
+  },
+
+  // ── Tax-Line Matcher ──
+  async runTaxMatch(threadId: string, taxRate = 0.18, tolerance = 0.05): Promise<TaxMatchData> {
+    return request<TaxMatchData>(`/threads/${threadId}/tax-match`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tax_rate: taxRate, tolerance }),
+    });
+  },
+
+  async getTaxMatch(threadId: string): Promise<TaxMatchData> {
+    return request<TaxMatchData>(`/threads/${threadId}/tax-match`);
+  },
 };
+
+export interface CashForecastData {
+  status: string;
+  forecast_id?: string;
+  thread_id: string;
+  horizon_days: number;
+  current_cash_balance?: number;
+  baseline_source?: string;
+  projected_inflows?: number;
+  projected_outflows?: number;
+  net_projected_change?: number;
+  projected_ending_cash?: number;
+  confidence_level?: string;
+  methodology?: string;
+  assumptions?: string[];
+  limitations?: string[];
+  daily_projections?: Array<{
+    day_number: number;
+    date: string;
+    day_of_week: string;
+    projected_inflow: number;
+    projected_outflow: number;
+    net_change: number;
+    projected_closing_cash: number;
+    is_weekend: boolean;
+  }>;
+  message?: string;
+}
+
+export interface TaxMatchItem {
+  id: string;
+  record_id: string;
+  source: string;
+  taxable_amount: number;
+  tax_rate: number | null;
+  tax_rate_source?: string;
+  expected_tax: number;
+  reported_tax: number;
+  tax_difference: number;
+  status: "MATCH" | "MISMATCH" | "MISSING" | "AMBIGUOUS" | "NOT_TAX_APPLICABLE" | "TAX_DATA_UNAVAILABLE" | string;
+  explanation: string;
+  evidence?: any;
+}
+
+export interface TaxMatchData {
+  status: string;
+  thread_id: string;
+  total_records: number;
+  tax_eligible_count?: number;
+  matched_count: number;
+  mismatched_count: number;
+  missing_count: number;
+  ambiguous_count: number;
+  not_applicable_count?: number;
+  unavailable_count?: number;
+  tax_match_rate: number;
+  total_tax_expected: number;
+  total_tax_reported: number;
+  total_tax_discrepancy: number;
+  net_tax_variance?: number;
+  tax_lines: TaxMatchItem[];
+  message?: string;
+}
