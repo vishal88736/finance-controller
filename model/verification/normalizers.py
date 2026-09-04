@@ -180,3 +180,69 @@ def _is_nan(val: Any) -> bool:
     if isinstance(val, str) and val.strip().lower() in ('nan', 'none', 'null', ''):
         return True
     return False
+
+
+def is_missing_amount_value(raw: Any) -> bool:
+    """
+    Strict missing-amount detector (does NOT treat 0 as missing).
+
+    Returns True when the raw value carries no financial amount:
+    None, NaN/Inf floats, empty/blank strings, or 'nan'/'none'/'null' tokens.
+    Numeric zero (0, 0.0, "0", "0.00") is a VALID amount and returns False.
+    """
+    if raw is None:
+        return True
+    if isinstance(raw, float) and (math.isnan(raw) or math.isinf(raw)):
+        return True
+    if isinstance(raw, Decimal):
+        try:
+            if raw.is_nan() or raw.is_infinite():
+                return True
+        except Exception:
+            return True
+        return False
+    if isinstance(raw, (int,)):
+        return False
+    s = str(raw).strip()
+    if s == "":
+        return True
+    if s.lower() in ("nan", "none", "null", "n/a", "na", "-", "--", "inf", "-inf", "+inf"):
+        return True
+    return False
+
+
+def parse_optional_amount(raw: Any) -> Optional[Decimal]:
+    """
+    Parse a raw amount value into Decimal, preserving missingness.
+
+    Returns None when the value is missing/invalid (see is_missing_amount_value
+    or unparseable strings). Returns Decimal("0.00") ONLY for genuine zero
+    inputs ("0", 0, 0.0). Callers must treat None as "no amount" and exclude
+    such records from amount-based matching with an INVALID_RECORD /
+    MISSING_AMOUNT exception — never coerce to 0.0.
+    """
+    if is_missing_amount_value(raw):
+        return None
+    if isinstance(raw, Decimal):
+        try:
+            if raw.is_nan() or raw.is_infinite():
+                return None
+        except Exception:
+            return None
+        return raw.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if isinstance(raw, (int, float)):
+        try:
+            return Decimal(str(raw)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        except Exception:
+            return None
+    cleaned = re.sub(r'[₹$€£¥,\s]', '', str(raw))
+    cleaned = re.sub(r'[A-Za-z]+$', '', cleaned).strip()
+    if cleaned in ("", "-", ".", "-.", ".-"):
+        return None
+    try:
+        d = Decimal(cleaned).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+        if d.is_nan() or d.is_infinite():
+            return None
+        return d
+    except (InvalidOperation, ValueError, Exception):
+        return None

@@ -203,7 +203,7 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
             Tax Match Rate
           </div>
           <div className="text-2xl font-bold font-mono text-slate-900 mt-1">
-            {taxData ? `${taxData.tax_match_rate.toFixed(1)}%` : "—"}
+            {taxData ? (taxData.tax_match_rate != null ? `${taxData.tax_match_rate.toFixed(1)}%` : "N/A") : "—"}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
             {taxData ? `${taxData.matched_count} / ${taxData.tax_eligible_count ?? taxData.total_records} eligible lines matched` : "—"}
@@ -249,10 +249,10 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
             Abs. Variance (cumulative)
           </div>
           <div className="text-2xl font-bold font-mono text-indigo-700 mt-1">
-            ${(taxData?.total_tax_discrepancy ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
+            {taxData?.total_tax_discrepancy != null ? `$${taxData.total_tax_discrepancy.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "N/A"}
           </div>
           <div className="text-[11px] text-slate-400 mt-1">
-            Signed net variance: {taxData ? `${taxData.net_tax_variance && taxData.net_tax_variance > 0 ? "+" : ""}$${(taxData.net_tax_variance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "—"}
+            Signed net variance: {taxData ? (taxData.net_tax_variance != null ? `${taxData.net_tax_variance > 0 ? "+" : ""}$${taxData.net_tax_variance.toLocaleString("en-US", { minimumFractionDigits: 2 })}` : "N/A") : "—"}
             {taxData && taxData.not_applicable_count ? ` · ${taxData.not_applicable_count} not applicable` : ""}
           </div>
         </div>
@@ -333,12 +333,12 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
                   >
                     <td className="font-bold text-slate-900">{line.record_id}</td>
                     <td className="text-slate-500 font-sans">{line.source}</td>
-                    <td>${line.taxable_amount.toFixed(2)}</td>
+                    <td>{line.taxable_amount != null ? `$${line.taxable_amount.toFixed(2)}` : "N/A"}</td>
                     <td>{line.tax_rate != null ? `${(line.tax_rate * 100).toFixed(1)}%` : "—"}</td>
-                    <td className="text-emerald-700 font-semibold">${line.expected_tax.toFixed(2)}</td>
-                    <td className="text-slate-800">${line.reported_tax.toFixed(2)}</td>
-                    <td className={line.tax_difference > 0 ? "text-red-600 font-bold" : "text-slate-400"}>
-                      {line.tax_difference > 0 ? `Δ $${line.tax_difference.toFixed(2)}` : "—"}
+                    <td className="text-emerald-700 font-semibold">{line.expected_tax != null ? `$${line.expected_tax.toFixed(2)}` : "N/A"}</td>
+                    <td className="text-slate-800">{line.reported_tax != null ? `$${line.reported_tax.toFixed(2)}` : "N/A"}</td>
+                    <td className={line.tax_difference && line.tax_difference > 0 ? "text-red-600 font-bold" : "text-slate-400"}>
+                      {line.tax_difference && line.tax_difference > 0 ? `Δ $${line.tax_difference.toFixed(2)}` : "—"}
                     </td>
                     <td>{getStatusBadge(line.status)}</td>
                     <td className="text-right font-sans">
@@ -401,16 +401,16 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
               </div>
               <div className="text-emerald-400 font-bold text-sm">
                 {selected.tax_rate != null
-                  ? `$${selected.taxable_amount.toFixed(2)} × ${(selected.tax_rate * 100).toFixed(1)}% = $${selected.expected_tax.toFixed(2)}`
-                  : `$${selected.taxable_amount.toFixed(2)} (no tax rate) → $${selected.expected_tax.toFixed(2)}`}
+                  ? `${selected.taxable_amount != null ? `$${selected.taxable_amount.toFixed(2)}` : "N/A"} × ${(selected.tax_rate * 100).toFixed(1)}% = ${selected.expected_tax != null ? `$${selected.expected_tax.toFixed(2)}` : "N/A"}`
+                  : `${selected.taxable_amount != null ? `$${selected.taxable_amount.toFixed(2)}` : "N/A"} (no tax rate) → ${selected.expected_tax != null ? `$${selected.expected_tax.toFixed(2)}` : "N/A"}`}
               </div>
               <div className="text-slate-300 pt-1 border-t border-slate-800 flex justify-between">
                 <span>Reported Tax:</span>
-                <span className="font-bold text-white">${selected.reported_tax.toFixed(2)}</span>
+                <span className="font-bold text-white">{selected.reported_tax != null ? `$${selected.reported_tax.toFixed(2)}` : "N/A"}</span>
               </div>
               <div className="text-red-400 pt-1 border-t border-slate-800 flex justify-between font-bold">
                 <span>Tax Discrepancy:</span>
-                <span>Δ ${selected.tax_difference.toFixed(2)}</span>
+                <span>{selected.tax_difference != null ? `Δ $${selected.tax_difference.toFixed(2)}` : "N/A"}</span>
               </div>
             </div>
 

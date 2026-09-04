@@ -103,11 +103,28 @@ class CashForecasterService:
     ) -> Dict[str, Any]:
         """
         Execute deterministic cash forecasting for the given thread.
-        Supports 7-day, 30-day, or custom integer horizons.
+
+        Contract (consistent):
+        - Supported horizons are exactly 7, 14, and 30 days for named presets,
+          with a validated range of 1..90 days for custom horizons.
+        - Returns both requested_horizon and applied_horizon (applied is the
+          validated/clamped value actually used).
+        - Invalid horizons (<1 or >90 or non-integer) raise CashForecastingError
+          with a clear message; callers map to 422.
         """
-        if horizon_days not in (7, 14, 30):
-            # Clamp to safe reasonable boundaries (1 to 90 days)
-            horizon_days = max(1, min(int(horizon_days), 90))
+        requested_horizon = horizon_days
+        try:
+            requested_int = int(horizon_days)
+        except Exception:
+            raise CashForecastingError(f"Invalid forecast horizon '{horizon_days}': must be an integer 1..90.")
+        if requested_int < 1 or requested_int > 90:
+            raise CashForecastingError(
+                f"Invalid forecast horizon {requested_int}: must be between 1 and 90 days. "
+                f"Supported presets are 7, 14, and 30 days."
+            )
+        # Validated range 1..90; presets 7/14/30 pass through unchanged.
+        horizon_days = requested_int
+        applied_horizon = horizon_days
 
         log_audit(
             db=db,
@@ -145,6 +162,8 @@ class CashForecasterService:
                 "status": "INSUFFICIENT_DATA",
                 "thread_id": thread_id,
                 "horizon_days": horizon_days,
+                "requested_horizon": requested_horizon,
+                "applied_horizon": applied_horizon,
                 "message": "No transaction or settlement records are available in this thread. Upload documents before forecasting.",
                 "historical_summary": {
                     "total_records": 0,
@@ -153,8 +172,13 @@ class CashForecasterService:
                     "historical_outflows": 0.0,
                 },
                 "forecast": None,
+                "daily_projections": [],
                 "confidence_level": "LOW",
+                "forecast_method": "deterministic_dow_weighted_moving_average",
                 "methodology": "Deterministic historical moving average",
+                "input_period": {"start": None, "end": None, "date_span_days": 0},
+                "horizon": {"requested": requested_horizon, "applied": applied_horizon},
+                "data_sufficiency": {"sufficient": False, "reason": "No historical records."},
                 "assumptions": ["Requires historical financial records to project future cash flows."],
                 "limitations": ["Insufficient data points to build a baseline velocity."],
             }
@@ -391,6 +415,9 @@ class CashForecasterService:
             "forecast_id": forecast_id,
             "thread_id": thread_id,
             "horizon_days": horizon_days,
+            "requested_horizon": requested_horizon,
+            "applied_horizon": applied_horizon,
+            "horizon": {"requested": requested_horizon, "applied": applied_horizon},
             "current_cash_balance": float(starting_balance),
             "baseline_source": baseline_source,
             "projected_inflows": float(_round_dec(total_proj_inflow)),
@@ -398,7 +425,19 @@ class CashForecasterService:
             "net_projected_change": float(_round_dec(net_projected_change)),
             "projected_ending_cash": float(_round_dec(ending_balance)),
             "confidence_level": confidence,
+            "forecast_method": "deterministic_dow_weighted_moving_average",
             "methodology": methodology_desc,
+            "input_period": {
+                "start": min_date.date().isoformat() if hasattr(min_date, "date") else str(min_date),
+                "end": max_date.date().isoformat() if hasattr(max_date, "date") else str(max_date),
+                "date_span_days": date_span_days,
+            },
+            "data_sufficiency": {
+                "sufficient": True,
+                "total_source_records": total_source_records,
+                "date_span_days": date_span_days,
+                "confidence": confidence,
+            },
             "assumptions": assumptions_list,
             "limitations": limitations_list,
             "analysis_date": context["analysis_date"],

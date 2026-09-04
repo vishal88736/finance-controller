@@ -89,6 +89,12 @@ export interface LatestRun {
     rejection_breakdown?: Record<string, number>;
     zero_match_diagnostics?: string | null;
   };
+  multi_source?: {
+    all_agree_count: number;
+    one_disagrees_count: number;
+    all_disagree_count: number;
+    isolated_count: number;
+  };
   documents_processed?: Array<{
     document_id: string;
     filename: string;
@@ -429,12 +435,12 @@ export interface TaxMatchItem {
   id: string;
   record_id: string;
   source: string;
-  taxable_amount: number;
+  taxable_amount: number | null;
   tax_rate: number | null;
   tax_rate_source?: string;
-  expected_tax: number;
-  reported_tax: number;
-  tax_difference: number;
+  expected_tax: number | null;
+  reported_tax: number | null;
+  tax_difference: number | null;
   status: "MATCH" | "MISMATCH" | "MISSING" | "AMBIGUOUS" | "NOT_TAX_APPLICABLE" | "TAX_DATA_UNAVAILABLE" | string;
   explanation: string;
   evidence?: any;
@@ -451,11 +457,11 @@ export interface TaxMatchData {
   ambiguous_count: number;
   not_applicable_count?: number;
   unavailable_count?: number;
-  tax_match_rate: number;
-  total_tax_expected: number;
-  total_tax_reported: number;
-  total_tax_discrepancy: number;
-  net_tax_variance?: number;
+  tax_match_rate: number | null;
+  total_tax_expected: number | null;
+  total_tax_reported: number | null;
+  total_tax_discrepancy: number | null;
+  net_tax_variance?: number | null;
   tax_lines: TaxMatchItem[];
   message?: string;
 }

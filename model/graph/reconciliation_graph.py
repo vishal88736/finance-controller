@@ -134,6 +134,7 @@ def python_reconciliation_node(state: ReconciliationState) -> Dict[str, Any]:
         document_tables=tables,
         run_id=run_id,
         thread_id=thread_id,
+        fx_rates=state.get("fx_rates"),
     )
 
     progress = list(state.get("step_progress", []))

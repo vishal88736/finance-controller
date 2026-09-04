@@ -104,12 +104,20 @@ SEMANTIC_COLUMN_CANDIDATES: Dict[str, List[str]] = {
     "fee_amount": [
         "fee", "fees", "fee_amount", "processing_fee", "interchange",
         "platform_fee", "commission", "service_charge",
+        "gateway_fee", "mdr", "mdr_fee", "fees_deducted",
+        "transaction_fee", "gateway_charge", "gateway_charges",
+        "processing_charge", "processing_charges", "service_fee",
+        "convenience_fee", "payment_fee", "settlement_fee",
+        "deduction", "deductions", "fee_deducted",
     ],
     "refund_amount": [
         "refund", "refund_amount", "return_amount", "reversal",
+        "refund_fee", "refunded_amount", "return", "returns",
+        "credit_note_amount", "reversal_amount",
     ],
     "chargeback_amount": [
         "chargeback", "chargeback_amount", "dispute_amount",
+        "dispute", "dispute_fee", "chargeback_fee", "representment_amount",
     ],
 }
 

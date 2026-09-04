@@ -113,12 +113,27 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
         txn_matches.append(n)
 
     query_type = "GENERAL"
-    if txn_matches:
+    if txn_matches and any(kw in lower for kw in ["why", "fail", "status", "match", "explain", "evidence", "gross", "net", "fee", "refund", "chargeback", "difference", "caused"]):
         query_type = "SPECIFIC_RECORD"
-    elif any(kw in lower for kw in ["cash forecast", "forecast cash", "forecast my cash", "cash position", "projected cash", "future cash", "inflow forecast", "outflow forecast", "ending cash", "forecast for the next", "forecast my"]):
+    elif txn_matches and len(txn_matches) > 0 and any(kw in lower for kw in ["transaction", "txn", "record", "reference", "invoice", "order"]):
+        # Specific record lookup takes precedence when an ID is present.
+        query_type = "SPECIFIC_RECORD"
+    elif any(kw in lower for kw in ["cash forecast", "forecast cash", "forecast my cash", "cash position", "projected cash", "future cash", "inflow forecast", "outflow forecast", "ending cash", "forecast for the next", "forecast my", "what does the forecast represent", "what does forecast"]):
         query_type = "CASH_FORECAST"
-    elif any(kw in lower for kw in ["tax match", "tax-line", "tax line", "tax mismatch", "tax rate", "check whether tax", "show me tax", "tax differences", "gst", "vat", "tds"]):
+    elif any(kw in lower for kw in ["tax match", "tax-line", "tax line", "tax mismatch", "tax rate", "check whether tax", "show me tax", "tax differences", "gst", "vat", "tds", "why was a tax", "tax line excluded", "tax excluded"]):
         query_type = "TAX_MATCH"
+    elif any(kw in lower for kw in ["what changed between runs", "what changed", "between runs", "run history", "compare runs"]):
+        query_type = "RUN_DIFF"
+    elif any(kw in lower for kw in ["which source disagrees", "which source", "source disagrees", "sources agree", "who disagrees", "multi-source", "multi source"]):
+        query_type = "SOURCE_DISAGREEMENT"
+    elif any(kw in lower for kw in ["settlement status", "what is the settlement", "settlement agent", "payout status"]):
+        query_type = "SETTLEMENT_STATUS"
+    elif any(kw in lower for kw in ["which records are unresolved", "unresolved", "what is unresolved", "open exceptions"]):
+        query_type = "EXCEPTION_QUERY"
+    elif any(kw in lower for kw in ["what evidence", "evidence supports", "prove", "support this match", "why do you claim"]):
+        query_type = "EVIDENCE_QUERY"
+    elif any(kw in lower for kw in ["gross amount", "net amount", "what is the gross", "what is the net", "fee, refund", "caused by a fee", "fee, refund, or chargeback", "was the difference caused"]):
+        query_type = "AMOUNT_BREAKDOWN"
     elif any(kw in lower for kw in ["material", "serious", "high priority", "critical", "severe"]):
         query_type = "MATERIAL_EXCEPTIONS"
     elif any(kw in lower for kw in ["ambiguous", "multiple candidate", "held"]):
@@ -127,7 +142,7 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
         query_type = "METRIC_QUERY"
     elif any(kw in lower for kw in ["amount discrepanc", "difference", "discrepanc", "fee", "delta", "mismatch", "refund", "chargeback"]):
         query_type = "DISCREPANCY_QUERY"
-    elif any(kw in lower for kw in ["unmatched", "failing", "why unmatched", "why are there", "exceptions", "unresolved", "missing", "explain", "explanation"]):
+    elif any(kw in lower for kw in ["unmatched", "failing", "why unmatched", "why are there", "exceptions", "unresolved", "missing", "explain", "explanation", "why did this transaction fail"]):
         query_type = "EXCEPTION_QUERY"
     elif any(kw in lower for kw in ["document", "uploaded", "files", "fingerprint", "sha256", "digest", "provenance"]):
         query_type = "DOCUMENT_QUERY"
@@ -136,10 +151,17 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
     elif any(kw in lower for kw in ["audit", "history", "log", "trail"]):
         query_type = "UNSUPPORTED_QUERY"
 
+    forecast_horizon = None
+    if query_type == "CASH_FORECAST":
+        horizon_match = re.search(r'\b(\d+)\s*days?\b', lower)
+        if horizon_match:
+            forecast_horizon = int(horizon_match.group(1))
+
     return {
         "query_type": query_type,
         "extracted_record_ids": list(dict.fromkeys(txn_matches)),
         "extracted_entities": [],
+        "forecast_horizon": forecast_horizon,
     }
 
 
@@ -273,9 +295,35 @@ def retrieve_relevant_records_node(state: QAState) -> Dict[str, Any]:
         )
         retrieved_documents.extend(docs or [])
 
-    # 8. CASH FORECAST QUERY
+    # 7.5 SETTLEMENT STATUS QUERY
+    elif query_type == "SETTLEMENT_STATUS":
+        from ..tools.qa_tools import get_settlement_status_tool
+        s_res = run_tool(
+            "get_settlement_status_tool",
+            lambda: get_settlement_status_tool(db, thread_id=thread_id),
+        )
+        if s_res:
+            retrieved_records.extend(s_res.get("settlements", []))
+            retrieved_exceptions.extend(s_res.get("pending_exceptions", []))
+
+    # 8. CASH FORECAST QUERY — parse 7/14/30 or any 1..90 horizon from text.
     elif query_type == "CASH_FORECAST":
-        h_days = 30 if ("30" in lower or "month" in lower) else 7
+        import re as _re
+        h_days = 7
+        _m = _re.search(r'(\d{1,3})\s*-?\s*day', lower)
+        if _m:
+            try:
+                _h = int(_m.group(1))
+                if 1 <= _h <= 90:
+                    h_days = _h
+            except Exception:
+                pass
+        elif "30" in lower or "month" in lower:
+            h_days = 30
+        elif "14" in lower or "two week" in lower or "two-week" in lower or "fortnight" in lower:
+            h_days = 14
+        elif "7" in lower or "week" in lower:
+            h_days = 7
         fct_res = run_tool(
             "run_cash_forecast_tool",
             lambda: run_cash_forecast_tool(db, thread_id=thread_id, horizon_days=h_days),

@@ -24,6 +24,10 @@ const REASONS = [
   { id: "AMBIGUOUS_CANDIDATE_CONFLICT", label: "Ambiguous" },
   { id: "MISSING_COUNTERPART", label: "Missing counterpart" },
   { id: "DUPLICATE_TRANSACTION", label: "Duplicate" },
+  { id: "ONE_DISAGREES", label: "One Disagrees" },
+  { id: "ALL_DISAGREE", label: "All Disagree" },
+  { id: "CURRENCY_MISMATCH", label: "Currency Mismatch" },
+  { id: "MISSING_SETTLEMENT", label: "Missing Settlement" },
 ];
 
 const CATEGORIES = [
@@ -82,6 +86,15 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
         return <span className="pill bg-amber-50 text-amber-700 border border-amber-200">Duplicate</span>;
       case "UNRECORDED_TRANSACTION":
         return <span className="pill bg-blue-50 text-blue-700 border border-blue-200">Unrecorded</span>;
+      case "ONE_DISAGREES":
+        return <span className="pill bg-orange-50 text-orange-700 border border-orange-200">One Disagrees</span>;
+      case "ALL_DISAGREE":
+        return <span className="pill bg-red-50 text-red-700 border border-red-200">All Disagree</span>;
+      case "CURRENCY_MISMATCH":
+        return <span className="pill bg-pink-50 text-pink-700 border border-pink-200">Currency Mismatch</span>;
+      case "MISSING_SETTLEMENT":
+      case "MISSING_PAYOUT":
+        return <span className="pill bg-slate-50 text-slate-700 border border-slate-200">Missing Settlement</span>;
       default:
         return <span className="pill bg-slate-100 text-slate-600 border border-slate-200">Missing counterpart</span>;
     }

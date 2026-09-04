@@ -160,25 +160,30 @@ class TaxMatcherService:
         total_tax_discrepancy = Decimal("0.00")  # absolute cumulative variance
         net_tax_variance = Decimal("0.00")        # signed net variance
 
-        # Clear prior tax results for fresh analysis in this run
-        db.query(TaxMatchResult).filter(TaxMatchResult.thread_id == thread_id).delete()
+        # Run-scoped history: never delete previous runs. Each invocation gets
+        # its own run_id; GET returns the latest run's lines. This preserves
+        # audit history instead of wiping it.
+        if not run_id:
+            run_id = f"taxrun_{uuid.uuid4().hex[:12]}"
 
         for rec in doc_records:
             raw_data = json.loads(rec.raw_data_json) if rec.raw_data_json else {}
 
             # ── Eligibility gate: only tax-bearing records are tax lines ──
+            # Contract: actual zero tax => 0.0; no eligible transactions => null/N/A;
+            # missing data distinct from zero; failure distinct from zero.
             if not _is_tax_eligible(raw_data):
                 not_applicable_count += 1
                 line_entry = {
                     "id": f"tax_{uuid.uuid4().hex[:10]}",
                     "record_id": rec.record_id,
                     "source": rec.source,
-                    "taxable_amount": 0.0,
+                    "taxable_amount": None,
                     "tax_rate": None,
                     "tax_rate_source": "NONE",
-                    "expected_tax": 0.0,
-                    "reported_tax": 0.0,
-                    "tax_difference": 0.0,
+                    "expected_tax": None,
+                    "reported_tax": None,
+                    "tax_difference": None,
                     "status": "NOT_TAX_APPLICABLE",
                     "explanation": (
                         f"Record '{rec.record_id}' ({rec.source}) carries no tax evidence "
@@ -198,11 +203,11 @@ class TaxMatcherService:
                     run_id=run_id,
                     record_id=rec.record_id,
                     source=rec.source,
-                    taxable_amount=0.0,
-                    tax_rate=0.0,
-                    expected_tax=0.0,
-                    reported_tax=0.0,
-                    tax_difference=0.0,
+                    taxable_amount=None,
+                    tax_rate=None,
+                    expected_tax=None,
+                    reported_tax=None,
+                    tax_difference=None,
                     status=line_entry["status"],
                     evidence_json=json.dumps(line_entry["evidence"]),
                     explanation=line_entry["explanation"],
@@ -347,15 +352,15 @@ class TaxMatcherService:
             }
             tax_lines.append(line_entry)
 
-            # Persist row
+            # Persist row — preserve nulls (None) for non-applicable/missing; never coerce to 0.0.
             db_record = TaxMatchResult(
                 id=line_entry["id"],
                 thread_id=thread_id,
                 run_id=run_id,
                 record_id=rec.record_id,
                 source=rec.source,
-                taxable_amount=line_entry["taxable_amount"] if line_entry["taxable_amount"] is not None else 0.0,
-                tax_rate=line_entry["tax_rate"] if line_entry["tax_rate"] is not None else 0.0,
+                taxable_amount=line_entry["taxable_amount"],
+                tax_rate=line_entry["tax_rate"],
                 expected_tax=line_entry["expected_tax"],
                 reported_tax=line_entry["reported_tax"],
                 tax_difference=line_entry["tax_difference"],
@@ -397,6 +402,7 @@ class TaxMatcherService:
 
         return {
             "status": "COMPLETED",
+            "run_id": run_id,
             "thread_id": thread_id,
             "total_records": total_lines,
             "tax_eligible_count": tax_eligible_count,

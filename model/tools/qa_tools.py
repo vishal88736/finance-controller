@@ -424,3 +424,36 @@ def run_tax_match_tool(
     )
     result["_meta"] = _tool_meta("run_tax_match_tool", thread_id, tax_rate=tax_rate)
     return result
+
+
+def get_settlement_status_tool(db: Session, thread_id: str, limit: int = 50) -> Dict[str, Any]:
+    """Retrieve settlement records and payout statuses for the thread."""
+    limit = _sanitize_limit(limit)
+    settlements = (
+        db.query(DocumentRecord)
+        .join(Document, DocumentRecord.document_id == Document.id)
+        .filter(DocumentRecord.thread_id == thread_id)
+        .filter(Document.document_type.in_(["SETTLEMENTS", "PAYMENTS"]))
+        .order_by(DocumentRecord.iso_date.desc())
+        .limit(limit)
+        .all()
+    )
+    
+    # Also fetch unmatched/exceptions that might be pending settlements
+    exceptions = (
+        db.query(ExceptionItemResult)
+        .filter(ExceptionItemResult.thread_id == thread_id)
+        .filter(ExceptionItemResult.exception_type.in_(["MISSING_SETTLEMENT", "MISSING_PAYOUT"]))
+        .limit(limit)
+        .all()
+    )
+
+    return {
+        "settlements": [json.loads(s.raw_data_json) for s in settlements if s.raw_data_json],
+        "pending_exceptions": [{
+            "record_id": e.record_id,
+            "type": e.exception_type,
+            "description": e.description
+        } for e in exceptions],
+        "_meta": _tool_meta("get_settlement_status_tool", thread_id, limit=limit)
+    }

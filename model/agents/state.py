@@ -26,6 +26,7 @@ class ReconciliationState(TypedDict):
     document_tables: Optional[List[Any]]
     schema_result: Optional[Any]
     recon_output: Optional[Any]
+    fx_rates: Optional[Dict[str, float]]
 
 
 class QAState(TypedDict):
@@ -38,6 +39,7 @@ class QAState(TypedDict):
     query_type: str  # SPECIFIC_RECORD, METRIC_QUERY, DISCREPANCY_QUERY, EXCEPTION_QUERY, MATERIAL_EXCEPTIONS, SUMMARY_QUERY, DOCUMENT_QUERY, AMBIGUOUS_QUERY, GENERAL, OFF_TOPIC
     extracted_entities: List[str]
     extracted_record_ids: List[str]
+    forecast_horizon: Optional[int]
     retrieved_records: List[Dict[str, Any]]
     retrieved_exceptions: List[Dict[str, Any]]
     retrieved_metrics: Dict[str, Any]

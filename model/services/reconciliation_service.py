@@ -113,6 +113,7 @@ def run_reconciliation(
     demo: bool = False,
     run_id: Optional[str] = None,
     add_thread_message: bool = True,
+    fx_rates: Optional[Dict[str, float]] = None,
 ) -> Dict[str, Any]:
     """
     Execute reconciliation for a thread over its own documents.
@@ -186,6 +187,7 @@ def run_reconciliation(
         "step_progress": [],
         "error": None,
         "ground_truth": ground_truth,
+        "fx_rates": fx_rates,
     }
 
     config = get_langsmith_config(

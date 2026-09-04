@@ -121,6 +121,7 @@ class ReconcileRequest(BaseModel):
     user_prompt: Optional[str] = "Reconcile these financial records and isolate discrepancies."
     demo_batch: Optional[bool] = False
     document_ids: Optional[List[str]] = None
+    fx_rates: Optional[Dict[str, float]] = None
 
 
 class ForecastRequest(BaseModel):
@@ -260,6 +261,7 @@ def api_get_thread(thread_id: str, db: Session = Depends(get_db)):
             "detected_schemas": summary_data.get("detected_schemas", {}),
             "mapped_columns": summary_data.get("mapped_columns", {}),
             "diagnostics": summary_data.get("diagnostics", {}),
+            "multi_source": summary_data.get("multi_source", {}),
             "documents_processed": summary_data.get("documents_processed", []),
             "created_at": latest_run.created_at.isoformat() if latest_run.created_at else None,
         } if latest_run else None,
@@ -547,14 +549,18 @@ def api_run_forecast(
     req: ForecastRequest = ForecastRequest(),
     db: Session = Depends(get_db),
 ):
-    """Run deterministic forward cash forecasting for 7, 14, or 30 days."""
+    """Run deterministic forward cash forecasting (validated 1..90 days; presets 7/14/30)."""
+    from ..services.cash_forecaster import CashForecastingError
     _require_thread(db, thread_id)
-    return cash_forecaster.run_forecast(
-        db=db,
-        thread_id=thread_id,
-        horizon_days=req.horizon_days,
-        current_cash_balance=req.current_cash_balance,
-    )
+    try:
+        return cash_forecaster.run_forecast(
+            db=db,
+            thread_id=thread_id,
+            horizon_days=req.horizon_days,
+            current_cash_balance=req.current_cash_balance,
+        )
+    except CashForecastingError as e:
+        raise HTTPException(status_code=422, detail=str(e))
 
 
 @app.get("/api/threads/{thread_id}/forecast")
@@ -563,15 +569,21 @@ def api_get_forecast(
     horizon_days: int = 7,
     db: Session = Depends(get_db),
 ):
-    """Get latest cash forecast or generate fresh projection."""
+    """Get latest cash forecast (read-only: never mutates state or generates a forecast)."""
     _require_thread(db, thread_id)
+    try:
+        req_h = int(horizon_days)
+    except Exception:
+        raise HTTPException(status_code=422, detail=f"Invalid forecast horizon '{horizon_days}': must be an integer 1..90.")
+    if req_h < 1 or req_h > 90:
+        raise HTTPException(status_code=422, detail=f"Invalid forecast horizon {req_h}: must be between 1 and 90 days.")
     latest = (
         db.query(CashForecastResult)
         .filter(CashForecastResult.thread_id == thread_id)
         .order_by(CashForecastResult.created_at.desc())
         .first()
     )
-    if latest and latest.horizon_days == horizon_days:
+    if latest and latest.horizon_days == req_h:
         daily = json.loads(latest.daily_forecast_json) if latest.daily_forecast_json else []
         context = forecast_data_context(daily)
         return {
@@ -579,6 +591,9 @@ def api_get_forecast(
             "forecast_id": latest.id,
             "thread_id": latest.thread_id,
             "horizon_days": latest.horizon_days,
+            "requested_horizon": req_h,
+            "applied_horizon": latest.horizon_days,
+            "horizon": {"requested": req_h, "applied": latest.horizon_days},
             "current_cash_balance": latest.current_cash_balance,
             "baseline_source": latest.baseline_source,
             "projected_inflows": latest.projected_inflows,
@@ -586,8 +601,10 @@ def api_get_forecast(
             "net_projected_change": latest.net_projected_change,
             "projected_ending_cash": latest.projected_ending_cash,
             "confidence_level": latest.confidence_level,
+            "forecast_method": "deterministic_dow_weighted_moving_average",
             "methodology": latest.methodology,
             "assumptions": json.loads(latest.assumptions_json) if latest.assumptions_json else [],
+            "limitations": [],
             "analysis_date": context["analysis_date"],
             "historical_window_end": context["historical_window_end"],
             "dataset_is_stale": context["dataset_is_stale"],
@@ -597,12 +614,17 @@ def api_get_forecast(
             "created_at": latest.created_at.isoformat() if latest.created_at else None,
         }
     
-    # Read-only behavior: Do not mutate state or generate a new forecast on GET
+    # Read-only behavior: Do not mutate state or generate a new forecast on GET.
+    # Preserve UNAVAILABLE (never $0.00): frontend must show "No forecast yet — Recalculate".
     return {
         "status": "UNAVAILABLE",
-        "message": "No existing forecast found. Use the POST endpoint to generate a forecast.",
+        "message": "No forecast yet — Recalculate",
+        "detail": "No existing forecast found for this horizon. Use the POST endpoint to generate a forecast.",
         "thread_id": thread_id,
-        "horizon_days": horizon_days,
+        "horizon_days": req_h,
+        "requested_horizon": req_h,
+        "applied_horizon": req_h,
+        "horizon": {"requested": req_h, "applied": req_h},
         "daily_projections": [],
     }
 
@@ -628,14 +650,32 @@ def api_get_tax_match(
     thread_id: str,
     db: Session = Depends(get_db),
 ):
-    """Get latest tax-line matching results for thread."""
+    """Get latest tax-line matching results for thread (run-scoped history preserved)."""
     _require_thread(db, thread_id)
-    lines = (
-        db.query(TaxMatchResult)
+    # Run-scoped: return only the latest run's lines, preserving history in DB.
+    latest_run_id_row = (
+        db.query(TaxMatchResult.run_id, TaxMatchResult.created_at)
         .filter(TaxMatchResult.thread_id == thread_id)
-        .order_by(TaxMatchResult.created_at.asc())
-        .all()
+        .order_by(TaxMatchResult.created_at.desc())
+        .first()
     )
+    if latest_run_id_row and latest_run_id_row[0]:
+        latest_run_id = latest_run_id_row[0]
+        lines = (
+            db.query(TaxMatchResult)
+            .filter(TaxMatchResult.thread_id == thread_id, TaxMatchResult.run_id == latest_run_id)
+            .order_by(TaxMatchResult.created_at.asc())
+            .all()
+        )
+    else:
+        # Legacy rows without run_id (pre-migration): fall back to all thread rows.
+        lines = (
+            db.query(TaxMatchResult)
+            .filter(TaxMatchResult.thread_id == thread_id)
+            .order_by(TaxMatchResult.created_at.asc())
+            .all()
+        )
+        latest_run_id = None
     if lines:
         matched_count = sum(1 for l in lines if l.status == "MATCH")
         mismatched_count = sum(1 for l in lines if l.status == "MISMATCH")
@@ -646,8 +686,20 @@ def api_get_tax_match(
         eligible_count = matched_count + mismatched_count + missing_count + ambiguous_count + unavailable_count
         total = len(lines)
         rate = (matched_count / eligible_count * 100.0) if eligible_count > 0 else 0.0
+        # Null contract: no eligible transactions => totals are null/N/A, never 0.0.
+        if eligible_count > 0:
+            total_expected = sum((l.expected_tax or 0.0) for l in lines if l.status != "NOT_TAX_APPLICABLE")
+            total_reported = sum((l.reported_tax or 0.0) for l in lines if l.status != "NOT_TAX_APPLICABLE")
+            total_disc = sum((l.tax_difference or 0.0) for l in lines if l.status != "NOT_TAX_APPLICABLE")
+            net_var = sum(((l.reported_tax or 0.0) - (l.expected_tax or 0.0)) for l in lines if l.status != "NOT_TAX_APPLICABLE")
+        else:
+            total_expected = None
+            total_reported = None
+            total_disc = None
+            net_var = None
         return {
             "status": "COMPLETED",
+            "run_id": latest_run_id,
             "thread_id": thread_id,
             "total_records": total,
             "tax_eligible_count": eligible_count,
@@ -658,16 +710,16 @@ def api_get_tax_match(
             "not_applicable_count": not_applicable_count,
             "unavailable_count": unavailable_count,
             "tax_match_rate": round(rate, 2),
-            "total_tax_expected": sum(l.expected_tax for l in lines),
-            "total_tax_reported": sum(l.reported_tax for l in lines),
-            "total_tax_discrepancy": sum(l.tax_difference for l in lines),
-            "net_tax_variance": sum(l.reported_tax - l.expected_tax for l in lines),
+            "total_tax_expected": total_expected,
+            "total_tax_reported": total_reported,
+            "total_tax_discrepancy": total_disc,
+            "net_tax_variance": net_var,
             "tax_lines": [{
                 "id": l.id,
                 "record_id": l.record_id,
                 "source": l.source,
                 "taxable_amount": l.taxable_amount,
-                "tax_rate": l.tax_rate if l.tax_rate else None,
+                "tax_rate": l.tax_rate if l.tax_rate is not None else None,
                 "expected_tax": l.expected_tax,
                 "reported_tax": l.reported_tax,
                 "tax_difference": l.tax_difference,

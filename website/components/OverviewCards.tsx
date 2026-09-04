@@ -167,7 +167,9 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({
           <div className="text-xs text-slate-500 mt-3 font-medium">
             {run
               ? run.exceptions_count > 0
-                ? "Discrepancies, fees, & counterpart gaps"
+                ? run.multi_source?.one_disagrees_count !== undefined 
+                  ? `${run.multi_source.one_disagrees_count} partial agreements, ${run.multi_source.all_disagree_count} multi-disagreements, ${run.multi_source.isolated_count} isolated`
+                  : "Discrepancies, fees, & counterpart gaps"
                 : "Clean reconciliation, 0 exceptions"
               : "Awaiting matching run"}
           </div>

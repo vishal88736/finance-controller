@@ -154,18 +154,9 @@ class ReconciliationPlanner:
         if source_candidates and counterpart_candidates:
             source_doc_id = source_candidates[0]
             
-            # Check for unsupported n-way reconciliation
+            # Check for multi-way reconciliation
             cp_roles = set(classifications[cid].document_role for cid in counterpart_candidates)
-            if len(cp_roles) > 1:
-                return ReconciliationPlan(
-                    relationship="MULTI_WAY_UNSUPPORTED",
-                    source_doc_id=source_doc_id,
-                    source_filename=fname_map.get(source_doc_id, source_doc_id),
-                    source_role=classifications[source_doc_id].document_role,
-                    source_population_count=len(df_map.get(source_doc_id, pd.DataFrame())),
-                    is_valid_pair=False,
-                    plan_explanation=f"Multi-way reconciliation across distinct counterpart roles ({', '.join(r.value for r in cp_roles)}) is not supported. Please reconcile exactly two sources at a time.",
-                )
+            relationship_type = "MULTI_SOURCE_RECONCILIATION" if len(cp_roles) > 1 else f"{classifications[source_doc_id].document_role.value}_VS_{list(cp_roles)[0].value if cp_roles else 'UNKNOWN'}"
             
             counterpart_doc_ids = counterpart_candidates
             # Multiple primary source documents cannot all be the authoritative
@@ -293,7 +284,7 @@ class ReconciliationPlanner:
                 "key_name": "canonical_transaction_id",
             }
 
-        rel_name = f"{source_role.value}_{counterpart_role.value}"
+        rel_name = locals().get("relationship_type") or f"{source_role.value}_{counterpart_role.value}"
         explanation = (
             f"Reconciliation Plan: Source '{source_fname}' ({source_role.value}, {source_pop} records) "
             f"reconciled against Counterpart '{counterpart_fname}' ({counterpart_role.value}, {counterpart_pop} records). "
