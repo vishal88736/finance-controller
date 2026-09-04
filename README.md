@@ -64,26 +64,23 @@
 
 ## 3. Key Capabilities
 
-### 1. ChatGPT-Style Thread System
-- Every conversation has a unique `thread_id` (e.g. `thr_8f3a91...`).
-- Threads encapsulate messages, documents, reconciliation runs, matches, exceptions, and audit logs.
-- Strict **Thread Isolation**: queries in Thread A cannot access data in Thread B.
+### 1. Evidence-First Pandas Reconciliation Engine
+- Pure deterministic engine (`pandas_reconciler.py`) processing records natively. Legacy loops have been fully removed.
+- **Fee, Refund, and Chargeback Netting**: Deterministic net amount calculation (`Gross - Fee = Net`). Differentiates between exact gross matches, net matches, and normal fee deltas.
+- **Currency (FX) Handling**: Detects currency mismatches across counterpart sources and immediately raises explicit "Currency conversion required" exceptions instead of failing math operations.
+- **Strict Relationship Validation**: Detects and cleanly rejects unsupported multi-way reconciliations (e.g., trying to reconcile Ledger vs Bank vs Processor simultaneously).
 
-### 2. Two-Level Duplicate Detection
-- **Level 1 (Exact File Duplicate)**: Cryptographic SHA-256 hash of raw bytes. Prevents uploading the exact same file twice.
-- **Level 2 (Logical Dataset Duplicate)**: Deterministic hash of sorted canonical records. Detects renamed files with identical transactions (e.g. `settlement_01.csv` vs `settlement_final.csv`).
+### 2. ChatGPT-Style Thread System & Router
+- Every conversation has a unique `thread_id` (e.g. `thr_8f3a91...`). Strict **Thread Isolation** prevents cross-thread data leakage.
+- **Expanded Intent Coverage**: The Orchestrator supports granular natural-language routing for Fees, Refunds, Chargebacks, and Tax operations. 
+- **Read-Only Safeties**: Forecasting, Tax Verification, and Querying APIs are strictly `GET` endpoints that cannot mutate state. Empty-states (e.g. 0 eligible transactions) are accurately differentiated from zero-tax results.
 
-### 3. Evidence-First Reconciliation Engine
-- Every match decision includes a complete evidence dictionary (`evidence_json`):
-  - Exact reference matching
-  - Amount delta & fee percentage
-  - Date proximity & settlement window
-  - Entity Levenshtein distance
-- Categorizes discrepancies into **NORMAL** (small rounding, date lag) and **MATERIAL** (fee deltas > $0.05, missing records, duplicates).
+### 3. Two-Level Duplicate Detection
+- **Level 1 (Exact File Duplicate)**: Cryptographic SHA-256 hash of raw bytes.
+- **Level 2 (Logical Dataset Duplicate)**: Deterministic hash of sorted canonical records. Detects renamed files with identical transactions.
 
 ### 4. 4-Layer Guardrails
-- **Layer 1: Input Classification**: Rejects off-topic requests (poems, jokes, recipes, weather, politics) and prompt injections with the official response:
-  > *"I can help with reconciliation, settlement analysis, financial exceptions, and questions about the data in this thread."*
+- **Layer 1: Input Classification**: Rejects off-topic requests and unsupported queries (e.g. system audit logs).
 - **Layer 2: Thread Scope Check**: Ensures thread existence and blocks cross-thread queries.
 - **Layer 3: Tool Permission Check**: Only allows authorized deterministic financial tools.
 - **Layer 4: Output Validation**: Redacts confidential keys or answer keys.

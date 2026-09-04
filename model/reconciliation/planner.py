@@ -153,6 +153,20 @@ class ReconciliationPlanner:
 
         if source_candidates and counterpart_candidates:
             source_doc_id = source_candidates[0]
+            
+            # Check for unsupported n-way reconciliation
+            cp_roles = set(classifications[cid].document_role for cid in counterpart_candidates)
+            if len(cp_roles) > 1:
+                return ReconciliationPlan(
+                    relationship="MULTI_WAY_UNSUPPORTED",
+                    source_doc_id=source_doc_id,
+                    source_filename=fname_map.get(source_doc_id, source_doc_id),
+                    source_role=classifications[source_doc_id].document_role,
+                    source_population_count=len(df_map.get(source_doc_id, pd.DataFrame())),
+                    is_valid_pair=False,
+                    plan_explanation=f"Multi-way reconciliation across distinct counterpart roles ({', '.join(r.value for r in cp_roles)}) is not supported. Please reconcile exactly two sources at a time.",
+                )
+            
             counterpart_doc_ids = counterpart_candidates
             # Multiple primary source documents cannot all be the authoritative
             # denominator in a single pass. Surface the extras rather than

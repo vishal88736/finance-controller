@@ -596,7 +596,15 @@ def api_get_forecast(
             "daily_projections": daily,
             "created_at": latest.created_at.isoformat() if latest.created_at else None,
         }
-    return cash_forecaster.run_forecast(db=db, thread_id=thread_id, horizon_days=horizon_days)
+    
+    # Read-only behavior: Do not mutate state or generate a new forecast on GET
+    return {
+        "status": "UNAVAILABLE",
+        "message": "No existing forecast found. Use the POST endpoint to generate a forecast.",
+        "thread_id": thread_id,
+        "horizon_days": horizon_days,
+        "daily_projections": [],
+    }
 
 
 @app.post("/api/threads/{thread_id}/tax-match")
@@ -668,7 +676,16 @@ def api_get_tax_match(
                 "evidence": json.loads(l.evidence_json) if l.evidence_json else {},
             } for l in lines],
         }
-    return tax_matcher.run_tax_matching(db=db, thread_id=thread_id)
+    
+    # Read-only behavior: Do not mutate state or generate a new tax match on GET
+    return {
+        "status": "UNAVAILABLE",
+        "message": "No existing tax match results found. Use the POST endpoint to generate tax matching.",
+        "thread_id": thread_id,
+        "tax_lines": [],
+        "total_records": 0,
+        "tax_eligible_count": 0,
+    }
 
 
 # ─────────────────────────────────────────────────────────────

@@ -407,10 +407,10 @@ class TaxMatcherService:
             "not_applicable_count": not_applicable_count,
             "unavailable_count": unavailable_count,
             "tax_match_rate": round(match_rate, 2),
-            "total_tax_expected": float(_round_dec(total_expected_tax)),
-            "total_tax_reported": float(_round_dec(total_reported_tax)),
-            "total_tax_discrepancy": float(_round_dec(total_tax_discrepancy)),
-            "net_tax_variance": float(_round_dec(net_tax_variance)),
+            "total_tax_expected": float(_round_dec(total_expected_tax)) if tax_eligible_count > 0 else None,
+            "total_tax_reported": float(_round_dec(total_reported_tax)) if tax_eligible_count > 0 else None,
+            "total_tax_discrepancy": float(_round_dec(total_tax_discrepancy)) if tax_eligible_count > 0 else None,
+            "net_tax_variance": float(_round_dec(net_tax_variance)) if tax_eligible_count > 0 else None,
             "tax_lines": tax_lines,
         }
 

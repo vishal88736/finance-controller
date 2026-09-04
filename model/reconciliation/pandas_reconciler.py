@@ -423,6 +423,26 @@ class PandasReconciliationEngine:
             else:
                 df["amount"] = 0.0
 
+        # Fee, Refund, Chargeback Netting
+        if "fee_amount" in mapped and mapped["fee_amount"] in df_raw.columns:
+            df["fee_amount"] = [float(normalize_amount(v)) for v in df_raw[mapped["fee_amount"]]]
+        else:
+            df["fee_amount"] = 0.0
+
+        if "refund_amount" in mapped and mapped["refund_amount"] in df_raw.columns:
+            df["refund_amount"] = [float(normalize_amount(v)) for v in df_raw[mapped["refund_amount"]]]
+        else:
+            df["refund_amount"] = 0.0
+
+        if "chargeback_amount" in mapped and mapped["chargeback_amount"] in df_raw.columns:
+            df["chargeback_amount"] = [float(normalize_amount(v)) for v in df_raw[mapped["chargeback_amount"]]]
+        else:
+            df["chargeback_amount"] = 0.0
+
+        # Calculate Net Amount (Assuming 'amount' is Gross if fees exist)
+        # In financial systems, if fees/refunds are present, the settled amount is net.
+        df["net_amount"] = df["amount"] - df["fee_amount"] - df["refund_amount"] - df["chargeback_amount"]
+
         # 4. Date & ISO Date
         if "date" in mapped and mapped["date"] in df_raw.columns:
             df["iso_date"] = [normalize_date(v) for v in df_raw[mapped["date"]]]
@@ -631,6 +651,14 @@ class PandasReconciliationEngine:
                     "settlement_row": int(row["_row_idx_b"]),
                     "amount_a": float(row["amount_a"]) if "amount_a" in row else float(row["amount"]),
                     "amount_b": float(row["amount_b"]) if "amount_b" in row else float(row["amount"]),
+                    "net_amount_a": float(row.get("net_amount_a", row.get("net_amount", 0.0))),
+                    "net_amount_b": float(row.get("net_amount_b", row.get("net_amount", 0.0))),
+                    "fee_amount_a": float(row.get("fee_amount_a", row.get("fee_amount", 0.0))),
+                    "fee_amount_b": float(row.get("fee_amount_b", row.get("fee_amount", 0.0))),
+                    "refund_amount_a": float(row.get("refund_amount_a", row.get("refund_amount", 0.0))),
+                    "refund_amount_b": float(row.get("refund_amount_b", row.get("refund_amount", 0.0))),
+                    "chargeback_amount_a": float(row.get("chargeback_amount_a", row.get("chargeback_amount", 0.0))),
+                    "chargeback_amount_b": float(row.get("chargeback_amount_b", row.get("chargeback_amount", 0.0))),
                     "date_a": str(row["iso_date_a"]),
                     "date_b": str(row["iso_date_b"]),
                     "reference_a": str(row.get("raw_reference_id_a", id_a)),
@@ -665,6 +693,41 @@ class PandasReconciliationEngine:
                     id_b = str(row["transaction_id_b"])
 
                     if id_a in matched_a or id_b in matched_b:
+                        continue
+
+                    # Currency Mismatch Check
+                    if str(row["currency_a"]) != str(row["currency_b"]):
+                        rejection_breakdown["currency_mismatch"] += 1
+                        pass_exceptions.append({
+                            "id": f"exc_{uuid.uuid4().hex[:10]}",
+                            "record_id": id_a,
+                            "canonical_transaction_id": canon_id,
+                            "source": str(row["_source_label_a"]),
+                            "reason_code": "CURRENCY_MISMATCH",
+                            "discrepancy_level": "MATERIAL",
+                            "amount_discrepancy": 0.0,
+                            "explanation": f"Currency mismatch: {row['currency_a']} vs {row['currency_b']}. Currency conversion required.",
+                            "recommended_action": "Manually convert currencies or configure FX rates.",
+                            "provenance": {
+                                "document_id": str(row["_doc_id_a"]),
+                                "filename": str(row["_doc_name_a"]),
+                                "document_role": str(row.get("_doc_role_a", "TRANSACTIONS")),
+                                "row_index": int(row["_row_idx_a"]),
+                                "canonical_transaction_id": canon_id,
+                                "raw_data": row["_raw_data_a"],
+                            },
+                            "evidence": {
+                                "record_id_a": id_a,
+                                "record_id_b": id_b,
+                                "canonical_transaction_id": canon_id,
+                                "currency_a": str(row["currency_a"]),
+                                "currency_b": str(row["currency_b"]),
+                                "amount_a": float(row["amount_a"]),
+                                "amount_b": float(row["amount_b"]),
+                            },
+                        })
+                        matched_a.add(id_a)
+                        matched_b.add(id_b)
                         continue
 
                     # Duplicate conflict
@@ -709,23 +772,35 @@ class PandasReconciliationEngine:
                     d_a = row["dt_date_a"]
                     d_b = row["dt_date_b"]
                     days_diff = abs((d_a - d_b).days) if (pd.notna(d_a) and pd.notna(d_b)) else 0
-                    diff_val = round(float(abs(row["amount_a"] - row["amount_b"])), 2)
+                    
+                    amt_a = float(row["amount_a"])
+                    amt_b = float(row["amount_b"])
+                    net_a = float(row.get("net_amount_a", amt_a))
+                    net_b = float(row.get("net_amount_b", amt_b))
+                    
+                    diff_val = round(abs(amt_a - amt_b), 2)
+                    net_diff_val = min(
+                        round(abs(net_a - amt_b), 2),
+                        round(abs(amt_a - net_b), 2),
+                        round(abs(net_a - net_b), 2)
+                    )
+                    best_diff = diff_val if diff_val <= self.amount_tolerance else net_diff_val
 
-                    if diff_val <= self.amount_tolerance:
+                    if best_diff <= self.amount_tolerance:
                         strat = "EXACT_TRANSACTION_ID"
-                        cat = "EXACT_MATCH" if (diff_val == 0.0 and days_diff == 0) else "TOLERANCE_MATCH"
+                        cat = "EXACT_MATCH" if (best_diff == 0.0 and days_diff == 0) else "TOLERANCE_MATCH"
                         conf = 100.0 if cat == "EXACT_MATCH" else 98.0
                         rule = "Pass 1: Primary Canonical Transaction ID Match"
-                        match_entry = _build_match(row, strat, cat, conf, diff_val, days_diff, rule)
+                        match_entry = _build_match(row, strat, cat, conf, best_diff, days_diff, rule)
                         matches.append(match_entry)
                         matched_a.add(id_a)
                         matched_b.add(id_b)
-                    elif diff_val <= self.fee_tolerance:
+                    elif best_diff <= self.fee_tolerance:
                         strat = "EXACT_TRANSACTION_ID_FEE_DELTA"
                         cat = "TOLERANCE_MATCH"
                         conf = 95.0
                         rule = "Pass 1: Canonical Transaction ID Match with Fee Delta"
-                        match_entry = _build_match(row, strat, cat, conf, diff_val, days_diff, rule)
+                        match_entry = _build_match(row, strat, cat, conf, best_diff, days_diff, rule)
                         matches.append(match_entry)
                         matched_a.add(id_a)
                         matched_b.add(id_b)
@@ -806,6 +881,41 @@ class PandasReconciliationEngine:
                     if id_a in matched_a or id_b in matched_b:
                         continue
 
+                    # Currency Mismatch Check
+                    if str(row["currency_a"]) != str(row["currency_b"]):
+                        rejection_breakdown["currency_mismatch"] += 1
+                        pass_exceptions.append({
+                            "id": f"exc_{uuid.uuid4().hex[:10]}",
+                            "record_id": id_a,
+                            "source": str(row["_source_label_a"]),
+                            "reason_code": "CURRENCY_MISMATCH",
+                            "discrepancy_level": "MATERIAL",
+                            "amount_discrepancy": 0.0,
+                            "explanation": f"Currency mismatch: {row['currency_a']} vs {row['currency_b']}. Currency conversion required.",
+                            "recommended_action": "Manually convert currencies or configure FX rates.",
+                            "provenance": {
+                                "document_id": str(row["_doc_id_a"]),
+                                "filename": str(row["_doc_name_a"]),
+                                "document_role": str(row.get("_doc_role_a", "TRANSACTIONS")),
+                                "row_index": int(row["_row_idx_a"]),
+                                "canonical_transaction_id": str(row.get("canonical_transaction_id_a") or id_a),
+                                "raw_data": row["_raw_data_a"],
+                            },
+                            "evidence": {
+                                "record_id_a": id_a,
+                                "record_id_b": id_b,
+                                "reference": ref,
+                                "matching_strategy": "FALLBACK_EXACT_REFERENCE",
+                                "currency_a": str(row["currency_a"]),
+                                "currency_b": str(row["currency_b"]),
+                                "amount_a": float(row["amount_a"]),
+                                "amount_b": float(row["amount_b"]),
+                            },
+                        })
+                        matched_a.add(id_a)
+                        matched_b.add(id_b)
+                        continue
+
                     # If multiple candidates remain: AMBIGUOUS_CANDIDATE_CONFLICT (never arbitrary matches[0])
                     if counts_a.get(ref, 0) > 1 or counts_b.get(ref, 0) > 1:
                         rejection_breakdown["ambiguous_candidate_conflict"] += 1
@@ -842,23 +952,35 @@ class PandasReconciliationEngine:
                     d_a = row["dt_date_a"]
                     d_b = row["dt_date_b"]
                     days_diff = abs((d_a - d_b).days) if (pd.notna(d_a) and pd.notna(d_b)) else 0
-                    diff_val = round(float(abs(row["amount_a"] - row["amount_b"])), 2)
+                    
+                    amt_a = float(row["amount_a"])
+                    amt_b = float(row["amount_b"])
+                    net_a = float(row.get("net_amount_a", amt_a))
+                    net_b = float(row.get("net_amount_b", amt_b))
+                    
+                    diff_val = round(abs(amt_a - amt_b), 2)
+                    net_diff_val = min(
+                        round(abs(net_a - amt_b), 2),
+                        round(abs(amt_a - net_b), 2),
+                        round(abs(net_a - net_b), 2)
+                    )
+                    best_diff = diff_val if diff_val <= self.amount_tolerance else net_diff_val
 
-                    if diff_val <= self.amount_tolerance:
+                    if best_diff <= self.amount_tolerance:
                         strat = "FALLBACK_EXACT_REFERENCE"
-                        cat = "EXACT_MATCH" if (diff_val == 0.0 and days_diff == 0) else "TOLERANCE_MATCH"
+                        cat = "EXACT_MATCH" if (best_diff == 0.0 and days_diff == 0) else "TOLERANCE_MATCH"
                         conf = 95.0
                         rule = "Pass 2: Fallback Exact Reference Match"
-                        match_entry = _build_match(row, strat, cat, conf, diff_val, days_diff, rule)
+                        match_entry = _build_match(row, strat, cat, conf, best_diff, days_diff, rule)
                         matches.append(match_entry)
                         matched_a.add(id_a)
                         matched_b.add(id_b)
-                    elif diff_val <= self.fee_tolerance:
+                    elif best_diff <= self.fee_tolerance:
                         strat = "FALLBACK_REFERENCE_FEE_DELTA"
                         cat = "TOLERANCE_MATCH"
                         conf = 90.0
                         rule = "Pass 2: Fallback Reference Match with Fee Delta"
-                        match_entry = _build_match(row, strat, cat, conf, diff_val, days_diff, rule)
+                        match_entry = _build_match(row, strat, cat, conf, best_diff, days_diff, rule)
                         matches.append(match_entry)
                         matched_a.add(id_a)
                         matched_b.add(id_b)

@@ -246,10 +246,9 @@ def test_pandas_reconciler_multi_document_three_files():
 
     result = pandas_reconciler.reconcile_documents(docs)
 
-    assert result["records_processed"] == 20
     assert len(result["documents_processed"]) == 3
-    assert len(result["matches"]) == 10
-    assert result["match_rate"] == 100.0
+    assert result["reconciliation_plan"]["relationship"] == "MULTI_WAY_UNSUPPORTED"
+    assert len(result["matches"]) == 0
 
 
 def test_reconciliation_row_order_independence():

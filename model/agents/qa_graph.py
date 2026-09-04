@@ -125,14 +125,16 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
         query_type = "AMBIGUOUS_QUERY"
     elif any(kw in lower for kw in ["match rate", "accuracy", "precision", "recall", "throughput", "metrics", "f1", "reconciliation rate"]):
         query_type = "METRIC_QUERY"
-    elif any(kw in lower for kw in ["amount discrepanc", "difference", "discrepanc", "fee", "delta", "mismatch"]):
+    elif any(kw in lower for kw in ["amount discrepanc", "difference", "discrepanc", "fee", "delta", "mismatch", "refund", "chargeback"]):
         query_type = "DISCREPANCY_QUERY"
-    elif any(kw in lower for kw in ["unmatched", "failing", "why unmatched", "why are there", "exceptions", "unresolved"]):
+    elif any(kw in lower for kw in ["unmatched", "failing", "why unmatched", "why are there", "exceptions", "unresolved", "missing", "explain", "explanation"]):
         query_type = "EXCEPTION_QUERY"
-    elif any(kw in lower for kw in ["document", "uploaded", "files", "fingerprint", "sha256", "digest"]):
+    elif any(kw in lower for kw in ["document", "uploaded", "files", "fingerprint", "sha256", "digest", "provenance"]):
         query_type = "DOCUMENT_QUERY"
     elif any(kw in lower for kw in ["summary", "overview", "status", "results"]):
         query_type = "SUMMARY_QUERY"
+    elif any(kw in lower for kw in ["audit", "history", "log", "trail"]):
+        query_type = "UNSUPPORTED_QUERY"
 
     return {
         "query_type": query_type,
@@ -329,6 +331,9 @@ def format_deterministic_answer(state: QAState) -> str:
     metrics = state.get("retrieved_metrics", {})
     documents = state.get("retrieved_documents", [])
     thread_id = state.get("thread_id", "")
+
+    if query_type == "UNSUPPORTED_QUERY":
+        return "I am unable to answer queries about audit history or system logs as they are outside my supported capabilities. I can help you with reconciliation status, mismatched amounts, missing transactions, fees, tax, and cash forecasting."
 
     # ── Honest no-data states ──
     if query_type == "CASH_FORECAST":

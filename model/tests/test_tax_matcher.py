@@ -146,7 +146,7 @@ def test_tax_non_applicable_records_excluded(db_session):
     assert res["status"] == "COMPLETED"
     assert res["tax_eligible_count"] == 0
     assert res["not_applicable_count"] == 1
-    assert res["total_tax_expected"] == 0.0
+    assert res["total_tax_expected"] is None
     assert res["tax_match_rate"] == 0.0
     assert res["tax_lines"][0]["status"] == "NOT_TAX_APPLICABLE"
 

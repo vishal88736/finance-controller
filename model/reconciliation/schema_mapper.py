@@ -101,6 +101,16 @@ SEMANTIC_COLUMN_CANDIDATES: Dict[str, List[str]] = {
         "taxable_amount", "taxable_base", "subtotal", "base_amount",
         "pre_tax_amount", "net_taxable",
     ],
+    "fee_amount": [
+        "fee", "fees", "fee_amount", "processing_fee", "interchange",
+        "platform_fee", "commission", "service_charge",
+    ],
+    "refund_amount": [
+        "refund", "refund_amount", "return_amount", "reversal",
+    ],
+    "chargeback_amount": [
+        "chargeback", "chargeback_amount", "dispute_amount",
+    ],
 }
 
 
