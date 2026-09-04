@@ -244,8 +244,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
     setMessages((prev) => [...prev, tempUserMsg]);
     setInput("");
     setIsLoading(true);
-    setLastToolActivity(null);
-    setNeedsReconcileMsg(false);
 
     try {
       const response = await api.sendMessage(threadId, question, runId || undefined);
@@ -256,11 +254,6 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
       ]);
       if (response.intent === "RECONCILIATION" && onReconciled) onReconciled();
 
-      // Surface tool activity when present
-      const meta = response.assistant_message?.metadata;
-      if (meta?.tools_called?.length) {
-        setLastToolActivity(meta.tools_called);
-      }
       if (response.intent === "QA") {
         // refresh suggestions (thread state may have changed after reconciliation chat)
         api
