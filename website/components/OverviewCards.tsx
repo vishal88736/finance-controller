@@ -3,9 +3,7 @@
 import React from "react";
 import {
   Layers,
-  CheckCircle2,
   AlertTriangle,
-  FileWarning,
   Activity,
   ArrowUpRight,
   TrendingUp,

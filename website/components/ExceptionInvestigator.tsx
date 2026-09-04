@@ -488,12 +488,3 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
     </div>
   );
 };
-
-const Stat: React.FC<{ label: string; value: string; danger?: boolean }> = ({ label, value, danger }) => (
-  <div className="bg-slate-50 border border-slate-200 p-3.5 rounded-xl">
-    <span className="text-[11px] text-slate-400 uppercase font-semibold tracking-wide block">{label}</span>
-    <span className={`text-base font-bold font-[family-name:var(--font-geist-mono)] mt-1 block ${danger ? "text-red-600" : "text-slate-900"}`}>
-      {value}
-    </span>
-  </div>
-);

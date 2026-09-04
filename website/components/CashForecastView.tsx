@@ -2,15 +2,9 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import {
-  TrendingUp,
   Calendar,
-  DollarSign,
   AlertCircle,
-  CheckCircle2,
   RefreshCw,
-  Loader2,
-  HelpCircle,
-  ArrowUpRight,
   ShieldCheck,
   Info,
 } from "lucide-react";

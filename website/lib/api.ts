@@ -19,7 +19,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
     res = await fetch(`${API_BASE}${path}`, init);
-  } catch (e) {
+  } catch {
     throw new ApiError("Cannot reach the Finance Controller backend. Is it running on port 8000?", 0);
   }
   if (!res.ok) {

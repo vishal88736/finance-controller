@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Send, Copy, Check, Sparkles, User, ShieldAlert, Wrench, Link2, RefreshCw, ExternalLink, ArrowUpRight } from "lucide-react";
+import { Send, Copy, Check, Sparkles, User, ShieldAlert, Wrench, RefreshCw, ExternalLink, ArrowUpRight } from "lucide-react";
 import { api, MessageItem } from "@/lib/api";
 
 interface ChatPanelProps {
@@ -13,10 +13,6 @@ interface ChatPanelProps {
 
 // Evidence reference parsed from answers like `TXN-1023` — clickable
 const ID_PATTERN = /\b([A-Za-z][A-Za-z0-9]*(?:[-_][A-Za-z0-9]+)+)\b/;
-
-interface EvidenceRef {
-  id: string;
-}
 
 /* ── Rich markdown-ish renderer (bold, code, lists, headers) ── */
 const FormattedMessage: React.FC<{ content: string; isUser: boolean; onOpenRecord?: (id: string) => void }> = ({
@@ -203,9 +199,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
   const [suggestionsState, setSuggestionsState] = useState<string>("NO_DOCUMENTS");
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [lastToolActivity, setLastToolActivity] = useState<string[] | null>(null);
   const [copiedMsgId, setCopiedMsgId] = useState<string | null>(null);
-  const [needsReconcileMsg, setNeedsReconcileMsg] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const loadHistory = useCallback(async () => {

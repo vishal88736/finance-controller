@@ -18,7 +18,7 @@ import {
   Menu, FileText, WifiOff, TrendingUp, Percent,
 } from "lucide-react";
 import {
-  api, ThreadItem, ThreadDocumentItem, LatestRun, MatchItem, ExceptionItem, AuditLogItem, HealthStatus,
+  api, ThreadItem, ThreadDocumentItem, LatestRun, MatchItem, ExceptionItem, AuditLogItem,
 } from "@/lib/api";
 
 type Tab = "overview" | "matches" | "qa" | "forecast" | "tax" | "exceptions" | "evaluation" | "audit";
@@ -35,22 +35,22 @@ const TABS = [
 ];
 
 export default function Home() {
-  // ── App state ──
+  // ── Thread selection ──
   const [threads, setThreads] = useState<ThreadItem[]>([]);
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<Tab>("overview");
+  const [backendDown, setBackendDown] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [docsOpen, setDocsOpen] = useState(false);
-  const [backendDown, setBackendDown] = useState(false);
-  const [activeTab, setActiveTab] = useState<Tab>("overview");
 
   // ── Thread data ──
   const [documents, setDocuments] = useState<ThreadDocumentItem[]>([]);
   const [latestRun, setLatestRun] = useState<LatestRun | null>(null);
-  const [matchCategory, setMatchCategory] = useState("ALL");
-  const [matchSearch, setMatchSearch] = useState("");
   const [matches, setMatches] = useState<MatchItem[]>([]);
   const [totalMatches, setTotalMatches] = useState(0);
   const [matchesLoading, setMatchesLoading] = useState(false);
+  const [matchCategory, setMatchCategory] = useState("ALL");
+  const [matchSearch, setMatchSearch] = useState("");
   const [exceptionReason, setExceptionReason] = useState("ALL");
   const [exceptionCategory, setExceptionCategory] = useState("ALL");
   const [exceptions, setExceptions] = useState<ExceptionItem[]>([]);
@@ -64,8 +64,6 @@ export default function Home() {
   const [stepProgress, setStepProgress] = useState<string[]>([]);
   const [runId, setRunId] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
-  const [healthData, setHealthData] = useState<HealthStatus | null>(null);
-  const [langsmithActive, setLangsmithActive] = useState(false);
 
   // ── Initial load ──
   const refreshThreads = useCallback(async (): Promise<ThreadItem[]> => {
@@ -77,10 +75,8 @@ export default function Home() {
   useEffect(() => {
     (async () => {
       try {
-        const h = await api.health();
-        setHealthData(h);
+        await api.health();
         setBackendDown(false);
-        void api.langsmithStatus().then((ls) => setLangsmithActive(ls.tracing_active)).catch(() => {});
         const list = await refreshThreads();
         if (list.length > 0) {
           setActiveThreadId(list[0].id);
@@ -162,11 +158,10 @@ export default function Home() {
   const handleCreateThread = async () => {
     try {
       const t = await api.createThread(`Analysis ${new Date().toLocaleDateString()}`);
-      const list = await refreshThreads();
-      void list;
+      await refreshThreads();
       setActiveThreadId(t.id);
       setActiveTab("overview");
-    } catch (e: any) {
+    } catch {
       setBackendDown(true);
     }
   };
@@ -407,7 +402,6 @@ export default function Home() {
                       <AgentActivityPanel
                         auditLogs={auditLogs}
                         isRunning={isRunning}
-                        stepProgress={stepProgress}
                       />
                       {latestRun === null && documents.length === 0 && (
                         <EmptyWorkspace onUpload={() => setDocsOpen(true)} />

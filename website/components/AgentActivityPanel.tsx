@@ -10,12 +10,10 @@ import {
   Search,
   Layers,
   FileCheck,
-  Clock,
   Sparkles,
   ChevronDown,
   ChevronUp,
   ArrowRight,
-  ShieldAlert,
   TrendingUp,
   Percent,
 } from "lucide-react";
@@ -24,8 +22,6 @@ import { AuditLogItem } from "@/lib/api";
 interface AgentActivityPanelProps {
   auditLogs: AuditLogItem[];
   isRunning: boolean;
-  stepProgress?: string[];
-  activeAgent?: string;
 }
 
 interface AgentNodeDef {
@@ -98,7 +94,6 @@ const WORKFLOW_AGENTS: AgentNodeDef[] = [
 export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
   auditLogs,
   isRunning,
-  stepProgress = [],
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
 

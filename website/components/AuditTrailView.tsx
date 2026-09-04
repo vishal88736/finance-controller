@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import {
-  ShieldCheck, RefreshCw, Clock, FileText, Layers, MessageSquare,
-  ShieldAlert, AlertOctagon, FlaskConical, X, Wrench,
+  ShieldCheck, RefreshCw, Clock, AlertOctagon, X, Wrench,
 } from "lucide-react";
 import { api, AuditLogItem } from "@/lib/api";
 

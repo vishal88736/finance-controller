@@ -2,12 +2,8 @@
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
 import {
-  FileText,
   Search,
-  CheckCircle2,
-  AlertTriangle,
   AlertCircle,
-  HelpCircle,
   RefreshCw,
   ChevronRight,
   X,
