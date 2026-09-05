@@ -135,7 +135,7 @@ python -m pytest model/tests
 
 ---
 
-## 6. Complete Hackathon Demo Walkthrough
+## 6. Complete Demo Walkthrough
 
 | Step | Action | Expected Outcome |
 |---|---|---|
