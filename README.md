@@ -131,7 +131,7 @@ npm run dev
 ```bash
 python -m pytest model/tests
 ```
-*(79/79 unit & integration tests passing)*
+*(190/190 unit & integration tests passing)*
 
 ---
 

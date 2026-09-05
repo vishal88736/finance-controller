@@ -1,4 +1,7 @@
 """
+Legacy / currently unused in the live reconciliation path (only
+verification.normalizers is imported by the runtime; this module is
+exercised by tests only).
 Composite scoring for record pair comparison.
 Calls individual matchers and produces a structured score with boolean checks.
 """

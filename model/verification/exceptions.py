@@ -1,4 +1,7 @@
 """
+Legacy / currently unused in the live reconciliation path (only
+verification.normalizers is imported by the runtime; this module is
+exercised by tests only).
 Exception types and classification for financial reconciliation.
 Explicit categories — never just "FAILED".
 """

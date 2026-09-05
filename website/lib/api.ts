@@ -1,5 +1,5 @@
 /**
- * API client for the AI Finance Controller.
+ * API client for LedgerPilot.
  *
  * Every method throws on failure — the UI renders honest error/empty/loading
  * states. NO fabricated fallback data is ever returned.
@@ -20,7 +20,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   try {
     res = await fetch(`${API_BASE}${path}`, init);
   } catch {
-    throw new ApiError("Cannot reach the Finance Controller backend. Is it running on port 8000?", 0);
+    throw new ApiError("Cannot reach the LedgerPilot backend. Is it running on port 8000?", 0);
   }
   if (!res.ok) {
     let detail = `Request failed (${res.status})`;

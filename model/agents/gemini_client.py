@@ -1,5 +1,7 @@
 """
-Gemini Flash LLM Client for the QA Copilot.
+Legacy / currently unused: Gemini Flash LLM Client for the QA Copilot.
+The live QA path uses the Groq client only; this module is kept for
+reference and is not imported by the runtime.
 
 When GEMINI_API_KEY is configured, answers are synthesized by the LLM from
 retrieved evidence ONLY. When the LLM is unavailable (offline/demo mode),

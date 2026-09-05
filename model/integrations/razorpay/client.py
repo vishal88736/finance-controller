@@ -1,6 +1,8 @@
 """
-Razorpay integration module for future ingestion and settlement matching.
+Legacy / currently unused stub: Razorpay integration module for future
+ingestion and settlement matching.
 Provides a clean abstraction to pull payouts, settlements, and payments from Razorpay API.
+Currently returns empty results and is not wired into the live runtime.
 """
 
 import os

@@ -62,7 +62,7 @@ export const ReconciliationControl: React.FC<ReconciliationControlProps> = ({
         <button
           onClick={onRun}
           disabled={!canRun}
-          className="flex items-center justify-center gap-2 bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all cursor-pointer shadow-sm active:scale-[0.98] shrink-0"
+          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white text-sm font-semibold px-5 py-2.5 rounded-xl transition-all cursor-pointer shadow-sm active:scale-[0.98] shrink-0"
         >
           {isRunning ? (
             <>

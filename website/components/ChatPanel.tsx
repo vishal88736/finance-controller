@@ -300,7 +300,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
       {/* Header */}
       <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
@@ -490,7 +490,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="bg-gradient-to-b from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5"
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed text-white px-4 py-2.5 rounded-xl text-sm font-semibold cursor-pointer transition-all shadow-sm active:scale-[0.98] flex items-center gap-1.5"
           >
             <Send className="w-4 h-4" />
             <span className="hidden sm:inline">Send</span>

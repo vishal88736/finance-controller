@@ -1,9 +1,37 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Trash2, Check, X, Shield, FileText, MessageSquare, Pencil, Layers } from "lucide-react";
+import {
+  Plus, Trash2, Check, X, FileText, MessageSquare, Pencil, Layers,
+  LayoutDashboard, CheckCircle2, Percent, TrendingUp, AlertTriangle,
+  BarChart3, ShieldCheck,
+} from "lucide-react";
 import { ThreadItem } from "@/lib/api";
 import { BrandLogo } from "./BrandLogo";
+
+export type SidebarNavTarget =
+  | "overview"
+  | "documents"
+  | "matches"
+  | "tax"
+  | "forecast"
+  | "exceptions"
+  | "evaluation"
+  | "audit";
+
+const NAV_ITEMS: { id: SidebarNavTarget; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { id: "overview", label: "Analyses", icon: LayoutDashboard },
+  { id: "documents", label: "Documents", icon: FileText },
+  { id: "matches", label: "Reconciliation", icon: CheckCircle2 },
+  { id: "tax", label: "Tax Matching", icon: Percent },
+  { id: "forecast", label: "Forecasting", icon: TrendingUp },
+  { id: "exceptions", label: "Exceptions", icon: AlertTriangle },
+  { id: "evaluation", label: "Evaluation", icon: BarChart3 },
+  { id: "audit", label: "Audit Trail", icon: ShieldCheck },
+];
+
+// Keep in sync with the `version` field in website/package.json.
+const APP_VERSION = "v0.1.0";
 
 interface ThreadSidebarProps {
   threads: ThreadItem[];
@@ -15,6 +43,8 @@ interface ThreadSidebarProps {
   isOpen: boolean;
   onToggleOpen: () => void;
   disabled?: boolean;
+  activeNav?: string;
+  onNavigate?: (target: SidebarNavTarget) => void;
 }
 
 function groupLabel(dateStr?: string): string {
@@ -41,6 +71,8 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
   isOpen,
   onToggleOpen,
   disabled = false,
+  activeNav = "overview",
+  onNavigate,
 }) => {
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -70,7 +102,7 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
       className={`fixed lg:static inset-y-0 left-0 z-40 w-72 bg-slate-900 text-slate-200 flex flex-col border-r border-slate-800 transition-transform duration-300 ${
         isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
       }`}
-      aria-label="Threads"
+      aria-label="Primary navigation and analyses"
     >
       {/* Brand */}
       <div className="p-4 border-b border-slate-800/80 flex items-center justify-between">
@@ -85,17 +117,44 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
       </div>
 
       {/* New Analysis */}
-      <div className="p-3">
+      <div className="p-3 pb-1">
         <button
           onClick={onCreateThread}
           disabled={disabled}
-          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm shadow-blue-600/20 cursor-pointer active:scale-[0.98]"
+          className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-semibold text-xs px-4 py-2.5 rounded-xl transition-all shadow-sm cursor-pointer active:scale-[0.98]"
         >
           <Plus className="w-4 h-4" />
           <span>New Analysis</span>
         </button>
       </div>
 
+      {/* Primary navigation */}
+      <nav className="px-3 py-2 space-y-0.5" aria-label="Workspace sections">
+        {NAV_ITEMS.map((item) => {
+          const Icon = item.icon;
+          const isActive = activeNav === item.id;
+          return (
+            <button
+              key={item.id}
+              onClick={() => onNavigate?.(item.id)}
+              aria-current={isActive ? "page" : undefined}
+              className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-medium transition-colors cursor-pointer ${
+                isActive
+                  ? "bg-blue-600 text-white"
+                  : "text-slate-300 hover:bg-slate-800 hover:text-white"
+              }`}
+            >
+              <Icon className={`w-4 h-4 shrink-0 ${isActive ? "text-white" : "text-slate-500"}`} />
+              <span>{item.label}</span>
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* Analysis threads */}
+      <div className="px-5 pt-3 pb-1 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+        Analysis threads
+      </div>
       {/* Thread list grouped by date */}
       <div className="flex-1 overflow-y-auto px-3 pb-2 space-y-4" role="list">
         {threads.length === 0 ? (
@@ -241,11 +300,14 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
         )}
       </div>
 
-      {/* Footer */}
-      <div className="p-3 border-t border-slate-800/80">
-        <div className="flex items-center gap-2 px-2 text-[11px] text-slate-500">
-          <Shield className="w-3.5 h-3.5 text-slate-400" />
-          <span>Strict thread isolation enforced</span>
+      {/* Footer: system status + version only */}
+      <div className="p-3 border-t border-slate-800/80 space-y-1.5">
+        <div className="flex items-center gap-2 px-2 text-[11px] font-medium text-slate-300">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" aria-hidden="true" />
+          <span>System Ready</span>
+        </div>
+        <div className="px-2 text-[10px] text-slate-500 font-mono">
+          {APP_VERSION}
         </div>
       </div>
     </aside>

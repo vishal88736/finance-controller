@@ -247,7 +247,7 @@ def test_pandas_reconciler_multi_document_three_files():
     result = pandas_reconciler.reconcile_documents(docs)
 
     assert len(result["documents_processed"]) == 3
-    assert result["reconciliation_plan"]["relationship"] in ("MULTI_SOURCE_RECONCILIATION", "MULTI_WAY_UNSUPPORTED")
+    assert result["reconciliation_plan"]["relationship"] == "MULTI_SOURCE_RECONCILIATION"
     assert len(result["matches"]) == 10
 
 

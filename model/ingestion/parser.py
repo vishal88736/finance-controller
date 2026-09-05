@@ -1,6 +1,8 @@
 """
 Multi-source financial document parser.
-Supports: CSV, XLSX, JSON, and text/PDF.
+Supports: CSV, XLSX, JSON.
+PDF extraction is currently a stub and returns no extracted records
+(no OCR/VLM/PDF extraction implemented).
 Extracts rows and standardizes them using normalizer.py.
 """
 
@@ -64,7 +66,7 @@ def parse_file(file_path_or_bytes: Union[str, bytes], filename: str, source_labe
     return normalized
 
 def parse_simple_pdf(file_path_or_bytes: Union[str, bytes], source_label: str) -> List[Dict[str, Any]]:
-    """Clean PDF extraction abstraction that extracts lines with financial transactions."""
+    """PDF extraction stub: currently returns no extracted records (no OCR/VLM implemented)."""
     # Reads plain text if PDF contains text lines or falls back to line-by-line parsing
     lines = []
     if isinstance(file_path_or_bytes, bytes):

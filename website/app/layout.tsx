@@ -9,8 +9,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "AI Finance Controller — Reconciliation Platform",
-  description: "AI-powered multi-source financial reconciliation with deterministic matching, benchmark evaluation, and natural-language QA copilot.",
+  title: "LedgerPilot — Reconciliation Platform",
+  description: "LedgerPilot: AI-assisted, auditor-ready multi-source financial reconciliation with deterministic matching, evaluation, and analysis copilot.",
 };
 
 export default function RootLayout({
