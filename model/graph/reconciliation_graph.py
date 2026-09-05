@@ -311,6 +311,8 @@ def calculate_metrics_node(state: ReconciliationState) -> Dict[str, Any]:
         "exact_matches_count": recon_output.get("exact_matches_count", 0),
         "fuzzy_matches_count": recon_output.get("fuzzy_matches_count", 0),
         "duplicates_count": recon_output.get("duplicates_count", 0),
+        "split_matches_count": recon_output.get("split_matches_count", 0),
+        "split_matches": recon_output.get("split_matches", []),
         "mismatch_reasons": recon_output.get("mismatch_reasons", {}),
         "reconciliation_plan": recon_output.get("reconciliation_plan", {}),
         "role_classifications": recon_output.get("role_classifications", {}),

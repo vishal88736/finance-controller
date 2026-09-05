@@ -207,7 +207,7 @@ export const ThreadSidebar: React.FC<ThreadSidebarProps> = ({
                             )}
                           </div>
                         </div>
-                        <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity shrink-0">
+                        <div className="flex items-center gap-0.5 shrink-0 transition-opacity opacity-100 lg:opacity-0 lg:group-hover:opacity-100 lg:focus-within:opacity-100">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();

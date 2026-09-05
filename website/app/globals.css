@@ -7,6 +7,9 @@
 
 @layer base {
   :root {
+    /* ── Typography ── */
+    --font-mono-fin: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco,
+      Consolas, "Liberation Mono", "Courier New", monospace;
     /* ── Surface & Background ── */
     --bg-page: #f1f5f9;
     --bg-surface: #ffffff;
@@ -95,6 +98,84 @@
 /* ═══════════════════════════════════════════════════════════════
    COMPONENT UTILITIES
    ═══════════════════════════════════════════════════════════════ */
+
+/* ── Buttons (shared; previously btn-primary/secondary were undefined) ── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  transition: background-color var(--transition-base), border-color var(--transition-base),
+    box-shadow var(--transition-base), transform var(--transition-base);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--brand-primary);
+  color: #fff;
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--brand-primary-hover);
+}
+
+.btn-secondary {
+  background: #fff;
+  color: var(--text-secondary);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-xs);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--bg-surface-hover);
+  border-color: var(--border-hover);
+  color: var(--text-primary);
+}
+
+/* ── Financial mono numerals (tabular, consistent fallback) ── */
+.mono-fin {
+  font-family: var(--font-mono-fin);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+/* ── Skeleton loading ── */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: #eef2f7;
+  border-radius: 6px;
+  min-height: 14px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.7), transparent);
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Horizontal scroll affordance ── */
+.scroll-x-afford {
+  overflow-x: auto;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+  mask-image: linear-gradient(to right, black 92%, transparent 100%);
+}
+
+.scroll-x-afford:focus-visible {
+  mask-image: none;
+}
 
 /* ── Card Elevation System ── */
 .card {

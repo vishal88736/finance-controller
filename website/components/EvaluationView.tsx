@@ -53,7 +53,14 @@ export const EvaluationView: React.FC<EvaluationViewProps> = ({ threadId, hasRun
 
   if (loading) {
     return (
-      <div className="card p-10 text-center text-sm text-slate-400">Loading run metrics…</div>
+      <div className="card p-6 space-y-3" aria-label="Loading run metrics">
+        <div className="skeleton h-5 w-40" />
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="skeleton h-16 w-full" />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -142,7 +149,7 @@ export const EvaluationView: React.FC<EvaluationViewProps> = ({ threadId, hasRun
               <span className="text-xs font-medium text-slate-500">{m.label}</span>
               <div className={`w-8 h-8 ${m.iconBg} rounded-lg flex items-center justify-center`}>{m.icon}</div>
             </div>
-            <div className="text-2xl font-bold text-slate-900 font-[family-name:var(--font-geist-mono)] tracking-tight">
+            <div className="text-2xl font-bold text-slate-900 mono-fin tracking-tight">
               {m.value}
             </div>
           </div>
@@ -160,7 +167,7 @@ export const EvaluationView: React.FC<EvaluationViewProps> = ({ threadId, hasRun
           {cm.map((cell, idx) => (
             <div key={idx} className={`border p-4 rounded-xl ${cell.cls}`}>
               <div className="text-[10px] uppercase font-semibold tracking-wide opacity-70">{cell.label}</div>
-              <div className="text-2xl font-bold font-[family-name:var(--font-geist-mono)] mt-1.5">{cell.value}</div>
+              <div className="text-2xl font-bold mono-fin mt-1.5">{cell.value}</div>
             </div>
           ))}
         </div>
@@ -181,6 +188,6 @@ const Metric: React.FC<{ label: string; value: string; icon: React.ReactNode }> 
       {icon}
       {label}
     </div>
-    <div className="text-sm font-bold text-slate-800 font-[family-name:var(--font-geist-mono)] mt-1">{value}</div>
+    <div className="text-sm font-bold text-slate-800 mono-fin mt-1">{value}</div>
   </div>
 );

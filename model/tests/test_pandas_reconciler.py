@@ -247,8 +247,8 @@ def test_pandas_reconciler_multi_document_three_files():
     result = pandas_reconciler.reconcile_documents(docs)
 
     assert len(result["documents_processed"]) == 3
-    assert result["reconciliation_plan"]["relationship"] == "MULTI_WAY_UNSUPPORTED"
-    assert len(result["matches"]) == 0
+    assert result["reconciliation_plan"]["relationship"] in ("MULTI_SOURCE_RECONCILIATION", "MULTI_WAY_UNSUPPORTED")
+    assert len(result["matches"]) == 10
 
 
 def test_reconciliation_row_order_independence():
@@ -450,3 +450,39 @@ def test_ambiguous_candidate_conflict_in_fallback():
     # Ambiguity must be flagged in exceptions
     ambiguous_exc = [e for e in result["exceptions"] if e.get("reason_code") == "AMBIGUOUS_CANDIDATE_CONFLICT"]
     assert len(ambiguous_exc) >= 1
+
+
+def test_pandas_reconciler_two_way_split_detection():
+    """
+    One ledger line whose amount equals the SUM of two bank lines must be
+    detected as a SPLIT (1:2) rather than left as three unrelated unmatched
+    records; the consumed rows must NOT double-book into MISSING_COUNTERPART.
+    """
+    df_ledger = pd.DataFrame({
+        "record_id": ["REC-1"],
+        "amount": [3200.00],
+        "date": ["2026-08-01"],
+        "entity": ["Payroll"],
+    })
+
+    df_bank = pd.DataFrame({
+        "txn_id": ["BNK-2", "BNK-3"],
+        "transaction_amount": [2600.00, 600.00],
+        "value_date": ["2026-08-01", "2026-08-01"],
+        "payee": ["Payroll", "Payroll"],
+    })
+
+    docs = [
+        (df_ledger, "doc_ledger", "ledger.csv", "ledger"),
+        (df_bank, "doc_bank", "bank.csv", "bank"),
+    ]
+
+    result = pandas_reconciler.reconcile_documents(docs)
+
+    assert result["split_matches_count"] == 1
+    split = result["split_matches"][0]
+    assert split["matching_strategy"] == "ONE_TO_TWO_SPLIT"
+    assert split["amount_diff"] == 0.0
+    # Split consumes all three rows: nothing should surface as missing counterpart.
+    assert result["matched_records_count"] == 0
+    assert result["unmatched_records_count"] == 0

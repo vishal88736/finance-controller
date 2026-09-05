@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { ThreadSidebar } from "@/components/ThreadSidebar";
 import { DocumentWorkspace } from "@/components/DocumentWorkspace";
 import { ReconciliationControl } from "@/components/ReconciliationControl";
@@ -65,6 +65,9 @@ export default function Home() {
   const [runId, setRunId] = useState<string | null>(null);
   const [auditLogs, setAuditLogs] = useState<AuditLogItem[]>([]);
 
+  // Stale-request guard: only the latest requested thread may write results.
+  const activeThreadRef = useRef<string | null>(null);
+
   // ── Initial load ──
   const refreshThreads = useCallback(async (): Promise<ThreadItem[]> => {
     const list = await api.listThreads();
@@ -95,13 +98,15 @@ export default function Home() {
     setMatchesLoading(true);
     try {
       const res = await api.getResults(threadId, category, search);
+      if (activeThreadRef.current !== threadId) return;
       setMatches(res.matches);
       setTotalMatches(res.total);
     } catch {
+      if (activeThreadRef.current !== threadId) return;
       setMatches([]);
       setTotalMatches(0);
     } finally {
-      setMatchesLoading(false);
+      if (activeThreadRef.current === threadId) setMatchesLoading(false);
     }
   }, []);
 
@@ -109,19 +114,23 @@ export default function Home() {
     setExceptionsLoading(true);
     try {
       const res = await api.getExceptions(threadId, reason, category);
+      if (activeThreadRef.current !== threadId) return;
       setExceptions(res.exceptions);
       setTotalExceptions(res.total);
     } catch {
+      if (activeThreadRef.current !== threadId) return;
       setExceptions([]);
       setTotalExceptions(0);
     } finally {
-      setExceptionsLoading(false);
+      if (activeThreadRef.current === threadId) setExceptionsLoading(false);
     }
   }, []);
 
   // ── Load thread context ──
   const loadThreadData = useCallback(async (threadId: string) => {
+    activeThreadRef.current = threadId;
     const th = await api.getThread(threadId).catch(() => null);
+    if (activeThreadRef.current !== threadId) return;
 
     // Reset view state (after the await boundary) so stale data never leaks across threads
     setMatchCategory("ALL");
@@ -147,7 +156,11 @@ export default function Home() {
     setRunId(th.latest_run?.id ?? null);
     if (th.latest_run) void loadResults(threadId, "ALL", "");
     void loadExceptions(threadId, "ALL", "ALL");
-    void api.getAuditTrail(threadId).then(setAuditLogs).catch(() => setAuditLogs([]));
+    void api.getAuditTrail(threadId).then((logs) => {
+      if (activeThreadRef.current === threadId) setAuditLogs(logs);
+    }).catch(() => {
+      if (activeThreadRef.current === threadId) setAuditLogs([]);
+    });
   }, [loadResults, loadExceptions]);
 
   useEffect(() => {
@@ -366,7 +379,7 @@ export default function Home() {
 
               {/* Tabs */}
               <div className="space-y-4">
-                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 w-fit overflow-x-auto" role="tablist">
+                <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200/80 w-fit max-w-full overflow-x-auto scroll-x-afford" role="tablist" aria-label="Workspace views">
                   {TABS.map((tab) => {
                     const Icon = tab.icon;
                     const isActive = activeTab === tab.id;

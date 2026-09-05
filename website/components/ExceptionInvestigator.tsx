@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { Search, ChevronRight, AlertCircle, ArrowUpDown, X, ShieldAlert } from "lucide-react";
 import { ExceptionItem } from "@/lib/api";
 
@@ -21,13 +21,11 @@ interface ExceptionInvestigatorProps {
 const REASONS = [
   { id: "ALL", label: "All" },
   { id: "AMOUNT_MISMATCH", label: "Amount mismatch" },
-  { id: "AMBIGUOUS_CANDIDATE_CONFLICT", label: "Ambiguous" },
   { id: "MISSING_COUNTERPART", label: "Missing counterpart" },
+  { id: "UNRECORDED_TRANSACTION", label: "Unrecorded" },
   { id: "DUPLICATE_TRANSACTION", label: "Duplicate" },
-  { id: "ONE_DISAGREES", label: "One Disagrees" },
-  { id: "ALL_DISAGREE", label: "All Disagree" },
-  { id: "CURRENCY_MISMATCH", label: "Currency Mismatch" },
-  { id: "MISSING_SETTLEMENT", label: "Missing Settlement" },
+  { id: "AMBIGUOUS_CANDIDATE_CONFLICT", label: "Ambiguous" },
+  { id: "CURRENCY_MISMATCH", label: "Currency mismatch" },
 ];
 
 const CATEGORIES = [
@@ -54,6 +52,23 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("discrepancy");
   const [selected, setSelected] = useState<ExceptionItem | null>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  // Drawer focus: focus close on open, Escape to close, return focus to trigger.
+  useEffect(() => {
+    if (!selected) return;
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    drawerCloseRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      triggerRef.current?.focus?.();
+    };
+  }, [selected]);
 
   // Client-side filtering/sorting over the fetched page (server does reason/category/search too)
   const filtered = useMemo(() => {
@@ -118,8 +133,9 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
               }
               className="segment-item !bg-white border border-slate-200 hover:border-slate-300 text-slate-600 flex items-center gap-1.5 cursor-pointer"
               title="Toggle sort"
+              aria-label={`Sort exceptions by ${sortKey}. Activate to change sort.`}
             >
-              <ArrowUpDown className="w-3 h-3" />
+              <ArrowUpDown className="w-3 h-3" aria-hidden="true" />
               Sort: {sortKey}
             </button>
           </div>
@@ -144,7 +160,7 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
           )}
 
           {/* Reason */}
-          <div className="segment-group" role="tablist" aria-label="Exception type filter">
+          <div className="segment-group scroll-x-afford max-w-full" role="tablist" aria-label="Exception type filter">
             {REASONS.map((r) => (
               <button
                 key={r.id}
@@ -191,24 +207,28 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scroll-x-afford">
         <table className="w-full text-left fintech-table">
           <thead className="bg-slate-50/80 border-b border-slate-100">
             <tr>
-              <th>Record ID</th>
-              <th>Source</th>
-              <th>Type</th>
-              <th>Amount</th>
-              <th>Difference</th>
-              <th>Severity</th>
-              <th className="text-right">Action</th>
+              <th scope="col">Record ID</th>
+              <th scope="col">Source</th>
+              <th scope="col">Type</th>
+              <th scope="col">Amount</th>
+              <th scope="col">Difference</th>
+              <th scope="col">Severity</th>
+              <th scope="col" className="text-right">Action</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
-                  Loading exceptions…
+                <td colSpan={7} className="py-6 px-5">
+                  <div className="space-y-2" aria-label="Loading exceptions">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="skeleton h-10 w-full" />
+                    ))}
+                  </div>
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
@@ -217,23 +237,24 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
                   <div className="flex flex-col items-center gap-2">
                     <AlertCircle className="w-8 h-8 text-slate-200" />
                     <span>No exceptions match the current filters.</span>
+                    <span className="text-xs text-slate-400">Try clearing the severity or reason filter.</span>
                   </div>
                 </td>
               </tr>
             ) : (
               filtered.map((exc) => (
                 <tr key={exc.exception_id} onClick={() => setSelected(exc)} className="cursor-pointer group">
-                  <td className="font-[family-name:var(--font-geist-mono)] text-xs font-medium text-slate-900">
+                  <td className="mono-fin text-xs font-medium text-slate-900">
                     {exc.record_id}
                   </td>
-                  <td className="text-xs text-slate-500 font-[family-name:var(--font-geist-mono)]">{exc.source}</td>
+                  <td className="text-xs text-slate-500 mono-fin">{exc.source}</td>
                   <td>{getReasonTag(exc.reason_code)}</td>
-                  <td className="font-[family-name:var(--font-geist-mono)] text-sm font-bold text-slate-900">
+                  <td className="mono-fin text-sm font-bold text-slate-900">
                     {exc.amount !== undefined && exc.amount !== null
                       ? `$${exc.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
                       : "N/A"}
                   </td>
-                  <td className="font-[family-name:var(--font-geist-mono)] text-xs">
+                  <td className="mono-fin text-xs">
                     {exc.amount_discrepancy > 0 ? (
                       <span className="text-red-600 font-semibold">Δ ${exc.amount_discrepancy.toFixed(2)}</span>
                     ) : exc.candidates && exc.candidates.length > 0 ? (
@@ -281,7 +302,7 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
             <div className="px-6 py-4 border-b border-slate-100 flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2.5">
-                  <h3 className="text-base font-bold text-slate-900 font-[family-name:var(--font-geist-mono)]">
+                  <h3 className="text-base font-bold text-slate-900 mono-fin">
                     {selected.record_id}
                   </h3>
                   {onOpenRecord && (
@@ -303,6 +324,7 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
                 </p>
               </div>
               <button
+                ref={drawerCloseRef}
                 onClick={() => setSelected(null)}
                 className="text-slate-400 hover:text-slate-600 p-2 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Close exception details"
@@ -374,16 +396,16 @@ export const ExceptionInvestigator: React.FC<ExceptionInvestigatorProps> = ({
                 </div>
               </div>
 
-              {/* ── SECTION 2: AI INVESTIGATION & REASONING ── */}
+              {/* ── SECTION 2: DETERMINISTIC EVIDENCE ── */}
               <div className="bg-white border border-blue-200/90 rounded-xl p-4 shadow-xs space-y-3.5">
                 <div className="flex items-center justify-between border-b border-blue-100 pb-2">
                   <div className="flex items-center gap-1.5">
                     <div className="w-2 h-2 rounded-full bg-blue-600" />
                     <h4 className="text-xs font-bold uppercase tracking-wider text-blue-900">
-                      AI Investigation &amp; Evidence
+                      Deterministic Evidence
                     </h4>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200" title="Computed by deterministic Python from thread evidence">
                     Deterministic
                   </span>
                 </div>

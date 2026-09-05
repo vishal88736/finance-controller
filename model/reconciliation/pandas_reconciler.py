@@ -323,6 +323,13 @@ class PandasReconciliationEngine:
             fx_rates=fx_rates,
         )
 
+        # ── STAGE 6b: Two-way split detection (1:2 / 2:1) over unmatched rows ──
+        split_matches, split_ids_a, split_ids_b = self._detect_two_way_splits(
+            primary_df, secondary_df, matched_ids_a, matched_ids_b
+        )
+        matched_ids_a |= split_ids_a
+        matched_ids_b |= split_ids_b
+
         # ── STAGE 7: Exception Generation & Discrepancy Classification ──
         unmatched_exceptions = self._generate_exceptions(
             primary_df, secondary_df, matched_ids_a, matched_ids_b, duplicate_records_list
@@ -454,6 +461,7 @@ class PandasReconciliationEngine:
             "matched_records_count": matched_records_count,
             "unmatched_records_count": exceptions_count,
             "duplicates_count": len(duplicate_records_list),
+            "split_matches_count": len(split_matches),
             "match_rate": round(match_rate, 1),
             "exact_matches_count": exact_matches_count,
             "fuzzy_matches_count": fuzzy_matches_count,
@@ -474,6 +482,7 @@ class PandasReconciliationEngine:
             "diagnostics": diagnostics,
             "matches": matches,
             "exceptions": exceptions,
+            "split_matches": split_matches,
         }
 
         return clean_for_json(result)
@@ -1887,6 +1896,141 @@ class PandasReconciliationEngine:
             diagnostics["zero_match_diagnostics"] = diag_reason
 
         return matches, matched_a, matched_b, pass_exceptions, diagnostics
+
+    # ─────────────────────────────────────────────────────────────
+    # TWO-WAY SPLIT DETECTION (1:2 / 2:1)
+    # ─────────────────────────────────────────────────────────────
+    # Adopted from agent-for-accounting's `findPossibleSplits`: order-independent,
+    # exactly-two groupings only, and a single shared consumed-pool across BOTH
+    # directions so a row can never be claimed by two contradictory splits.
+
+    def _detect_two_way_splits(
+        self,
+        df_a: pd.DataFrame,
+        df_b: pd.DataFrame,
+        matched_a: Set[str],
+        matched_b: Set[str],
+    ) -> Tuple[List[Dict[str, Any]], Set[str], Set[str]]:
+        """
+        Detect a single row on one side whose amount equals the SUM of exactly
+        two rows on the other side (within amount tolerance and the date window).
+
+        Returns (splits, split_used_a, split_used_b).
+        """
+        splits: List[Dict[str, Any]] = []
+        used_a: Set[str] = set(matched_a)
+        used_b: Set[str] = set(matched_b)
+
+        def _available(df, used):
+            sub = df[~df["transaction_id"].isin(used)]
+            if "amount" in sub.columns:
+                sub = sub[~sub["amount"].isna()]
+            return sub
+
+        rows_a = [r for _, r in _available(df_a, used_a).iterrows()]
+        rows_b = [r for _, r in _available(df_b, used_b).iterrows()]
+
+        def _amt(r) -> Optional[float]:
+            try:
+                v = float(r["amount"])
+                if isinstance(v, float) and (math.isnan(v) or math.isinf(v)):
+                    return None
+                return v
+            except Exception:
+                return None
+
+        def _date_ok(x, y) -> bool:
+            dx, dy = x.get("dt_date"), y.get("dt_date")
+            if pd.isna(dx) or pd.isna(dy):
+                return True  # undated rows cannot be rejected on date
+            try:
+                return abs((dx - dy).days) <= self.date_window_days
+            except Exception:
+                return True
+
+        # candidate tuples: (diff, single_side, single_row, g1_row, g2_row)
+        candidates = []
+
+        def _consider(single_side, single_rows, group_rows):
+            for s in single_rows:
+                s_amt = _amt(s)
+                if s_amt is None:
+                    continue
+                for i in range(len(group_rows)):
+                    for j in range(i + 1, len(group_rows)):
+                        g1, g2 = group_rows[i], group_rows[j]
+                        if not (_date_ok(s, g1) and _date_ok(s, g2)):
+                            continue
+                        a1, a2 = _amt(g1), _amt(g2)
+                        if a1 is None or a2 is None:
+                            continue
+                        diff = round(abs((a1 + a2) - s_amt), 2)
+                        if diff <= self.amount_tolerance:
+                            candidates.append((diff, single_side, s, g1, g2))
+
+        _consider("a", rows_a, rows_b)  # 1 primary : 2 counterpart
+        _consider("b", rows_b, rows_a)  # 2 primary : 1 counterpart
+
+        # Order-independent sort: by diff, then by sorted content key so swapping
+        # bank/ledger yields identical selections.
+        def _sort_key(c):
+            diff, single_side, s, g1, g2 = c
+            ids = sorted([str(s["transaction_id"]), str(g1["transaction_id"]), str(g2["transaction_id"])])
+            return (diff, "~".join(ids))
+
+        candidates.sort(key=_sort_key)
+
+        for diff, single_side, s, g1, g2 in candidates:
+            s_id = str(s["transaction_id"])
+            g1_id = str(g1["transaction_id"])
+            g2_id = str(g2["transaction_id"])
+            single_set = used_a if single_side == "a" else used_b
+            group_set = used_b if single_side == "a" else used_a
+            if s_id in single_set or g1_id in group_set or g2_id in group_set:
+                continue
+            single_set.add(s_id)
+            group_set.add(g1_id)
+            group_set.add(g2_id)
+
+            def _meta(r):
+                return {
+                    "record_id": str(r["transaction_id"]),
+                    "amount": _amt(r),
+                    "date": str(r.get("iso_date")),
+                    "source": str(r.get("_source_label", "")),
+                    "document_id": str(r.get("_doc_id", "")),
+                    "row_index": int(r.get("_row_idx", -1)),
+                }
+
+            sum_amt = round((_amt(g1) or 0.0) + (_amt(g2) or 0.0), 2)
+            strategy = "ONE_TO_TWO_SPLIT" if single_side == "a" else "TWO_TO_ONE_SPLIT"
+            splits.append({
+                "id": f"split_{uuid.uuid4().hex[:10]}",
+                "record_id": s_id,
+                "match_category": "SPLIT_MATCH",
+                "matching_strategy": strategy,
+                "confidence_score": 80.0,
+                "discrepancy_level": "NORMAL" if diff <= 1.0 else "MATERIAL",
+                "side": single_side,
+                "single": _meta(s),
+                "group": [_meta(g1), _meta(g2)],
+                "sum_amount": sum_amt,
+                "amount_diff": diff,
+                "explanation": (
+                    f"Single {strategy.split('_')[0].lower()}-side record {s_id} "
+                    f"(${(_amt(s) or 0.0):,.2f}) equals the sum of two counterpart "
+                    f"records ({g1_id} ${(_amt(g1) or 0.0):,.2f} + {g2_id} ${(_amt(g2) or 0.0):,.2f} = ${sum_amt:,.2f}); "
+                    f"difference ${diff:,.2f} within tolerance ${self.amount_tolerance:.2f}. Manual confirmation recommended."
+                ),
+                "evidence": {
+                    "single": _meta(s),
+                    "group": [_meta(g1), _meta(g2)],
+                    "sum_amount": sum_amt,
+                    "amount_diff": diff,
+                },
+            })
+
+        return splits, used_a - set(matched_a), used_b - set(matched_b)
 
     # ─────────────────────────────────────────────────────────────
     # EXCEPTION GENERATION & CLASSIFICATION

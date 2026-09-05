@@ -324,6 +324,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
         </button>
       </div>
 
+      {/* Provenance legend */}
+      <div className="px-5 py-2 border-b border-slate-100 bg-slate-50/60 flex flex-wrap items-center gap-2 text-[10px] font-semibold" aria-label="Answer provenance legend">
+        <span className="text-slate-400 uppercase tracking-wide">Provenance:</span>
+        <span className="pill bg-slate-100 text-slate-600 border border-slate-200" title="Computed by deterministic Python from thread evidence">Deterministic</span>
+        <span className="pill bg-emerald-50 text-emerald-700 border border-emerald-200" title="LLM explanation checked against retrieved evidence">LLM verified against evidence</span>
+        <span className="pill bg-amber-50 text-amber-700 border border-amber-200" title="Refused by guardrails; no financial answer given">Refused</span>
+      </div>
+
       {/* Message list */}
       <div className="flex-1 px-5 py-4 overflow-y-auto space-y-4 bg-slate-50/40">
         {messagesError && (
@@ -391,7 +399,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ threadId, runId, onOpenRec
                   <span>
                     {m.created_at ? new Date(m.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : ""}
                     {m.role === "assistant" && m.metadata?.answer_source === "llm_validated" && (
-                      <span className="ml-1.5" title="LLM answer validated against retrieved evidence">· verified</span>
+                      <span className="ml-1.5 pill bg-emerald-50 text-emerald-700 border border-emerald-200" title="LLM answer validated against retrieved evidence">LLM verified against evidence</span>
+                    )}
+                    {m.role === "assistant" && m.metadata?.answer_source === "deterministic" && (
+                      <span className="ml-1.5 pill bg-slate-100 text-slate-600 border border-slate-200" title="Computed by deterministic Python from thread evidence">Deterministic</span>
+                    )}
+                    {m.role === "assistant" && (m.metadata?.answer_source === "refusal" || isGuardrail) && (
+                      <span className="ml-1.5 pill bg-amber-50 text-amber-700 border border-amber-200" title="Refused by guardrails; no financial answer given">Refused</span>
                     )}
                   </span>
                   {m.role === "assistant" && (

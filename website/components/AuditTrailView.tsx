@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   ShieldCheck, RefreshCw, Clock, AlertOctagon, X, Wrench,
 } from "lucide-react";
@@ -58,6 +58,22 @@ export const AuditTrailView: React.FC<AuditTrailViewProps> = ({ threadId }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [filter, setFilter] = useState<Category | "all">("all");
   const [selected, setSelected] = useState<AuditLogItem | null>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    drawerCloseRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      triggerRef.current?.focus?.();
+    };
+  }, [selected]);
 
   const fetchAudit = async () => {
     setIsLoading(true);
@@ -201,6 +217,7 @@ export const AuditTrailView: React.FC<AuditTrailViewProps> = ({ threadId }) => {
                 </p>
               </div>
               <button
+                ref={drawerCloseRef}
                 onClick={() => setSelected(null)}
                 className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Close audit details"

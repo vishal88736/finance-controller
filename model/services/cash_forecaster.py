@@ -33,6 +33,26 @@ def _round_dec(val: Decimal) -> Decimal:
     return val.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
 
+# Optional statistical (exponential-smoothing) run-rate. Remains 100% deterministic
+# (pure Decimal), with the day-of-week weighted moving average as the default and
+# the fallback when there is insufficient history.
+_FORECAST_METHODS = frozenset({
+    "deterministic_dow_weighted_moving_average",
+    "exponential_smoothing",
+})
+_EWMA_ALPHA = Decimal("0.3")
+
+
+def _ewma_level(values: List[Decimal]) -> Optional[Decimal]:
+    """Final smoothed level of a date-ordered series (alpha=0.3)."""
+    if not values:
+        return None
+    level = values[0]
+    for v in values[1:]:
+        level = _EWMA_ALPHA * v + (Decimal("1") - _EWMA_ALPHA) * level
+    return _round_dec(level)
+
+
 def forecast_data_context(daily_projections: List[Dict[str, Any]], analysis_date: Optional[str] = None) -> Dict[str, Any]:
     """
     Derive demonstration-facing context from persisted daily projections:
@@ -100,6 +120,7 @@ class CashForecasterService:
         horizon_days: int = 7,
         current_cash_balance: Optional[float] = None,
         run_id: Optional[str] = None,
+        method: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Execute deterministic cash forecasting for the given thread.
@@ -111,7 +132,17 @@ class CashForecasterService:
           validated/clamped value actually used).
         - Invalid horizons (<1 or >90 or non-integer) raise CashForecastingError
           with a clear message; callers map to 422.
+        - `method` selects the run-rate model. Default is the deterministic
+          day-of-week weighted moving average; `exponential_smoothing` is an
+          optional statistical tier. Unsupported values raise CashForecastingError.
         """
+        method = method or "deterministic_dow_weighted_moving_average"
+        if method not in _FORECAST_METHODS:
+            raise CashForecastingError(
+                f"Unsupported forecast method '{method}'. Supported: "
+                + ", ".join(sorted(_FORECAST_METHODS))
+            )
+
         requested_horizon = horizon_days
         try:
             requested_int = int(horizon_days)
@@ -174,7 +205,7 @@ class CashForecasterService:
                 "forecast": None,
                 "daily_projections": [],
                 "confidence_level": "LOW",
-                "forecast_method": "deterministic_dow_weighted_moving_average",
+                "forecast_method": method,
                 "methodology": "Deterministic historical moving average",
                 "input_period": {"start": None, "end": None, "date_span_days": 0},
                 "horizon": {"requested": requested_horizon, "applied": applied_horizon},
@@ -251,8 +282,15 @@ class CashForecasterService:
         # ── 4. Baseline daily run-rate & day-of-week multipliers ──
         # Daily averages
         effective_days = Decimal(str(max(1, len(daily_inflows) or date_span_days)))
-        base_daily_inflow = total_hist_inflow / effective_days if effective_days > 0 else Decimal("0.00")
-        base_daily_outflow = total_hist_outflow / effective_days if effective_days > 0 else Decimal("0.00")
+
+        if method == "exponential_smoothing":
+            in_vals = [daily_inflows[d] for d in sorted(daily_inflows)]
+            out_vals = [daily_outflows[d] for d in sorted(daily_outflows)]
+            base_daily_inflow = _ewma_level(in_vals) or Decimal("0.00")
+            base_daily_outflow = _ewma_level(out_vals) or Decimal("0.00")
+        else:
+            base_daily_inflow = total_hist_inflow / effective_days if effective_days > 0 else Decimal("0.00")
+            base_daily_outflow = total_hist_outflow / effective_days if effective_days > 0 else Decimal("0.00")
 
         # If no outflow data is observed, do NOT invent a fee/refund run-rate.
         # The forecast projects observed outflows only and records this honestly.
@@ -344,7 +382,7 @@ class CashForecasterService:
             confidence = "LOW"
 
         methodology_desc = (
-            "Deterministic day-of-week weighted moving average with "
+            f"Deterministic {method.replace('_', ' ')} with "
             "settlement pipeline realization. Outflow run-rate is derived "
             "strictly from observed historical outflows (no synthetic fee calibration)."
         )
@@ -425,7 +463,7 @@ class CashForecasterService:
             "net_projected_change": float(_round_dec(net_projected_change)),
             "projected_ending_cash": float(_round_dec(ending_balance)),
             "confidence_level": confidence,
-            "forecast_method": "deterministic_dow_weighted_moving_average",
+            "forecast_method": method,
             "methodology": methodology_desc,
             "input_period": {
                 "start": min_date.date().isoformat() if hasattr(min_date, "date") else str(min_date),

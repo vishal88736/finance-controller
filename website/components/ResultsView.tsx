@@ -99,56 +99,83 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
         </div>
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scroll-x-afford">
         <table className="w-full text-left fintech-table">
           <thead className="bg-slate-50/80 border-b border-slate-100">
             <tr>
-              <th>Record A</th>
-              <th>Record B</th>
-              <th>Counterparty</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Score</th>
-              <th>Status</th>
+              <th scope="col">Record A</th>
+              <th scope="col">Record B</th>
+              <th scope="col">Counterparty</th>
+              <th scope="col">Amount A</th>
+              <th scope="col">Amount B</th>
+              <th scope="col">Δ</th>
+              <th scope="col">Date</th>
+              <th scope="col">Category</th>
+              <th scope="col">Score</th>
+              <th scope="col">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {isLoading ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
-                  Loading matched pairs…
+                <td colSpan={10} className="py-6 px-5">
+                  <div className="space-y-2" aria-label="Loading matched pairs">
+                    {[0, 1, 2].map((i) => (
+                      <div key={i} className="skeleton h-9 w-full" />
+                    ))}
+                  </div>
                 </td>
               </tr>
             ) : matches.length === 0 ? (
               <tr>
-                <td colSpan={7} className="py-12 text-center text-slate-400 text-sm">
+                <td colSpan={10} className="py-12 text-center text-slate-400 text-sm">
                   <div className="flex flex-col items-center gap-2">
                     <CheckCircle2 className="w-8 h-8 text-slate-200" />
                     <span>No matched pairs match your filters.</span>
+                    <span className="text-xs text-slate-400">Try clearing the category filter or search.</span>
                   </div>
                 </td>
               </tr>
             ) : (
-              matches.map((m) => (
+              matches.map((m) => {
+                const delta = Math.abs((m.amount_a ?? 0) - (m.amount_b ?? 0));
+                return (
                 <tr key={m.match_id}>
-                  <td className="font-[family-name:var(--font-geist-mono)] text-xs font-medium text-slate-900">
+                  <td className="mono-fin text-xs font-medium text-slate-900">
                     {m.record_id_a}
                   </td>
-                  <td className="font-[family-name:var(--font-geist-mono)] text-xs text-slate-500">
+                  <td className="mono-fin text-xs text-slate-500">
                     {m.record_id_b}
                   </td>
-                  <td className="text-slate-800 text-sm font-medium truncate max-w-[200px]">
+                  <td className="text-slate-800 text-sm font-medium truncate max-w-[200px]" title={m.entity_a || m.entity_b || ""}>
                     {m.entity_a || m.entity_b || "—"}
                   </td>
-                  <td className="font-[family-name:var(--font-geist-mono)] text-sm font-bold text-slate-900">
+                  <td className="mono-fin text-sm font-bold text-slate-900">
                     ${m.amount_a.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </td>
-                  <td className="text-slate-500 font-[family-name:var(--font-geist-mono)] text-xs">
+                  <td className="mono-fin text-sm text-slate-600">
+                    ${m.amount_b.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </td>
+                  <td className={`mono-fin text-xs font-semibold ${delta > 0.005 ? "text-amber-700" : "text-slate-400"}`} title={m.evidence ? `Evidence: ${JSON.stringify(m.evidence).slice(0, 120)}` : undefined}>
+                    {delta > 0.005 ? `Δ $${delta.toFixed(2)}` : "—"}
+                  </td>
+                  <td className="text-slate-500 mono-fin text-xs">
                     {m.date_a || "N/A"}
                   </td>
-                  <td className="font-[family-name:var(--font-geist-mono)] text-xs">
+                  <td>
+                    <span className={`pill border ${
+                      m.match_category === "EXACT_MATCH"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : m.match_category === "TOLERANCE_MATCH"
+                        ? "bg-amber-50 text-amber-700 border-amber-200"
+                        : "bg-blue-50 text-blue-700 border-blue-200"
+                    }`} title={`Match category: ${m.match_category}`}>
+                      {m.match_category === "EXACT_MATCH" ? "Exact" : m.match_category === "TOLERANCE_MATCH" ? "Tolerance" : m.match_category === "FUZZY_MATCH" ? "Fuzzy" : m.match_category}
+                    </span>
+                  </td>
+                  <td className="mono-fin text-xs">
                     <div className="flex items-center gap-1.5">
-                      <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                      <div className="w-10 h-1.5 bg-slate-100 rounded-full overflow-hidden" role="img" aria-label={`Confidence ${m.confidence_score.toFixed(0)} percent`}>
                         <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${m.confidence_score}%` }} />
                       </div>
                       <span className="font-semibold text-slate-700">{m.confidence_score.toFixed(0)}%</span>
@@ -160,7 +187,8 @@ export const ResultsView: React.FC<ResultsViewProps> = ({
                     </span>
                   </td>
                 </tr>
-              ))
+                );
+              })
             )}
           </tbody>
         </table>

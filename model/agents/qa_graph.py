@@ -41,6 +41,8 @@ from ..tools.qa_tools import (
     get_metrics_tool,
     run_cash_forecast_tool,
     run_tax_match_tool,
+    run_working_capital_tool,
+    search_records_tool,
 )
 
 
@@ -113,7 +115,7 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
         txn_matches.append(n)
 
     query_type = "GENERAL"
-    if txn_matches and any(kw in lower for kw in ["why", "fail", "status", "match", "explain", "evidence", "gross", "net", "fee", "refund", "chargeback", "difference", "caused"]):
+    if txn_matches and any(kw in lower for kw in ["why", "fail", "status", "match", "explain", "evidence", "amount", "gross", "net", "fee", "refund", "chargeback", "difference", "caused"]):
         query_type = "SPECIFIC_RECORD"
     elif txn_matches and len(txn_matches) > 0 and any(kw in lower for kw in ["transaction", "txn", "record", "reference", "invoice", "order"]):
         # Specific record lookup takes precedence when an ID is present.
@@ -122,6 +124,8 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
         query_type = "CASH_FORECAST"
     elif any(kw in lower for kw in ["tax match", "tax-line", "tax line", "tax mismatch", "tax rate", "check whether tax", "show me tax", "tax differences", "gst", "vat", "tds", "why was a tax", "tax line excluded", "tax excluded"]):
         query_type = "TAX_MATCH"
+    elif any(kw in lower for kw in ["working capital", "cash conversion cycle", "conversion cycle", "days sales outstanding", "days payable", "dso", "dio", "dpo", "ccc", "receivables outstanding", "payables outstanding", "liquidity"]):
+        query_type = "WORKING_CAPITAL"
     elif any(kw in lower for kw in ["what changed between runs", "what changed", "between runs", "run history", "compare runs"]):
         query_type = "RUN_DIFF"
     elif any(kw in lower for kw in ["which source disagrees", "which source", "source disagrees", "sources agree", "who disagrees", "multi-source", "multi source"]):
@@ -146,6 +150,8 @@ def understand_question_node(state: QAState) -> Dict[str, Any]:
         query_type = "EXCEPTION_QUERY"
     elif any(kw in lower for kw in ["document", "uploaded", "files", "fingerprint", "sha256", "digest", "provenance"]):
         query_type = "DOCUMENT_QUERY"
+    elif any(kw in lower for kw in ["search for", "search records", "search transactions", "find records", "find transactions", "find any record", "records that mention", "records mentioning", "transactions that mention", "transactions mentioning", "which records mention", "which transactions mention", "look up", "looking for"]):
+        query_type = "RECORD_SEARCH"
     elif any(kw in lower for kw in ["summary", "overview", "status", "results"]):
         query_type = "SUMMARY_QUERY"
     elif any(kw in lower for kw in ["audit", "history", "log", "trail"]):
@@ -340,6 +346,28 @@ def retrieve_relevant_records_node(state: QAState) -> Dict[str, Any]:
         if tax_res:
             retrieved_metrics["tax_match"] = tax_res
 
+    # 9.5 WORKING CAPITAL QUERY
+    elif query_type == "WORKING_CAPITAL":
+        wc_res = run_tool(
+            "run_working_capital_tool",
+            lambda: run_working_capital_tool(db, thread_id=thread_id),
+        )
+        if wc_res:
+            retrieved_metrics["working_capital"] = wc_res
+
+    # 9.6 RECORD SEARCH (deterministic keyword search w/ citations)
+    elif query_type == "RECORD_SEARCH":
+        search_term = re.sub(
+            r"(?i)^(search for|search records|search transactions|find records|find transactions|find any record|look up|looking for|which records mention|which transactions mention)\s+",
+            "", question,
+        ).strip()
+        s_res = run_tool(
+            "search_records_tool",
+            lambda: search_records_tool(db, thread_id=thread_id, query=search_term),
+        )
+        if s_res:
+            retrieved_metrics["record_search"] = s_res
+
     # 10. GENERAL / SUMMARY
     else:
         retrieved_metrics = run_tool(
@@ -456,6 +484,44 @@ def format_deterministic_answer(state: QAState) -> str:
             discrepancies = [t for t in tax_res.get("tax_lines", []) if t.get("status") in ("MISMATCH", "MISSING")][:5]
             for d in discrepancies:
                 lines.append(f"• Record `{d.get('record_id')}` ({d.get('status')}): {d.get('explanation')}")
+        return "\n".join(lines)
+
+    if query_type == "WORKING_CAPITAL":
+        wc = metrics.get("working_capital") or {}
+        if wc.get("status") == "INSUFFICIENT_DATA":
+            return wc.get("message", "Not enough financial records in this thread to analyze working capital.")
+        dso = wc.get("dso_days")
+        dio = wc.get("dio_days")
+        dpo = wc.get("dpo_days")
+        ccc = wc.get("cash_conversion_cycle_days")
+        ccc_partial = wc.get("cash_conversion_cycle_partial_days")
+        lines = [
+            "**Deterministic Working-Capital Analysis**",
+            "",
+            f"• **Receivables Outstanding:** {_fmt_amount(wc.get('receivables_outstanding', 0.0))}",
+            f"• **Payables Outstanding:** {_fmt_amount(wc.get('payables_outstanding', 0.0))}",
+            f"• **Avg Settlement Lag:** {wc.get('average_settlement_lag_days', 'N/A')} days",
+            f"• **DSO (Days Sales Outstanding):** {dso if dso is not None else 'N/A'} days",
+            f"• **DIO (Days Inventory Outstanding):** {dio if dio is not None else 'Unavailable (no inventory data)'} days",
+            f"• **DPO (Days Payables Outstanding):** {dpo if dpo is not None else 'N/A'} days",
+            f"• **Cash Conversion Cycle:** {ccc if ccc is not None else (f'{ccc_partial} days (partial: DIO unavailable)' if ccc_partial is not None else 'Unavailable')}",
+        ]
+        return "\n".join(lines)
+
+    if query_type == "RECORD_SEARCH":
+        rs = metrics.get("record_search") or {}
+        if rs.get("status") in ("NO_MATCH", "NO_DATA", "NO_QUERY"):
+            return rs.get("message", "I could not find any records matching that search in this thread.")
+        results = rs.get("results", [])
+        if not results:
+            return "No matching records found in this thread."
+        lines = [f"Found **{rs.get('result_count', len(results))}** record(s) matching your search:"]
+        for r in results[:8]:
+            desc = r.get("description") or r.get("entity") or ""
+            lines.append(
+                f"- **{r['record_id']}** ({r.get('source')}): {_fmt_amount(r.get('amount', 0.0))} — {desc} "
+                f"[relevance {r.get('relevance_score')}]"
+            )
         return "\n".join(lines)
 
     if query_type == "METRIC_QUERY" or query_type == "SUMMARY_QUERY" or query_type == "GENERAL":

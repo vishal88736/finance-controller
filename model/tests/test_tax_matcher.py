@@ -216,3 +216,33 @@ def test_tax_source_rate_overrides_default(db_session):
     assert line["tax_rate"] == 0.12
     assert line["tax_rate_source"] == "SOURCE_DATA"
     assert line["expected_tax"] == 120.0  # 1000 * 0.12, NOT 1000 * 0.18
+
+
+def test_tax_severity_remedy_and_rule_pack(db_session):
+    """Mismatch/missing lines carry severity + remedy; result pins rule-pack version."""
+    thread_id = f"thr_tax_sev_{uuid.uuid4().hex[:8]}"
+    th = Thread(id=thread_id, title="Tax Sev")
+    db_session.add(th)
+    doc = Document(
+        id=f"doc_tax_sev_{uuid.uuid4().hex[:8]}",
+        thread_id=thread_id, filename="invoices.csv", file_type="csv",
+        content_hash_sha256=f"tax_sev_hash_{uuid.uuid4().hex[:8]}",
+    )
+    db_session.add(doc)
+    # Missing => HIGH severity (expected 180, reported 0).
+    db_session.add(DocumentRecord(
+        id=f"dr_tax_sev_m_{uuid.uuid4().hex[:8]}", document_id=doc.id, thread_id=thread_id,
+        record_id="INV-MISS", source="invoices", amount=1000.0,
+        raw_data_json=json.dumps({"taxable_amount": 1000.0, "tax_amount": 0.0, "tax_rate": 0.18}),
+    ))
+    db_session.commit()
+
+    res = tax_matcher.run_tax_matching(db_session, thread_id, tax_rate=0.18)
+    assert res["status"] == "COMPLETED"
+    assert res["rule_pack_version"] == "1.0.0"
+    assert res["findings"]["total"] == 1
+    line = res["tax_lines"][0]
+    assert line["status"] == "MISSING"
+    assert line["severity"] == "HIGH"
+    assert line["remedy"]
+    assert res["findings"]["by_severity"]["HIGH"] == 1

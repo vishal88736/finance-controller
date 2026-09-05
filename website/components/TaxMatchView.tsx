@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import {
   Search,
   AlertCircle,
@@ -10,7 +10,6 @@ import {
   ShieldAlert,
   Percent,
   Calculator,
-  Loader2,
 } from "lucide-react";
 import { api, TaxMatchData, TaxMatchItem } from "@/lib/api";
 
@@ -32,6 +31,22 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [search, setSearch] = useState<string>("");
   const [selected, setSelected] = useState<TaxMatchItem | null>(null);
+  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const triggerRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    if (!selected) return;
+    triggerRef.current = document.activeElement as HTMLElement | null;
+    drawerCloseRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setSelected(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      triggerRef.current?.focus?.();
+    };
+  }, [selected]);
 
   const fetchTaxMatches = useCallback(
     async (rate: number) => {
@@ -260,7 +275,7 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
 
       {/* ── Filter & Search Toolbar ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200 rounded-xl p-3 shadow-xs">
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <div className="flex items-center gap-1.5 overflow-x-auto scroll-x-afford pb-1 sm:pb-0 max-w-full" role="tablist" aria-label="Tax status filter">
           {[
             { id: "ALL", label: `All (${taxData?.total_records ?? 0})` },
             { id: "MISMATCH", label: `Mismatches (${taxData?.mismatched_count ?? 0})` },
@@ -269,6 +284,8 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
           ].map((f) => (
             <button
               key={f.id}
+              role="tab"
+              aria-selected={statusFilter === f.id}
               onClick={() => setStatusFilter(f.id)}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 statusFilter === f.id
@@ -295,33 +312,36 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
 
       {/* ── Table ── */}
       <div className="card overflow-hidden bg-white border border-slate-200">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scroll-x-afford">
           <table className="w-full text-left text-xs fintech-table">
             <thead className="bg-slate-50 border-b border-slate-100 text-slate-600 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th>Record ID</th>
-                <th>Source</th>
-                <th>Taxable Base</th>
-                <th>Rate</th>
-                <th>Expected Tax</th>
-                <th>Reported Tax</th>
-                <th>Difference</th>
-                <th>Status</th>
-                <th className="text-right">Action</th>
+                <th scope="col">Record ID</th>
+                <th scope="col">Source</th>
+                <th scope="col">Taxable Base</th>
+                <th scope="col">Rate</th>
+                <th scope="col">Expected Tax</th>
+                <th scope="col">Reported Tax</th>
+                <th scope="col">Difference</th>
+                <th scope="col">Status</th>
+                <th scope="col" className="text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 font-mono">
+            <tbody className="divide-y divide-slate-100 mono-fin">
               {isLoading ? (
                 <tr>
-                  <td colSpan={9} className="py-12 text-center text-slate-400 font-sans">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-indigo-500 mb-2" />
-                    Calculating deterministic tax lines…
+                  <td colSpan={9} className="py-6 px-5">
+                    <div className="space-y-2" aria-label="Calculating deterministic tax lines">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="skeleton h-9 w-full" />
+                      ))}
+                    </div>
                   </td>
                 </tr>
               ) : filteredLines.length === 0 ? (
                 <tr>
                   <td colSpan={9} className="py-12 text-center text-slate-400 font-sans">
-                    No tax lines match current filter criteria.
+                    No tax lines match current filter criteria. Try clearing the status filter or search.
                   </td>
                 </tr>
               ) : (
@@ -382,8 +402,10 @@ export const TaxMatchView: React.FC<TaxMatchViewProps> = ({
               </div>
 
               <button
+                ref={drawerCloseRef}
                 onClick={() => setSelected(null)}
                 className="text-slate-400 hover:text-slate-700 p-1 rounded-lg"
+                aria-label="Close tax details"
               >
                 <X className="w-4 h-4" />
               </button>

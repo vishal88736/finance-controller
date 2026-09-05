@@ -152,6 +152,16 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
         </div>
       )}
 
+      {forecast?.baseline_source === "HISTORY_DERIVED" && (
+        <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-xs text-amber-800 flex items-start gap-2" role="note">
+          <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+          <span>
+            Baseline cash was <strong>assumed</strong> from net historical flows because no opening
+            balance was provided. Treat the projected ending cash as directional, not audited.
+          </span>
+        </div>
+      )}
+
       {/* ── Metric Summary Cards ── */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Baseline Cash */}
@@ -165,18 +175,18 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
                 ? "PROVIDED"
                 : forecast?.baseline_source === "HISTORY_DERIVED"
                 ? "ASSUMED"
-                : "ACTUAL"}
+                : "UNAVAILABLE"}
             </span>
           </div>
-          <div className="text-2xl font-bold font-mono text-slate-900">
+          <div className="text-2xl font-bold mono-fin text-slate-900">
             ${(forecast?.current_cash_balance ?? 0).toLocaleString("en-US", { minimumFractionDigits: 2 })}
           </div>
           <div className="text-xs text-slate-500 mt-2">
             {forecast?.baseline_source === "USER_PROVIDED"
               ? "Opening cash position provided by the user"
               : forecast?.baseline_source === "HISTORY_DERIVED"
-              ? "Not provided — assumed from net historical cash flows"
-              : "Starting operating cash position"}
+              ? "Assumed from net historical cash flows — not a measured balance"
+              : "Baseline unavailable — no opening balance or usable history"}
           </div>
         </div>
 
@@ -283,14 +293,14 @@ export const CashForecastView: React.FC<CashForecastViewProps> = ({
                       : "bg-white border-slate-200/80 hover:bg-slate-50/80"
                   }`}
                 >
-                  <div className="flex items-center justify-between mb-1.5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-900 w-16">Day {p.day_number}</span>
-                      <span className="text-slate-500 w-24">{p.date}</span>
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 mb-1.5">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="font-bold text-slate-900 w-16 shrink-0">Day {p.day_number}</span>
+                      <span className="text-slate-500 w-24 truncate">{p.date}</span>
                       <span className="text-slate-400 font-sans text-[11px]">{p.day_of_week}</span>
                     </div>
 
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 mono-fin">
                       <span className="text-emerald-700 font-semibold">
                         +${p.projected_inflow.toFixed(2)}
                       </span>

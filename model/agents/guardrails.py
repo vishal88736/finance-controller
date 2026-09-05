@@ -240,6 +240,8 @@ ALLOWED_QA_TOOLS = frozenset({
     "get_metrics_tool",
     "run_cash_forecast_tool",
     "run_tax_match_tool",
+    "run_working_capital_tool",
+    "search_records_tool",
 })
 
 

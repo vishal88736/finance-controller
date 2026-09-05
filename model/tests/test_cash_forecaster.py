@@ -175,3 +175,39 @@ def test_forecast_data_context_stale_detection():
     non_stale = forecast_data_context(proj, analysis_date="2026-08-26")
     assert non_stale["dataset_is_stale"] is False
     assert non_stale["stale_note"] is None
+
+
+def test_forecast_exponential_smoothing_method(db_session):
+    """The optional statistical tier returns a valid forecast and reflects its method."""
+    thread_id = f"thr_fct_ewma_{uuid.uuid4().hex[:8]}"
+    th = Thread(id=thread_id, title="EWMA")
+    db_session.add(th)
+    doc = Document(
+        id=f"doc_fct_ewma_{uuid.uuid4().hex[:8]}", thread_id=thread_id,
+        filename="ledger.csv", file_type="csv",
+        content_hash_sha256=f"ewma_hash_{uuid.uuid4().hex[:8]}",
+    )
+    db_session.add(doc)
+    today = datetime.now().date()
+    for i in range(5):
+        db_session.add(DocumentRecord(
+            id=f"dr_fct_ewma_{i}_{uuid.uuid4().hex[:8]}", document_id=doc.id, thread_id=thread_id,
+            record_id=f"IN-{i}", source="ledger", amount=1000.0 + i * 50.0,
+            iso_date=(today - timedelta(days=i)).isoformat(),
+        ))
+    db_session.commit()
+
+    res = cash_forecaster.run_forecast(db_session, thread_id, horizon_days=7, method="exponential_smoothing")
+    assert res["status"] == "COMPLETED"
+    assert res["forecast_method"] == "exponential_smoothing"
+    assert len(res["daily_projections"]) == 7
+
+
+def test_forecast_rejects_unknown_method(db_session):
+    th_id = f"thr_fct_badmethod_{uuid.uuid4().hex[:8]}"
+    th = Thread(id=th_id, title="Bad method")
+    db_session.add(th)
+    db_session.commit()
+    from model.services.cash_forecaster import CashForecastingError
+    with pytest.raises(CashForecastingError):
+        cash_forecaster.run_forecast(db_session, th_id, horizon_days=7, method="prophet")

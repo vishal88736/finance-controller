@@ -425,7 +425,7 @@ export const AgentActivityPanel: React.FC<AgentActivityPanelProps> = ({
           </div>
 
           {/* ── Horizontal Connected Workflow Pipeline ── */}
-          <div className="overflow-x-auto pb-1">
+          <div className="overflow-x-auto scroll-x-afford pb-1" tabIndex={0} aria-label="Agent workflow pipeline, scroll horizontally for all agents">
             <div className="flex items-center min-w-[700px] justify-between gap-2">
               {WORKFLOW_AGENTS.map((agent, idx) => {
                 const Icon = agent.icon;

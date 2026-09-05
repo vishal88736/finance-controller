@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   X, FileText, Upload, AlertTriangle, CheckCircle2, FileSpreadsheet,
   ShieldAlert, Copy, Check, Loader2, Ban, Database,
@@ -52,6 +52,8 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
   const [selectedDoc, setSelectedDoc] = useState<ThreadDocumentItem | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const detailCloseRef = useRef<HTMLButtonElement>(null);
+  const detailTriggerRef = useRef<HTMLElement | null>(null);
 
   const handleEscape = useCallback((e: KeyboardEvent) => {
     if (e.key === "Escape") {
@@ -65,6 +67,15 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleEscape]);
+
+  useEffect(() => {
+    if (!selectedDoc) return;
+    detailTriggerRef.current = document.activeElement as HTMLElement | null;
+    detailCloseRef.current?.focus();
+    return () => {
+      detailTriggerRef.current?.focus?.();
+    };
+  }, [selectedDoc]);
 
   const uploadFiles = async (fileList: File[]) => {
     if (fileList.length === 0 || busy) return;
@@ -371,6 +382,7 @@ export const DocumentWorkspace: React.FC<DocumentWorkspaceProps> = ({
                 </div>
               </div>
               <button
+                ref={detailCloseRef}
                 onClick={() => setSelectedDoc(null)}
                 className="text-slate-400 hover:text-slate-600 p-1.5 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer"
                 aria-label="Close document details"

@@ -76,6 +76,29 @@ def _is_tax_eligible(raw_data: Dict[str, Any]) -> bool:
     return any(k in raw_data for k in _TAX_EVIDENCE_FIELDS)
 
 
+# Versioned rule pack (adopted from itr-agent): the tax engine's parameters and
+# severities are pinned to a version so a result always states the rules it used.
+TAX_RULE_PACK_VERSION = "1.0.0"
+
+_REMEDIES = {
+    "MISMATCH": "Review the reported tax line against the taxable base; correct the invoice or obtain a credit note.",
+    "MISSING": "A tax line is expected for this taxable base; obtain the missing tax invoice or withholding line.",
+    "AMBIGUOUS": "Invoice total does not equal subtotal + tax; verify for additional fees, discounts, or a rounding error.",
+}
+
+
+def _tax_severity(diff: Decimal, expected: Decimal) -> str:
+    """Tier a tax variance into LOW / MEDIUM / HIGH relative to the expected tax."""
+    if expected <= Decimal("0.00"):
+        return "MEDIUM"
+    ratio = diff / expected
+    if ratio >= Decimal("0.25"):
+        return "HIGH"
+    if ratio >= Decimal("0.05"):
+        return "MEDIUM"
+    return "LOW"
+
+
 class TaxMatcherService:
     """Production deterministic tax-line matcher engine."""
 
@@ -121,6 +144,7 @@ class TaxMatcherService:
             result = {
                 "status": "NO_DATA",
                 "thread_id": thread_id,
+                "rule_pack_version": TAX_RULE_PACK_VERSION,
                 "message": "No financial records found in this thread to perform tax matching.",
                 "total_records": 0,
                 "tax_eligible_count": 0,
@@ -159,6 +183,7 @@ class TaxMatcherService:
         total_reported_tax = Decimal("0.00")
         total_tax_discrepancy = Decimal("0.00")  # absolute cumulative variance
         net_tax_variance = Decimal("0.00")        # signed net variance
+        severity_counts: Dict[str, int] = {"HIGH": 0, "MEDIUM": 0, "LOW": 0}
 
         # Run-scoped history: never delete previous runs. Each invocation gets
         # its own run_id; GET returns the latest run's lines. This preserves
@@ -327,6 +352,14 @@ class TaxMatcherService:
             total_tax_discrepancy += diff
             net_tax_variance += signed_diff
 
+            # Deterministic severity + remedy for explainable findings.
+            severity = None
+            remedy = None
+            if status in ("MISMATCH", "MISSING", "AMBIGUOUS"):
+                severity = _tax_severity(diff, expected_tax_val)
+                remedy = _REMEDIES.get(status)
+                severity_counts[severity] = severity_counts.get(severity, 0) + 1
+
             line_entry = {
                 "id": f"tax_{uuid.uuid4().hex[:10]}",
                 "record_id": rec.record_id,
@@ -338,12 +371,16 @@ class TaxMatcherService:
                 "reported_tax": float(_round_dec(reported_tax_val)),
                 "tax_difference": float(_round_dec(diff)),
                 "status": status,
+                "severity": severity,
+                "remedy": remedy,
                 "explanation": explanation,
                 "evidence": {
                     "record_id": rec.record_id,
                     "source": rec.source,
                     "date": rec.iso_date,
                     "tax_rate_source": rate_source,
+                    "severity": severity,
+                    "remedy": remedy,
                     "calculation": f"${taxable_val:,.2f} × {float(item_rate)*100:.1f}% = ${expected_tax_val:,.2f}" if item_rate is not None else None,
                     "difference": f"${diff:,.2f}",
                     "signed_variance": f"${signed_diff:,.2f}",
@@ -404,6 +441,7 @@ class TaxMatcherService:
             "status": "COMPLETED",
             "run_id": run_id,
             "thread_id": thread_id,
+            "rule_pack_version": TAX_RULE_PACK_VERSION,
             "total_records": total_lines,
             "tax_eligible_count": tax_eligible_count,
             "matched_count": matched_count,
@@ -417,6 +455,10 @@ class TaxMatcherService:
             "total_tax_reported": float(_round_dec(total_reported_tax)) if tax_eligible_count > 0 else None,
             "total_tax_discrepancy": float(_round_dec(total_tax_discrepancy)) if tax_eligible_count > 0 else None,
             "net_tax_variance": float(_round_dec(net_tax_variance)) if tax_eligible_count > 0 else None,
+            "findings": {
+                "total": mismatched_count + missing_count + ambiguous_count,
+                "by_severity": severity_counts,
+            },
             "tax_lines": tax_lines,
         }
 

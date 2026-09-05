@@ -113,7 +113,7 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900 font-[family-name:var(--font-geist-mono)] tracking-tight">
+            <span className="text-3xl font-extrabold text-slate-900 mono-fin tracking-tight">
               {run ? `${matchRate.toFixed(1)}%` : "—"}
             </span>
             {run && (
@@ -154,7 +154,7 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900 font-[family-name:var(--font-geist-mono)] tracking-tight">
+            <span className="text-3xl font-extrabold text-slate-900 mono-fin tracking-tight">
               {run ? run.exceptions_count : "—"}
             </span>
             {run && run.exceptions_count > 0 && (
@@ -192,7 +192,7 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900 font-[family-name:var(--font-geist-mono)] tracking-tight">
+            <span className="text-3xl font-extrabold text-slate-900 mono-fin tracking-tight">
               {run ? run.total_records.toLocaleString() : "—"}
             </span>
             <span className="text-xs text-slate-400 font-mono">rows</span>
@@ -222,7 +222,7 @@ export const OverviewCards: React.FC<OverviewCardsProps> = ({
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="text-3xl font-extrabold text-slate-900 font-[family-name:var(--font-geist-mono)] tracking-tight">
+            <span className="text-3xl font-extrabold text-slate-900 mono-fin tracking-tight">
               {hasDocuments ? documentCount : "0"}
             </span>
             <span className="text-xs text-blue-700 font-semibold bg-blue-50 border border-blue-200 px-2 py-0.5 rounded-full">

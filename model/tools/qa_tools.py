@@ -10,6 +10,8 @@ Every tool result carries evidence metadata internally:
 """
 
 import json
+import math
+import re
 from typing import Dict, Any, List, Optional
 from sqlalchemy.orm import Session
 from ..database.models import (
@@ -426,6 +428,21 @@ def run_tax_match_tool(
     return result
 
 
+def run_working_capital_tool(
+    db: Session,
+    thread_id: str,
+    days: int = 365,
+) -> Dict[str, Any]:
+    """
+    Execute deterministic working-capital analysis (DSO / DIO / DPO / CCC) over
+    the thread's records. Every number is computed in Python — never by an LLM.
+    """
+    from ..services.working_capital import working_capital
+    result = working_capital.run_analysis(db=db, thread_id=thread_id, days=days)
+    result["_meta"] = _tool_meta("run_working_capital_tool", thread_id, days=days)
+    return result
+
+
 def get_settlement_status_tool(db: Session, thread_id: str, limit: int = 50) -> Dict[str, Any]:
     """Retrieve settlement records and payout statuses for the thread."""
     limit = _sanitize_limit(limit)
@@ -439,11 +456,12 @@ def get_settlement_status_tool(db: Session, thread_id: str, limit: int = 50) -> 
         .all()
     )
     
-    # Also fetch unmatched/exceptions that might be pending settlements
+    # Also surface unresolved exceptions that may indicate pending settlements/payouts.
     exceptions = (
         db.query(ExceptionItemResult)
         .filter(ExceptionItemResult.thread_id == thread_id)
-        .filter(ExceptionItemResult.exception_type.in_(["MISSING_SETTLEMENT", "MISSING_PAYOUT"]))
+        .filter(ExceptionItemResult.decision == "UNRESOLVED")
+        .order_by(ExceptionItemResult.amount_discrepancy.desc())
         .limit(limit)
         .all()
     )
@@ -452,8 +470,92 @@ def get_settlement_status_tool(db: Session, thread_id: str, limit: int = 50) -> 
         "settlements": [json.loads(s.raw_data_json) for s in settlements if s.raw_data_json],
         "pending_exceptions": [{
             "record_id": e.record_id,
-            "type": e.exception_type,
-            "description": e.description
+            "reason_code": e.reason_code,
+            "explanation": e.explanation
         } for e in exceptions],
         "_meta": _tool_meta("get_settlement_status_tool", thread_id, limit=limit)
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# Deterministic keyword record search (adopted from rag-document-qa's
+# IDF-weighted relevance + refusal gate, dependency-free, no embeddings).
+# ─────────────────────────────────────────────────────────────
+
+def _tokenize(text: str) -> List[str]:
+    return re.findall(r"[a-z0-9]+", str(text or "").lower())
+
+
+def search_records_tool(db: Session, thread_id: str, query: str, limit: int = 10) -> Dict[str, Any]:
+    """
+    Search thread-wide document records by free text, returning cited results.
+
+    Uses inverse-document-frequency (IDF) weighted term overlap over the record's
+    description/entity/reference/source fields — a cheap, deterministic, local
+    alternative to embeddings. When no query term matches, it refuses (returns
+    NO_MATCH) rather than guessing: identical to rag-document-qa's IDF-weighted
+    refusal gate that catches "fluent-but-wrong" lookups.
+    """
+    if not thread_id or not (query or "").strip():
+        return {"status": "NO_QUERY", "message": "Provide a search term or phrase.", "results": []}
+
+    records = db.query(DocumentRecord).filter(DocumentRecord.thread_id == thread_id).all()
+    if not records:
+        return {"status": "NO_DATA", "message": "No records exist in this thread to search.", "results": []}
+
+    qterms = _tokenize(query)
+    if not qterms:
+        return {"status": "NO_QUERY", "message": "Provide a search term or phrase.", "results": []}
+
+    def _fields(r: DocumentRecord) -> str:
+        return " ".join(filter(None, [r.description, r.clean_entity, r.entity, r.source, r.record_id, r.reference_id]))
+
+    field_tokens = [set(_tokenize(_fields(r))) for r in records]
+    N = len(records)
+    df: Dict[str, int] = {}
+    for toks in field_tokens:
+        for t in toks:
+            df[t] = df.get(t, 0) + 1
+
+    def _idf(t: str) -> float:
+        return math.log((N + 1) / (df.get(t, 0) + 1)) + 1.0
+
+    scored: List[tuple] = []
+    for r, toks in zip(records, field_tokens):
+        matched = [t for t in qterms if t in toks]
+        if not matched:
+            continue
+        score = sum(_idf(t) for t in matched)
+        scored.append((score, len(matched), r, matched))
+
+    if not scored:
+        return {
+            "status": "NO_MATCH",
+            "message": "I could not find any records matching that search in this thread.",
+            "query": query,
+            "results": [],
+        }
+
+    scored.sort(key=lambda x: (-x[0], -x[1], x[2].record_id))
+    limit = _sanitize_limit(limit, default=10)
+    results = []
+    for score, nmatch, r, matched in scored[:limit]:
+        results.append({
+            "record_id": r.record_id,
+            "source": r.source,
+            "amount": r.amount,
+            "date": r.iso_date,
+            "entity": r.entity,
+            "description": r.description,
+            "reference_id": r.reference_id,
+            "relevance_score": round(score, 4),
+            "matched_terms": sorted(set(matched)),
+        })
+
+    return {
+        "status": "OK",
+        "query": query,
+        "result_count": len(results),
+        "results": results,
+        "_meta": _tool_meta("search_records_tool", thread_id, query=query[:120]),
     }
